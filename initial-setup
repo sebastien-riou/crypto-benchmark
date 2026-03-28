@@ -3,7 +3,7 @@
 set -ex
 
 RENODE=${1:-1}
-LEAN_BENCHMARK=${2:-c4bf8db7}
+LEAN_BENCHMARK=${2:-6e6e440}
 DILITHIUM_LOWRAM=${3:-068c8d32}
 
 
