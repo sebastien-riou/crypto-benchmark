@@ -4,10 +4,11 @@ Benchmarking of various cryptographic primitives on embedded devices using:
 - Renode
 - Test vectors from https://github.com/sebastien-riou/BTVG-MLDSA/releases/tag/v0.0.3
 
-It benchmark the performances as well as the various memory footprints.
+It benchmarks the performances as well as the various memory footprints.
 
-This also produce self contained benchmarking libraries which can be easily integrated in STMCube-IDE projects and other vendors IDEs.
+It also produce self contained benchmarking libraries which can be easily integrated in STMCube-IDE projects and other vendors IDEs.
 
+Results can be retrieved using Python or displayed using the provided script `show-results`.
 
 ## Current status
 It has been used on two targets:
