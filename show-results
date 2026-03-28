@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -ex 
+
+TARGET=$(basename ${1})
+pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --uart-log lbmk-uart-${TARGET}.log ${@:2}

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -ex 
+
+PICKLE=$(basename ${1})
+pipenv run python ../lean-benchmark/lean_benchmark.py --describe $PICKLE --details=0 ${@:2}

@@ -1,0 +1,122 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "RV32IMC",
+            "cwd": "${workspaceFolder}",
+            "type": "cppdbg",
+            "program":  "${workspaceFolder}/build/rv32imc/crypto-benchmark.elf",
+            "request": "launch",
+            "args":[],
+            "stopAtEntry":false,
+            "preLaunchTask": "Renode RV32IMC",
+            "postDebugTask": "Close Renode",
+            "environment": [],
+            "MIMode": "gdb",
+            "miDebuggerPath": "riscv-none-elf-gdb",
+            "miDebuggerServerAddress": "localhost:3333",
+            "setupCommands": [
+                {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "RV64IMC",
+            "cwd": "${workspaceFolder}",
+            "type": "cppdbg",
+            "program":  "${workspaceFolder}/build/rv64imc/crypto-benchmark.elf",
+            "request": "launch",
+            "args":[],
+            "stopAtEntry":false,
+            "preLaunchTask": "Renode RV64IMC",
+            "postDebugTask": "Close Renode",
+            "environment": [],
+            "MIMode": "gdb",
+            "miDebuggerPath": "riscv-none-elf-gdb",
+            "miDebuggerServerAddress": "localhost:3333",
+            "setupCommands": [
+                {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "CortexM3",
+            "cwd": "${workspaceFolder}",
+            "type": "cppdbg",
+            "program":  "${workspaceFolder}/build/cortex-m3/crypto-benchmark.elf",
+            "request": "launch",
+            "args":[],
+            "stopAtEntry":false,
+            "preLaunchTask": "Renode CortexM3",
+            "postDebugTask": "Close Renode",
+            "environment": [],
+            "MIMode": "gdb",
+            "miDebuggerPath": "arm-none-eabi-gdb",
+            "miDebuggerServerAddress": "localhost:3333",
+            "setupCommands": [
+                {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Linux",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/linux/crypto-benchmark.elf",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Linux attach",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "${workspaceFolder}/build/linux/crypto-benchmark.elf",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+    ]
+}

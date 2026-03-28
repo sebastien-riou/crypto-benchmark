@@ -1,0 +1,2 @@
+add_definitions( -DCPU=rv32imc )
+include("${CMAKE_CURRENT_LIST_DIR}/../target/rv32imc/generic.cmake")

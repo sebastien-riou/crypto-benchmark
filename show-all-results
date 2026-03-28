@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -ex 
+
+./show-results on/cortex-m3 $*
+./show-results on/rv32imc $*
+./show-results on/rv64imc $*

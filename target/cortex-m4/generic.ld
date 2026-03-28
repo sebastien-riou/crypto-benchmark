@@ -1,0 +1,1 @@
+../cortex-m3/generic.ld

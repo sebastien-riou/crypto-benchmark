@@ -1,0 +1,3 @@
+set(DEVICE CORTEX_M7)
+add_definitions( -DCPU=cortex-m7 )
+include("${CMAKE_CURRENT_LIST_DIR}/../target/cortex-m7/generic.cmake")

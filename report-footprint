@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -ex 
+
+OUTDIR=${1:-build/cortex-m33}
+
+echo "Reporting size for build folder '$OUTDIR'"
+
+size ${OUTDIR}/crypto-benchmark-*.elf > ${OUTDIR}/sizes.txt
+pipenv run python report_footprint.py 

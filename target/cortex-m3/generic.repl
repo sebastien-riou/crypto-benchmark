@@ -1,0 +1,26 @@
+sysbus:
+    init:
+        Tag <0xE0001000, 0xE0001FFF> "dwt" 
+        Tag <0xe000e010 0x10> "systick"
+
+flash: Memory.MappedMemory @ sysbus 0x0
+    size: 0x00080000
+
+ram: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x00200000
+
+nvic0: IRQControllers.NVIC @ {
+    sysbus new Bus.BusPointRegistration { address: 0xe000e000; cpu: cpu }
+}
+    -> cpu@0
+    systickFrequency: 1000000
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m3"
+    nvic: nvic0
+
+dwt: Miscellaneous.DWT @ sysbus 0xE0001000
+    frequency: 72000000
+
+uart: UART.LiteX_UART @ sysbus 0x60001800
+    -> nvic0@15

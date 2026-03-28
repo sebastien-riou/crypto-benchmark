@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -ex 
+
+TOOLCHAIN=${1:-on/cortex-m33}
+PRESET=${2:-minSizeRel}
+
+TARGET=$(basename ${TOOLCHAIN})
+OUTDIR="build/$TARGET"
+
+./build-all-mldsa $TOOLCHAIN $PRESET
+
+./report-footprint $OUTDIR

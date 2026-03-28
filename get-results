@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -ex 
+
+UART=${1}
+pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --device=$UART ${@:2}

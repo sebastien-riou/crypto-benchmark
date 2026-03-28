@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -ex
+
+TOOLCHAIN=${1:-on/linux}
+ALGO=${2:-mldsa}
+PSET=${3:-44}
+CRYPTO_LIB=${4:-OPEN_SOURCE}
+PRESET=${5:-minSizeRel}
+
+TARGET=$(basename ${TOOLCHAIN})
+OUTDIR="build/$TARGET/$ALGO/$PSET"
+
+rm -rf $OUTDIR
+mkdir -p $OUTDIR
+
+cmake -B $OUTDIR -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DALGO=$ALGO -DPSET=$PSET -DCRYPTO_LIB=$CRYPTO_LIB ${@:6} --preset $PRESET .
+cmake --build $OUTDIR --verbose --clean-first 

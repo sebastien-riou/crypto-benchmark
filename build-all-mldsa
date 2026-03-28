@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -ex
+
+TOOLCHAIN=${1:-on/cortex-m33}
+PRESET=${2:-minSizeRel}
+
+./clean
+python3 link_ext.py --preset=$PRESET
+./buildit $TOOLCHAIN mldsa 44 STUB $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 65 STUB $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 87 STUB $PRESET ${@:3}
+
+# allow some builds to fail
+set +e 
+./buildit $TOOLCHAIN mldsa 44 OPEN_SOURCE $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 65 OPEN_SOURCE $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 87 OPEN_SOURCE $PRESET ${@:3}
+
+./buildit $TOOLCHAIN mldsa 44 PQSHIELD $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 65 PQSHIELD $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 87 PQSHIELD $PRESET ${@:3}
+
+./buildit $TOOLCHAIN mldsa 44 STM32PQC $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 65 STM32PQC $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 87 STM32PQC $PRESET ${@:3}
+
+./buildit $TOOLCHAIN mldsa 44 WOLFSSL $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 65 WOLFSSL $PRESET ${@:3}
+./buildit $TOOLCHAIN mldsa 87 WOLFSSL $PRESET ${@:3}
+
+TARGET=$(basename ${TOOLCHAIN})
+OUTDIR="build/$TARGET"
+
+size ${OUTDIR}/crypto-benchmark-*.elf > ${OUTDIR}/sizes.txt

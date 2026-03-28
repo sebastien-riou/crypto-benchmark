@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -ex
+
+ALGO=${1:-mldsa}
+PSET=${2:-44}
+
+rm -f lbmk-uart*.log
+rm -f cpu-trace*.log
+pipenv run renode-test renode.robot --variable PWD_PATH:"${PWD}" --variable ALGO:"${ALGO}" --variable PSET:"${PSET}"

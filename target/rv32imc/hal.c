@@ -1,0 +1,60 @@
+#include <stdint.h>
+#include <stdbool.h>
+
+typedef struct
+{
+    uint32_t RxTx;
+    uint32_t TxFull;
+    uint32_t RxEmpty;
+    uint32_t EventStatus;
+    uint32_t EventPending;
+    uint32_t EventEnable;
+} UART;
+
+const uint32_t TxEvent = 1;
+const uint32_t RxEvent = 2;
+volatile UART *const uart = (UART *)0x60001800;
+
+void init(int argc, const char*argv[]){
+
+}
+void led1(bool on){
+
+}
+bool button(){
+    return false;
+}
+void com_tx(const void *const buf, unsigned int size){
+    const uint8_t*const buf8 = (const uint8_t*const)buf;
+    for(unsigned int i=0;i<size;i++){
+        //wait tx buffer ready
+        while (uart->TxFull);
+
+        //send the byte
+        uart->RxTx = buf8[i];
+    }
+}
+void com_rx(void *const buf, unsigned int size){
+
+}
+void delay_ms(unsigned int ms){
+
+}
+
+uint64_t LBMK_get_cpu_timestamp(){
+	uint32_t mcycle, mcycleh;
+
+	// get mcycle and mcycleh
+	asm("csrr %0, mcycle" : "=r"(mcycle));
+	asm("csrr %0, mcycleh": "=r"(mcycleh));
+
+	return ((uint64_t)mcycleh << 32) | mcycle;
+}
+
+static volatile uint64_t heap_usage;
+void LBMK_init_heap_usage(){
+  heap_usage = 0;
+}
+uint64_t LBMK_get_heap_usage(){
+  return heap_usage;
+}

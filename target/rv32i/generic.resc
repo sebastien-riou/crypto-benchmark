@@ -1,0 +1,21 @@
+:name: RV32I
+:description: This script waits for GDB connection and generate output in lbmk-uart.log
+
+$name?="RV32I"
+$bin ?= $CWD/build/rv32i/crypto-benchmark.elf
+
+using sysbus
+mach create $name
+machine LoadPlatformDescription $CWD/target/rv32i/generic.repl
+
+machine StartGdbServer 3333
+
+macro reset
+"""
+    sysbus LoadELF $bin
+"""
+
+showAnalyzer sysbus.uart
+uart CreateFileBackend $CWD/lbmk-uart.log true
+
+runMacro $reset

@@ -1,0 +1,4 @@
+set(DEVICE CORTEX_M3)
+add_definitions( -DCPU=cortex-m3 )
+add_definitions( -DMSG_MAX_SIZE=\(10*1024\) )
+include("${CMAKE_CURRENT_LIST_DIR}/../target/cortex-m3/generic.cmake")

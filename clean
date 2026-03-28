@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Cmake stuff
+rm -f CMakeCache.txt
+rm -f cmake_install.cmake
+
+# Renode stuff
+rm -f lbmk-uart*.log
+rm -f log.html
+rm -f report.html
+rm -r robot_output.xml
+rm -rf logs
+rm -rf snapshots
+
+# Our stuff
+rm target/*/*/*.a
+rm target/*/*/*.h
+rm -rf build

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -ex
+
+TOOLCHAIN=${1:-on/linux}
+ALGO=${2:-mldsa}
+PSET=${3:-44}
+
+TARGET=$(basename ${TOOLCHAIN})
+OUTDIR="build/$TARGET/$ALGO/$PSET"
+
+./buildit $*
+
+cd $OUTDIR
+
+./lbmk-test

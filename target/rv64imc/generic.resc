@@ -1,0 +1,21 @@
+:name: RV64IMC
+:description: This script waits for GDB connection and generate output in lbmk-uart.log
+
+$name?="RV64IMC"
+$bin ?= $CWD/build/rv64imc/crypto-benchmark.elf
+
+using sysbus
+mach create $name
+machine LoadPlatformDescription $CWD/target/rv64imc/generic.repl
+
+machine StartGdbServer 3333
+
+macro reset
+"""
+    sysbus LoadELF $bin
+"""
+
+showAnalyzer sysbus.uart
+uart CreateFileBackend $CWD/lbmk-uart.log true
+
+runMacro $reset

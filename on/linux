@@ -1,0 +1,12 @@
+set(TARGET_DIR ${CMAKE_CURRENT_SOURCE_DIR}/target/linux)
+set(target_SRCS 
+	${TARGET_DIR}/linux.c
+)
+set(CMAKE_SIZE size)
+set(CMAKE_AR_O_EXT o)
+add_definitions( -DHAS_DELAY_MS )
+add_definitions( -DCPU=native )
+set(target_include_sys_c_DIRS 
+	${TARGET_DIR}
+)
+

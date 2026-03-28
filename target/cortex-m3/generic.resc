@@ -1,0 +1,21 @@
+:name: Generic-Cortex-M3
+:description: This script waits for GDB connection and generate output in lbmk-uart.log
+
+$name?="Generic-Cortex-M3"
+$bin ?= $CWD/build/cortex-m3/crypto-benchmark.elf
+
+using sysbus
+mach create $name
+machine LoadPlatformDescription $CWD/target/cortex-m3/generic.repl
+
+machine StartGdbServer 3333
+
+macro reset
+"""
+    sysbus LoadELF $bin
+"""
+
+showAnalyzer sysbus.uart
+uart CreateFileBackend $CWD/lbmk-uart.log true
+
+runMacro $reset
