@@ -24,6 +24,7 @@ Following ML-DSA librairies have been integrated (alphabetical order):
 
 This has been tested with:
 - Ubuntu 24.04
+- cmake 3.28.3
 - gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
 - xpack-arm-none-eabi-gcc-14.2.1-1.1 (--version reports 'arm-none-eabi-gcc (xPack GNU Arm Embedded GCC x86_64) 14.2.1 20241119')
 - xpack-riscv-none-elf-gcc-15.2.0-1 (--version reports 'riscv-none-elf-gcc (xPack GNU RISC-V Embedded GCC x86_64) 15.2.0')
@@ -225,6 +226,7 @@ NOTE: STM's CMake extension generates an error when launching debug, you can ign
 ## Debugging using Linux build
 In one terminal:
 ````
+python3 link_ext.py --preset=debug
 ./testit on/linux mldsa 44 OPEN_SOURCE debug
 ````
 

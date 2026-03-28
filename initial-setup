@@ -25,7 +25,8 @@ cd ..
 
 cd lean-benchmark
 git checkout $LEAN_BENCHMARK
-./build-all-targets
+./build-all-targets debug
+./build-all-targets minSizeRel
 cd ..
 
 cd crypto-benchmark
