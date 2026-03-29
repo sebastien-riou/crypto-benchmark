@@ -21,7 +21,7 @@ Following ML-DSA librairies have been integrated (alphabetical order):
 - `OPEN_SOURCE`: [Dilithium-lowram](https://github.com/sebastien-riou/dilithium-lowram.git) 
 - `PQSHIELD`: [PQShield's PQMicroLib-Core](https://pqshield.com/products/pqm-cor/)
 - `STM32PQC`: [ST Microelectronics's X-Cube PQC](https://www.st.com/en/embedded-software/x-cube-pqc.html)
-- `WOLFSSL`: [WolfSSL](https://github.com/sebastien-riou/wolfssl)
+- `WOLFSSL`: [WolfSSL](https://github.com/sebastien-riou/wolfssl) (use 'crypto-benchmark' branch)
 
 This has been tested with:
 - Ubuntu 24.04
