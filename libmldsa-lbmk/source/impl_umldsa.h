@@ -16,7 +16,10 @@ static unsigned int pset_to_algid(unsigned int pset){
   __builtin_unreachable();
 }
 
+//#define CTX_IN_STACK
+#ifndef CTX_IN_STACK
 static uint8_t ctx[PQS_MLDSA_CTX_SIZE] = { 0 };
+#endif
 static uint8_t pqs_private_key[DSA_PRIVATE_KEY_SIZE]={0};
 static uint8_t pqs_public_key[DSA_PUBLIC_KEY_SIZE]={0};
 
@@ -26,6 +29,9 @@ static void dsa_gen_key_from_seed(
   const unsigned int pset,
   const void* seed
 ){
+  #ifdef CTX_IN_STACK
+  uint8_t ctx[PQS_MLDSA_CTX_SIZE] = { 0 };
+  #endif
   // Initialization of the context
   enum pqs_mldsa_result r = pqs_mldsa_ctx_init((struct pqs_mldsa_ctx*)ctx, pset_to_algid(pset), NULL);
   if (r != PQS_MLDSA_SUCCESS) {// Context initialization failed.
@@ -49,10 +55,11 @@ static uint32_t dsa_verify(
   const void*const signature,
   const void*const message,
   size_t message_size){
-  // Operational context
+  #ifdef CTX_IN_STACK
+  uint8_t ctx[PQS_MLDSA_CTX_SIZE] = { 0 };
+  #endif
   size_t signature_size = DSA_SIG_SIZE;
   // Initialization of the context
-  
   enum pqs_mldsa_result r = pqs_mldsa_ctx_init((struct pqs_mldsa_ctx*)ctx, pset_to_algid(pset), NULL);
   if (r != PQS_MLDSA_SUCCESS) {// Context initialization failed.
     throw_exception(ERROR_VERIFY|ERROR_LIB_INIT|r);
@@ -71,10 +78,12 @@ static void dsa_sign(
   void* signature,
   const void*const message,
   size_t message_size){
+  #ifdef CTX_IN_STACK
+  uint8_t ctx[PQS_MLDSA_CTX_SIZE] = { 0 };
+  #endif
   size_t signature_size = DSA_SIG_SIZE;
   uint8_t seed[32] = {0};//deterministic
   // Initialization of the context
-  
   enum pqs_mldsa_result r = pqs_mldsa_ctx_init((struct pqs_mldsa_ctx*)ctx, pset_to_algid(pset), NULL);
   if (r != PQS_MLDSA_SUCCESS) {// Context initialization failed.
     throw_exception(ERROR_SIGN|ERROR_LIB_INIT|r);
