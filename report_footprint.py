@@ -6,22 +6,10 @@ import argparse
 
 import humanfriendly
 
-if __name__ == '__main__':
-    scriptname = os.path.basename(__file__)
-    parser = argparse.ArgumentParser(scriptname)
-    levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
-    parser.add_argument('--log-level', default='INFO', choices=levels)
-    
-    args = parser.parse_args()
-
-    logformat = '%(asctime)s.%(msecs)03d %(levelname)s:\t%(message)s'
-    logdatefmt = '%Y-%m-%d %H:%M:%S'
-    logging.basicConfig(level=args.log_level, format=logformat, datefmt=logdatefmt)
-    
+def report_footprint(build_dir):
     size_report_str = r"(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\w+).*crypto-benchmark-(\w+)-(\w+)-(\w+).elf"
     size_report_pattern = re.compile(size_report_str)
 
-    build_dir = 'build'
     targets = [ f.path for f in os.scandir(build_dir) if f.is_dir() ]
     out = {}
     for target_path in targets:
@@ -70,6 +58,21 @@ if __name__ == '__main__':
                             ram_size = 0
                         d['ram'] = ram_size
                         out[target][algo][pset][lib]=d
+    return out
+
+if __name__ == '__main__':
+    scriptname = os.path.basename(__file__)
+    parser = argparse.ArgumentParser(scriptname)
+    levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+    parser.add_argument('--log-level', default='INFO', choices=levels)
+    
+    args = parser.parse_args()
+
+    logformat = '%(asctime)s.%(msecs)03d %(levelname)s:\t%(message)s'
+    logdatefmt = '%Y-%m-%d %H:%M:%S'
+    logging.basicConfig(level=args.log_level, format=logformat, datefmt=logdatefmt)
+    
+    out = report_footprint('build')
     for target in out.keys():
         for algo in out[target].keys():
             for pset in out[target][algo].keys():
