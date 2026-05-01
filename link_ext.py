@@ -110,7 +110,7 @@ if __name__ == '__main__':
     parser.add_argument('--log-level', default='INFO', choices=levels)
     parser.add_argument('--preset', default='minSizeRel', type=str)
     goals = ('small','balanced')
-    parser.add_argument('--goal', default='small', choices=levels)
+    parser.add_argument('--goal', default='small', choices=goals)
     
     args = parser.parse_args()
 
