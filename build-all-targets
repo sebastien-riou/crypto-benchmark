@@ -2,19 +2,20 @@
 
 set -ex
 
-#TOOLCHAIN=${1:-on/linux}
 ALGO=${1:-mldsa}
 PSET=${2:-44}
 CRYPTOLIB=${3:-OPEN_SOURCE}
 PRESET=${4:-minSizeRel}
+GOAL=${5:-small}
 
 ./clean
-python3 link_ext.py --preset=$PRESET
-./buildit on/linux     $*
+python3 link_ext.py --preset=$PRESET --goal=$GOAL
+#./buildit on/linux     $*
 ./buildit on/cortex-m3 $*
 ./buildit on/cortex-m4 $*
 ./buildit on/cortex-m7 $*
 ./buildit on/cortex-m33 $*
 ./buildit on/cortex-m55 $*
 ./buildit on/rv32imc   $*
+./buildit on/rv32imcb  $*
 ./buildit on/rv64imc   $*

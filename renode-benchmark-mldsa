@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -ex
+
+CRYPTOLIB=${1:-OPEN_SOURCE}
+GOAL=${2:-small}
+
+./renode-benchmark mldsa 44 $CRYPTOLIB $GOAL
+./renode-benchmark mldsa 65 $CRYPTOLIB $GOAL
+./renode-benchmark mldsa 87 $CRYPTOLIB $GOAL
