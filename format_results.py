@@ -24,7 +24,7 @@ def format_number_millions(num: int, *,precision=2) -> str:
     out = f'{r:.{precision}f}'
     return out
 
-def gen_footprint_table(libs,*, lib_list=None, pset_list=None) -> str:
+def gen_latex_footprint_table(libs,*, lib_list=None, pset_list=None) -> str:
     out = r"""
     \begin{table}[H]
     \centering
@@ -62,7 +62,7 @@ def gen_footprint_table(libs,*, lib_list=None, pset_list=None) -> str:
 
     return out
 
-def gen_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
+def gen_latex_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
     out = r"""
     \begin{table}[H]
     \centering
@@ -108,10 +108,52 @@ def gen_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
     """
     return out
 
+def gen_csv_footprint_table(libs,*, lib_list=None, pset_list=None) -> str:
+    out = 'Memory footprint for key generation, signing and verification (in KiB).\n'
+    out += 'Implementation,Level,Stack,Heap,Static RAM,Read-only\n'
+
+    for lib in sorted(libs.keys()):
+        if lib_list and lib not in lib_list:
+                continue
+        for pset in sorted(libs[lib].keys()):
+            if pset_list and pset not in pset_list:
+                continue
+            stack = f'{format_size_kib(libs[lib][pset]['stack']):>5}'
+            heap  = f'{format_size_kib(libs[lib][pset]['heap']):>5}'
+            rw    = f'{format_size_kib(libs[lib][pset]['rw']):>5}'
+            ro    = f'{format_size_kib(libs[lib][pset]['ro']):>5}'
+            out += f'{lib:20}'+' , '+str(pset)+f' , {stack} , {heap} , {rw} , {ro} \n'
+
+    return out
+
+def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
+    out = 'Performance for a 69-byte message and zero-length context (in million cycles).\n'
+    out += 'Implementation,Level,Operation,Minimum,Average(a),Worst observed(b)\n'
+
+    for lib in sorted(libs.keys()):
+        if lib_list and lib not in lib_list:
+            continue
+        for pset in sorted(libs[lib].keys()):
+            if pset_list and pset not in pset_list:
+                continue
+            for op in ['key-exp','sign','verify']:
+                if op_list and op not in op_list:
+                    continue
+                min_cycles    = f'{format_number_millions(libs[lib][pset][op]['min_cycles']):>5}'
+                ave_cycles    = f'{format_number_millions(libs[lib][pset][op]['ave_cycles']):>5}'
+                max_cycles    = f'{format_number_millions(libs[lib][pset][op]['max_cycles']):>5}'
+                out += f'{lib:20}'+' , '+str(pset)+f' , {op} , {min_cycles} , {ave_cycles} , {max_cycles}\n'
+
+    out += '(a): Match long term average for sign.\n'
+    out += '(b): Probability of occurrence is 2^-37 for sign.\n'
+    return out
+
+
 if __name__ == '__main__':
     scriptname = os.path.basename(__file__)
     parser = argparse.ArgumentParser(scriptname)
     levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+    formats = ('csv', 'latex')
     parser.add_argument('--log-level', default='INFO', choices=levels)
     parser.add_argument(
         '--root', help='Path to crypto-benchmark root', default='.', type=str
@@ -126,10 +168,13 @@ if __name__ == '__main__':
         '--op', help='List of operations to report', default=None, nargs='+', type=str
     )
     parser.add_argument(
-        'target', help='target platform to report', type=str
+        'target', help='Target platform to report', type=str
     )
     parser.add_argument(
-        'algo', help='algorithm to report', type=str
+        'algo', help='Algorithm to report', type=str
+    )
+    parser.add_argument(
+        'format', help='Desired output format', choices=formats
     )
 
     args = parser.parse_args()
@@ -236,5 +281,10 @@ if __name__ == '__main__':
 
 
     logging.debug(libs)
-    print(gen_perf_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
-    print(gen_footprint_table(libs,lib_list=args.lib, pset_list=args.pset))
+    match args.format:
+        case 'latex':
+            print(gen_latex_perf_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
+            print(gen_latex_footprint_table(libs,lib_list=args.lib, pset_list=args.pset))
+        case 'csv':
+            print(gen_csv_perf_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
+            print(gen_csv_footprint_table(libs,lib_list=args.lib, pset_list=args.pset))
