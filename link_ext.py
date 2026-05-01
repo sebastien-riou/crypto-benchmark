@@ -6,7 +6,7 @@ from glob import glob
 import logging
 import argparse
 
-def main(preset='minSizeRel'):
+def main(*,preset='minSizeRel', goal=''):
     targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
     libs = ['pqcle','pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','wolfssl']
 
@@ -28,6 +28,8 @@ def main(preset='minSizeRel'):
     debug=''
     if preset == 'debug':
         debug='-debug'
+    if goal:
+        goal='-'+goal
         
     for p in [PQCLE,LOWRAM,TOMCRYPT,LBMK,WOLFSSL]:
         try:
@@ -81,7 +83,7 @@ def main(preset='minSizeRel'):
                     if targetname == 'linux':
                         targetdir = 'gcc-x86_64-linux-gnu'
                     else:
-                        targetdir = f'gcc-{targetname}{debug}'
+                        targetdir = f'gcc-{targetname}{goal}{debug}'
                     source = f'{PQCLE}/out/build/{targetdir}'
                     source_lib = f'{PQCLE}/out/{targetdir}/lib'
                     source_h = source+'/inc/pqcle'
@@ -107,10 +109,12 @@ if __name__ == '__main__':
     levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
     parser.add_argument('--log-level', default='INFO', choices=levels)
     parser.add_argument('--preset', default='minSizeRel', type=str)
+    goals = ('small','balanced')
+    parser.add_argument('--goal', default='small', choices=levels)
     
     args = parser.parse_args()
 
     logformat = '%(asctime)s.%(msecs)03d %(levelname)s:\t%(message)s'
     logdatefmt = '%Y-%m-%d %H:%M:%S'
     logging.basicConfig(level=args.log_level, format=logformat, datefmt=logdatefmt)
-    main(args.preset)
+    main(preset=args.preset,goal=args.goal)
