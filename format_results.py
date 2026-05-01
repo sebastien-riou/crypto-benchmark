@@ -108,6 +108,63 @@ def gen_latex_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) ->
     """
     return out
 
+def gen_latex_perf_vs_msg_len_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
+    out = r"""
+    \begin{table}[H]
+    \centering
+    \setlength{\belowcaptionskip}{2pt}
+    \caption{Performance vs message length, zero-length context (in million cycles).}
+    \label{tab:mldsa-perf}
+    \footnotesize
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}|l|r|r|r|r|r|}
+    \hline
+    \textbf{Implementation} &
+    \textbf{Level} &
+    \textbf{Operation} &
+    \textbf{Minimum} &
+    \textbf{Average\textsuperscript{a,c}} &
+    \textbf{Worst observed\textsuperscript{b,c}} \\
+    """
+    for lib in sorted(libs.keys()):
+        if lib_list and lib not in lib_list:
+            continue
+
+        out += '\\hline\n'
+        for pset in sorted(libs[lib].keys()):
+            if pset_list and pset not in pset_list:
+                continue
+            op = 'sign'
+            min_cycles69    = libs[lib][pset][op]['min_cycles']
+            min_cycles    = f'{format_number_millions(min_cycles69):>5}'
+            ave_cycles69    = libs[lib][pset][op]['ave_cycles']
+            ave_cycles    = f'{format_number_millions(ave_cycles69):>5}'
+            max_cycles69    = libs[lib][pset][op]['max_cycles']
+            max_cycles    = f'{format_number_millions(max_cycles69):>5}'
+            out += r'\texttt{'+f'{lib:20}'+'} & '+str(pset)+f' & sign 69 & {min_cycles} & {ave_cycles} & {max_cycles} \\\\\n'
+            for op in ['sign 10K','sign 1M']:
+                if op_list and op not in op_list:
+                    continue
+                min_cycles    = f'{format_number_millions(libs[lib][pset][op]['min_cycles']):>5}'
+                ave = ave_cycles69 - min_cycles69 + libs[lib][pset][op]['min_cycles']
+                ave_cycles    = f'{format_number_millions(ave):>5}'
+                max = max_cycles69 - min_cycles69 + libs[lib][pset][op]['min_cycles']
+                max_cycles    = f'{format_number_millions(max):>5}'
+                out += r'\texttt{'+f'{lib:20}'+'} & '+str(pset)+f' & {op} & {min_cycles} & {ave_cycles} & {max_cycles} \\\\\n'
+
+    out += r"""    \hline
+    \end{tabular*}
+    \vspace{2pt}
+    \begin{minipage}{\textwidth}
+    \footnotesize
+    \raggedright
+    \textsuperscript{a} Match long term average for \texttt{sign}.
+    \textsuperscript{b} Probability of occurrence is $2^{-37}$ for \texttt{sign}.
+    \textsuperscript{c} Extrapolated from 69-cycle baseline.
+    \end{minipage}
+    \end{table}
+    """
+    return out
+
 def gen_csv_footprint_table(libs,*, lib_list=None, pset_list=None) -> str:
     out = 'Memory footprint for key generation, signing and verification (in KiB).\n'
     out += 'Implementation,Level,Stack,Heap,Static RAM,Read-only\n'
@@ -133,6 +190,7 @@ def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> s
     for lib in sorted(libs.keys()):
         if lib_list and lib not in lib_list:
             continue
+
         for pset in sorted(libs[lib].keys()):
             if pset_list and pset not in pset_list:
                 continue
@@ -147,7 +205,6 @@ def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> s
     out += '(a): Match long term average for sign.\n'
     out += '(b): Probability of occurrence is 2^-37 for sign.\n'
     return out
-
 
 if __name__ == '__main__':
     scriptname = os.path.basename(__file__)
@@ -253,6 +310,10 @@ if __name__ == '__main__':
                         'mldsa_gen_key':'key-exp',
                         'mldsa_sign69':'sign',
                         'mldsa_verify69':'verify',
+                        'mldsa_sign10K':'sign 10K',
+                        'mldsa_verify10K':'verify 10K',
+                        'mldsa_sign1M':'sign 1M',
+                        'mldsa_verify1M':'verify 1M',
                     }
                     operation = setup_to_report[value['setup']]
                     libs[lib][pset][operation] = {
@@ -281,10 +342,13 @@ if __name__ == '__main__':
 
 
     logging.debug(libs)
+
     match args.format:
         case 'latex':
             print(gen_latex_perf_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
+            print(gen_latex_perf_vs_msg_len_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
             print(gen_latex_footprint_table(libs,lib_list=args.lib, pset_list=args.pset))
         case 'csv':
             print(gen_csv_perf_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
             print(gen_csv_footprint_table(libs,lib_list=args.lib, pset_list=args.pset))
+
