@@ -50,3 +50,11 @@ uint64_t LBMK_get_cpu_timestamp(){
 
 	return ((uint64_t)mcycleh << 32) | mcycle;
 }
+
+static volatile uint64_t heap_usage;
+void LBMK_init_heap_usage(){
+  heap_usage = 0;
+}
+uint64_t LBMK_get_heap_usage(){
+  return heap_usage;
+}
