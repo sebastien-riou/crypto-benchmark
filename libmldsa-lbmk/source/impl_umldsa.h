@@ -1,6 +1,18 @@
 #pragma once
 
-#define IMPL_NAME "umldsa"
+
+#define UMLDSA_small 1
+#define UMLDSA_balanced 2
+
+#define UMLDSA_INDEX CAT(UMLDSA_,GOAL)
+
+#if UMLDSA_INDEX == UMLDSA_small
+  #define IMPL_NAME "umldsa-small"
+#endif
+
+#if UMLDSA_INDEX == UMLDSA_balanced
+  #define IMPL_NAME "umldsa-balanced"
+#endif
 
 #include <pqcle/pqs_mldsa.h>
 #include <stddef.h>

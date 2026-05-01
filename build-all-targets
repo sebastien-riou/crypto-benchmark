@@ -10,6 +10,9 @@ GOAL=${5:-small}
 
 ./clean
 python3 link_ext.py --preset=$PRESET --goal=$GOAL
+
+#allow some build to fail
+set +e
 #./buildit on/linux     $*
 ./buildit on/cortex-m3 $*
 ./buildit on/cortex-m4 $*
