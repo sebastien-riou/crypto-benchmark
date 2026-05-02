@@ -148,7 +148,11 @@ typedef void(*dsa_sign_t)(const void*const private_key,
 
 static const uint8_t*tv_sign_message;
 #ifndef MSG_MAX_SIZE
-  #define MSG_MAX_SIZE (1*1024*1024)
+  #if LARGE_TV
+    #define MSG_MAX_SIZE (1*1024*1024)
+  #else
+    #define MSG_MAX_SIZE (10*1024)
+#endif
 #endif 
 static uint8_t message[MSG_MAX_SIZE] = {0};
 void mldsa_gen_key(uintptr_t*args){
