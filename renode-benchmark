@@ -7,6 +7,6 @@ PSET=${2:-44}
 CRYPTOLIB=${3:-OPEN_SOURCE}
 GOAL=${4:-small}
 
-./build-all-targets $ALGO $PSET $CRYPTOLIB minSizeRel $GOAL
+./build-all-targets $ALGO $PSET $CRYPTOLIB $GOAL minSizeRel
 ./test-renode $ALGO $PSET
 ./show-all-results --details=0 --write=1

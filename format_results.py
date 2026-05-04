@@ -165,21 +165,21 @@ def gen_latex_perf_vs_msg_len_table(libs,*, lib_list=None, pset_list=None, op_li
     """
     return out
 
-def gen_csv_footprint_table(libs,*, lib_list=None, pset_list=None) -> str:
+def gen_csv_footprint_table(libs,*, pset_list=None) -> str:
     out = 'Memory footprint for key generation, signing and verification (in KiB).\n'
     out += 'Implementation,Level,Stack,Heap,Static RAM,Read-only\n'
 
     for lib in sorted(libs.keys()):
-        if lib_list and lib not in lib_list:
-                continue
         for pset in sorted(libs[lib].keys()):
-            if pset_list and pset not in pset_list:
-                continue
-            stack = f'{format_size_kib(libs[lib][pset]['stack']):>5}'
-            heap  = f'{format_size_kib(libs[lib][pset]['heap']):>5}'
-            rw    = f'{format_size_kib(libs[lib][pset]['rw']):>5}'
-            ro    = f'{format_size_kib(libs[lib][pset]['ro']):>5}'
-            out += f'{lib:20}'+' , '+str(pset)+f' , {stack} , {heap} , {rw} , {ro} \n'
+            try:
+                stack = f'{format_size_kib(libs[lib][pset]['stack']):>5}'
+                heap  = f'{format_size_kib(libs[lib][pset]['heap']):>5}'
+                rw    = f'{format_size_kib(libs[lib][pset]['rw']):>5}'
+                ro    = f'{format_size_kib(libs[lib][pset]['ro']):>5}'
+                out += f'{lib:20}'+' , '+str(pset)+f' , {stack} , {heap} , {rw} , {ro} \n'
+            except KeyError:
+                logging.warning(f'no size data for lib {lib}, pset {pset}')
+                pass
 
     return out
 
@@ -188,12 +188,13 @@ def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> s
     out += 'Implementation,Level,Operation,Minimum,Average(a),Worst observed(b)\n'
 
     for lib in sorted(libs.keys()):
-        if lib_list and lib not in lib_list:
-            continue
+        #if lib_list and lib not in lib_list:
+        #    continue
 
         for pset in sorted(libs[lib].keys()):
-            if pset_list and pset not in pset_list:
-                continue
+            #if pset_list and pset not in pset_list:
+            #    continue
+            logging.debug(f'libs[lib][pset]={libs[lib][pset]}')
             for op in ['key-exp','sign','verify']:
                 if op_list and op not in op_list:
                     continue
@@ -225,6 +226,9 @@ if __name__ == '__main__':
         '--op', help='List of operations to report', default=None, nargs='+', type=str
     )
     parser.add_argument(
+        '--hw-platform', help='Specify a hardware platform', type=str
+    )
+    parser.add_argument(
         'target', help='Target platform to report', type=str
     )
     parser.add_argument(
@@ -244,19 +248,39 @@ if __name__ == '__main__':
 
     impl_to_lib_name = {
         'pqcrystals-mldsa-lowram':'pqcrystals-lowram',
-        'umldsa':'pqshield-balanced',
-        'wolfssl-lowram':'wolfssl-lowram',
-        'stm32pqc-lowram':'stm32pqc-lowram'
+        'umldsa-small':'pqshield',
+        'umldsa-balanced':'pqshield',
+        'wolfssl-lowram':'wolfssl',
+        'stm32pqc-lowram':'stm32pqc'
+    }
+    impl_to_goal_name = {
+        'pqcrystals-mldsa-lowram':'small',
+        'umldsa-small':'small',
+        'umldsa-balanced':'balanced',
+        'wolfssl-lowram':'small',
+        'stm32pqc-lowram':'small'
     }
     build_target_to_lib_name = {
         'OPEN_SOURCE':'pqcrystals-lowram',
-        'PQSHIELD':'pqshield-balanced',
-        'WOLFSSL':'wolfssl-lowram',
-        'STM32PQC':'stm32pqc-lowram'
+        'PQSHIELD':'pqshield',
+        'WOLFSSL':'wolfssl',
+        'STM32PQC':'stm32pqc'
     }
+    def build_target_to_full_lib_name(lib,goal):
+        return f'{build_target_to_lib_name[lib]}-{goal}'
+
+    lib_names = []
+    if args.lib:
+        for lib in args.lib:
+            lib_names.append(build_target_to_lib_name[lib])
+    else:
+        for lib in build_target_to_lib_name.keys():
+            lib_names.append(build_target_to_lib_name[lib])
+    logging.debug(f'lib_names: {lib_names}')
 
     #get perf results
     result_files = glob.glob('*.pickle',root_dir=args.root)
+    hw_platforms = {}
     for p in result_files:
         with open(os.path.join(args.root,p),'rb') as f:
             data = pickle.load(f)
@@ -265,16 +289,28 @@ if __name__ == '__main__':
             keys = data['info'][::2] #items at even index
             values = data['info'][1::2] #items at odd index
             info = dict(zip(keys,values))
-
+            target = info['sw_target_cpu']
+            if target != args.target:
+                continue
+            hw_platform = info['hw_platform']
+            if args.hw_platform and args.hw_platform != hw_platform:
+                continue
+            hw_platforms[hw_platform] = p
             logging.debug(info)
 
             lib = impl_to_lib_name[info['impl_name']]
+            if lib not in lib_names:
+                logging.debug(f'ignoring {lib}')
+                continue
+            goal = impl_to_goal_name[info['impl_name']]
+            full_name = f'{lib}-{goal}'
+            logging.debug(f'adding perf data for {full_name}')
             pset = info['mldsa_pset']
 
-            if lib not in libs:
-                libs[lib] = {}
-            if pset not in libs[lib]:
-                libs[lib][pset] = {}
+            if full_name not in libs:
+                libs[full_name] = {}
+            if pset not in libs[full_name]:
+                libs[full_name][pset] = {}
 
             consolidated = {}
             for r in results:
@@ -316,7 +352,7 @@ if __name__ == '__main__':
                         'mldsa_verify1M':'verify 1M',
                     }
                     operation = setup_to_report[value['setup']]
-                    libs[lib][pset][operation] = {
+                    libs[full_name][pset][operation] = {
                                 'min_cycles':min_cycles,
                                 'max_cycles':max_cycles,
                                 'ave_cycles':ave_cycles,
@@ -326,9 +362,13 @@ if __name__ == '__main__':
                     pass 
                 ms = max(ms,max_stack)
                 heap_sum += max_heap
-            libs[lib][pset]['stack'] = ms
-            libs[lib][pset]['heap'] = heap_sum
+            
+            libs[full_name][pset]['stack'] = ms
+            libs[full_name][pset]['heap'] = heap_sum
 
+    if len(hw_platforms) > 1:
+        logging.error(f'hw_platforms: {hw_platforms}')
+        raise RuntimeError(f'More than one hw_platform found, please use --hw-platform')
     #get footprint results
     sizes = report_footprint.report_footprint(os.path.join(args.root,'build'))
     sizes = sizes[args.target][args.algo]
@@ -336,10 +376,26 @@ if __name__ == '__main__':
     #re struct results by libs
     for pset in sizes.keys():
         for lib in sizes[pset].keys():
-            d = sizes[pset][lib]
-            libs[build_target_to_lib_name[lib]][pset]['ro']=d['text']
-            libs[build_target_to_lib_name[lib]][pset]['rw']=d['ram']
-
+            if args.lib and lib not in args.lib:
+                logging.debug(f'{lib} ignored')
+                continue
+            for goal in sizes[pset][lib].keys():
+                full_name = build_target_to_full_lib_name(lib,goal)
+                logging.debug(f'process {full_name} sizes')
+                d = sizes[pset][lib][goal]
+                try:
+                    libs[full_name][pset]['ro']=d['text']
+                    libs[full_name][pset]['rw']=d['ram']
+                except KeyError:
+                    logging.warning(f'discarding size info for {full_name} {pset} because dynamic sizes info does not exist')
+                    pass
+                #if full_name not in libs:
+                #    libs[full_name] = {}
+                #if pset not in libs[full_name]:
+                #    libs[full_name][pset] = {}
+                #libs[full_name][pset]['ro']=d['text']
+                #libs[full_name][pset]['rw']=d['ram']
+                
 
     logging.debug(libs)
 
@@ -349,6 +405,6 @@ if __name__ == '__main__':
             print(gen_latex_perf_vs_msg_len_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
             print(gen_latex_footprint_table(libs,lib_list=args.lib, pset_list=args.pset))
         case 'csv':
-            print(gen_csv_perf_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
-            print(gen_csv_footprint_table(libs,lib_list=args.lib, pset_list=args.pset))
+            print(gen_csv_perf_table(libs, pset_list=args.pset, op_list=args.op))
+            print(gen_csv_footprint_table(libs, pset_list=args.pset))
 

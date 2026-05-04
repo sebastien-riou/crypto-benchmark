@@ -5,8 +5,9 @@ set -ex
 ALGO=${1:-mldsa}
 PSET=${2:-44}
 CRYPTOLIB=${3:-OPEN_SOURCE}
-PRESET=${4:-minSizeRel}
-GOAL=${5:-small}
+GOAL=${4:-small}
+PRESET=${5:-minSizeRel}
+
 
 ./clean
 python3 link_ext.py --preset=$PRESET --goal=$GOAL

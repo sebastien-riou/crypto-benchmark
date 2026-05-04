@@ -8,6 +8,6 @@ PRESET=${2:-minSizeRel}
 TARGET=$(basename ${TOOLCHAIN})
 OUTDIR="build/$TARGET"
 
-./build-all-mldsa $TOOLCHAIN $PRESET
+./build-all-mldsa $TOOLCHAIN $PRESET ${@:3}
 
 ./report-footprint $OUTDIR
