@@ -173,6 +173,6 @@ add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     #copy to generic name for debug
     COMMAND rm -f ${CMAKE_BINARY_DIR}/../../crypto-benchmark.elf
     COMMAND ln -s $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_BINARY_DIR}/../../crypto-benchmark.elf
-    COMMAND cp $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_BINARY_DIR}/../../crypto-benchmark-${CRYPTO_LIB}-${ALGO}-${PSET}.elf
+    COMMAND cp $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_BINARY_DIR}/../../crypto-benchmark-${CRYPTO_LIB}-${GOAL}-${ALGO}-${PSET}.elf
 )
 
