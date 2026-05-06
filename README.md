@@ -73,88 +73,109 @@ You can optionally specify:
 
 The output is a set of files `renode-mldsa-benchmark-*-*-*.csv`.
 
+You should get something like:
+````
+renode-mldsa-benchmark-cortex-m33-OPEN_SOURCE-small.csv
+Performance for a 69-byte message and zero-length context (in million cycles).                                                                       
+Implementation                                                                  Level                                Operation  Minimum  Average(a)  Worst observed(b)
+pqcrystals-lowram-small                                                          44                                   key-exp     1.92     1.97        2.01
+pqcrystals-lowram-small                                                          44                                   sign        3.47    11.23       230.40
+pqcrystals-lowram-small                                                          44                                   verify      2.76     2.77        2.78
+pqcrystals-lowram-small                                                          65                                   key-exp     3.74     3.74        3.74
+pqcrystals-lowram-small                                                          65                                   sign        5.68    20.98       444.43
+pqcrystals-lowram-small                                                          65                                   verify      4.91     4.92        4.93
+pqcrystals-lowram-small                                                          87                                   key-exp     6.13     6.26        6.38
+pqcrystals-lowram-small                                                          87                                   sign        9.23    27.56       550.51
+pqcrystals-lowram-small                                                          87                                   verify      8.50     8.52        8.54
+(a): Match long term average for sign.                                                                                                               
+(b): Probability of occurrence is 2^-37 for sign.                                                                                                    
+Memory footprint for key generation                                              signing and verification (in KiB).                                  
+Implementation                                                                  Level                                Stack      Heap     Static RAM  Read-only
+pqcrystals-lowram-small                                                          44                                    5.19       0.00     3.77       12.52 
+pqcrystals-lowram-small                                                          65                                    6.69       0.00     5.84       11.96 
+pqcrystals-lowram-small                                                          87                                    8.19       0.00     7.30       12.21 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------renode-mldsa-benchmark-cortex-m3-OPEN_SOURCE-small.csv
+Performance for a 69-byte message and zero-length context (in million cycles).                                                                       
+Implementation                                                                  Level                                Operation  Minimum  Average(a)  Worst observed(b)
+pqcrystals-lowram-small                                                          44                                   key-exp     1.92     1.97        2.01
+pqcrystals-lowram-small                                                          44                                   sign        3.51    11.33       232.38
+pqcrystals-lowram-small                                                          44                                   verify      2.76     2.77        2.78
+...
+````
+
+
 ----
 **NOTE**
 
 PQSHIELD, STM32PQC and WOLFSSL require additional setup.
 ----
 
-## Display results
+## Display raw results
 
 ````
-./show-all-results --details=0
+./show-all-uart-results --details=0
 ````
 
 You should get something like:
 ````
-$ ./show-all-results --details=0
-+ ./show-results on/cortex-m3 --details=0
-++ basename on/cortex-m3
-+ TARGET=cortex-m3
+$ ./show-all-uart-results --details=0
++ for i in lbmk-uart-*.log
++ pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --uart-log lbmk-uart-cortex-m33.log --details=0
+hw_platform: cortex-m33
+sw_target_cpu: cortex-m33
+mldsa_pset: 87
+impl_name: pqcrystals-mldsa-lowram
+sw_version: 0.0.7-15-g4d92b8d-dirty-untracked
+tv_name: mldsa87-m69-h7D444798
+84 records
+Consolidated stats for mldsa_gen_key-mldsa_gen_key:
+        Min cycles: 6.1M
+        Ave cycles: 6.3M
+        Max cycles: 6.4M
+        Max stack:  3.88 KiB (3976 bytes)
+        Max heap:   0 bytes
+Consolidated stats for mldsa_sign-mldsa_sign69:
+        Min cycles: 9.2M
+        Ave cycles: 27.6M
+        Max cycles: 550.5M
+        Max stack:  8.19 KiB (8384 bytes)
+        Max heap:   0 bytes
+Consolidated stats for mldsa_verify-mldsa_verify69:
+        Min cycles: 8.5M
+        Ave cycles: 8.5M
+        Max cycles: 8.5M
+        Max stack:  2.87 KiB (2936 bytes)
+        Max heap:   0 bytes
+Consolidated stats for mldsa_sign-mldsa_sign10K:
+        Min cycles: 10.1M
+        Ave cycles: 10.1M
+        Max cycles: 10.1M
+        Max stack:  8.19 KiB (8384 bytes)
+        Max heap:   0 bytes
+Consolidated stats for mldsa_verify-mldsa_verify10K:
+        Min cycles: 9.4M
+        Ave cycles: 9.4M
+        Max cycles: 9.4M
+        Max stack:  2.87 KiB (2936 bytes)
+        Max heap:   0 bytes
+
++ for i in lbmk-uart-*.log
 + pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --uart-log lbmk-uart-cortex-m3.log --details=0
-hw_platform: Renode
+hw_platform: cortex-m3
 sw_target_cpu: cortex-m3
-mldsa_pset: 44
+mldsa_pset: 87
 impl_name: pqcrystals-mldsa-lowram
-sw_version: 0.0.0-unknown-dirty-untracked
-tv_name: mldsa44-m69-h8517CD9D
-64 records
-Consolidated stats for mldsa_sign-mldsa_sign:
-        Min cycles: 3.5M
-        Ave cycles: 11.3M
-        Max cycles: 232.4M
-Consolidated stats for mldsa_verify-mldsa_verify:
-        Min cycles: 2.8M
-        Ave cycles: 2.8M
-        Max cycles: 2.8M
-
-+ ./show-results on/rv32imc --details=0
-++ basename on/rv32imc
-+ TARGET=rv32imc
-+ pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --uart-log lbmk-uart-rv32imc.log --details=0
-hw_platform: Renode
-sw_target_cpu: rv32imc
-mldsa_pset: 44
-impl_name: pqcrystals-mldsa-lowram
-sw_version: 0.0.0-unknown-dirty-untracked
-tv_name: mldsa44-m69-h8517CD9D
-64 records
-Consolidated stats for mldsa_sign-mldsa_sign:
-        Min cycles: 5.6M
-        Ave cycles: 17.6M
-        Max cycles: 359.3M
-Consolidated stats for mldsa_verify-mldsa_verify:
-        Min cycles: 4.1M
-        Ave cycles: 4.2M
-        Max cycles: 4.2M
-
-+ ./show-results on/rv64imc --details=0
-++ basename on/rv64imc
-+ TARGET=rv64imc
-+ pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --uart-log lbmk-uart-rv64imc.log --details=0
-hw_platform: Renode
-sw_target_cpu: rv64imc
-mldsa_pset: 44
-impl_name: pqcrystals-mldsa-lowram
-sw_version: 0.0.0-unknown-dirty-untracked
-tv_name: mldsa44-m69-h8517CD9D
-64 records
-Consolidated stats for mldsa_sign-mldsa_sign:
-        Min cycles: 4.7M
-        Ave cycles: 13.5M
-        Max cycles: 262.3M
-Consolidated stats for mldsa_verify-mldsa_verify:
-        Min cycles: 3.5M
-        Ave cycles: 3.5M
-        Max cycles: 3.5M
-
+sw_version: 0.0.7-15-g4d92b8d-dirty-untracked
+tv_name: mldsa87-m69-h7D444798
+...
 ````
 
 ## Import result in Python
 The following create pickle files with all data
 
 ````
-./show-all-results --write=1
+./show-all-uart-results --write=1
 ````
 
 The pickle files can be imported in any Python script using the `pickle` module.

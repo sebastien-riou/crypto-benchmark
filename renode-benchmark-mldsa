@@ -21,3 +21,9 @@ do
     pipenv run python format_results.py $TARGET mldsa csv --lib=$CRYPTOLIB --hw-platform=$TARGET > renode-mldsa-benchmark-$TARGET-$CRYPTOLIB-$GOAL.csv
 done
 
+set +x
+for TOOLCHAIN in "${TOOLCHAINS[@]}"
+do
+    echo $TARGET-$CRYPTOLIB-$GOAL
+    column -s, -t < renode-mldsa-benchmark-$TARGET-$CRYPTOLIB-$GOAL.csv
+done

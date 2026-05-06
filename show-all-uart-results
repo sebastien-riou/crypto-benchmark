@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -ex 
+
+for i in lbmk-uart-*.log; do
+    pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --uart-log $i $*
+done

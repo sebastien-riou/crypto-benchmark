@@ -1,7 +1,10 @@
 #!/bin/bash
 
-set -ex 
-
-for i in lbmk-uart-*.log; do
-    pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --uart-log $i $*
+set -e 
+for i in *.csv; 
+do
+    printf %"$COLUMNS"s |tr " " "-"
+    echo $i
+    column -s, -t < $i
+    printf %"$COLUMNS"s |tr " " "-"
 done
