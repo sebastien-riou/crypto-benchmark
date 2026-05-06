@@ -166,7 +166,7 @@ def gen_latex_perf_vs_msg_len_table(libs,*, lib_list=None, pset_list=None, op_li
     return out
 
 def gen_csv_footprint_table(libs,*, pset_list=None) -> str:
-    out = 'Memory footprint for key generation, signing and verification (in KiB).\n'
+    out = 'Memory footprint for key generation; signing and verification (in KiB).\n'
     out += 'Implementation,Level,Stack,Heap,Static RAM,Read-only\n'
 
     for lib in sorted(libs.keys()):
@@ -313,6 +313,9 @@ if __name__ == '__main__':
             logging.debug(f'adding perf data for {full_name}')
             pset = info['mldsa_pset']
 
+            if args.pset and pset not in args.pset:
+                continue
+
             if full_name not in libs:
                 libs[full_name] = {}
             if pset not in libs[full_name]:
@@ -381,6 +384,8 @@ if __name__ == '__main__':
     
     #re struct results by libs
     for pset in sizes.keys():
+        if args.pset and pset not in args.pset:
+            continue
         for lib in sizes[pset].keys():
             if args.lib and lib not in args.lib:
                 logging.debug(f'{lib} ignored')
@@ -411,6 +416,6 @@ if __name__ == '__main__':
             print(gen_latex_perf_vs_msg_len_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
             print(gen_latex_footprint_table(libs,lib_list=args.lib, pset_list=args.pset))
         case 'csv':
-            print(gen_csv_perf_table(libs, pset_list=args.pset, op_list=args.op))
-            print(gen_csv_footprint_table(libs, pset_list=args.pset))
+            print(gen_csv_perf_table(libs, op_list=args.op))
+            print(gen_csv_footprint_table(libs))
 
