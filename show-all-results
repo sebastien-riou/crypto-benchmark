@@ -2,6 +2,6 @@
 
 set -ex 
 
-./show-results on/cortex-m3 $*
-./show-results on/rv32imc $*
-./show-results on/rv64imc $*
+for i in lbmk-uart-*.log; do
+    pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --uart-log $i $*
+done

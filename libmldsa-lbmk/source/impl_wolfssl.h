@@ -8,11 +8,40 @@
   #error "WOLFSSL built without dilithium/MLDSA"
 #endif
 
-#ifdef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
-#define IMPL_NAME "wolfssl-lowram"
-#else
-#define IMPL_NAME "wolfssl-fast"
+
+#define WOLFSSL_small 1
+#define WOLFSSL_balanced 2
+#define WOLFSSL_fast 3
+
+#define WOLFSSL_INDEX CAT(WOLFSSL_,GOAL)
+
+#if WOLFSSL_INDEX == WOLFSSL_small
+  #define IMPL_NAME "wolfssl-small"
+  #ifndef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
+    #error
+  #endif
 #endif
+
+#if WOLFSSL_INDEX == WOLFSSL_balanced
+  #define IMPL_NAME "wolfssl-fast" //we do not support a balanced build yet
+  #ifdef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
+    #error
+  #endif
+#endif
+
+#if WOLFSSL_INDEX == WOLFSSL_fast
+  #define IMPL_NAME "wolfssl-fast"
+  #ifdef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
+    #error
+  #endif
+#endif
+
+
+//#ifdef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
+//#define IMPL_NAME "wolfssl-lowram"
+//#else
+//#define IMPL_NAME "wolfssl-fast"
+//#endif
 
 
 #include <stddef.h>

@@ -6,7 +6,7 @@ from glob import glob
 import logging
 import argparse
 
-def main(*,preset='minSizeRel', goal=''):
+def main(*,preset='minSizeRel', goal=None):
     targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
     libs = ['pqcle','pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','wolfssl']
 
@@ -28,8 +28,12 @@ def main(*,preset='minSizeRel', goal=''):
     debug=''
     if preset == 'debug':
         debug='-debug'
-    if goal:
-        goal='-'+goal
+    if goal is None:
+        goal='small'
+    goal_file = 'goal.txt'
+    with open(goal_file,'w') as f:
+        print(goal,file=f)
+    goal='-'+goal
         
     for p in [PQCLE,LOWRAM,TOMCRYPT,LBMK,WOLFSSL]:
         try:
@@ -97,8 +101,11 @@ def main(*,preset='minSizeRel', goal=''):
                     source_lib = LBMK + f'/build/{targetname}/lib{libname}'
                     source_h = LBMK + '/include'
                 case 'wolfssl':
-                    source_lib = WOLFSSL + f'/build/{targetname}/lib'
-                    source_h = WOLFSSL + f'/build/{targetname}/include/wolfssl'
+                    if goal == '-balanced':
+                        logging.warning('No support for a "balanced" wolfssl yet, using "fast"')
+                        goal='-fast'
+                    source_lib = WOLFSSL + f'/build/{targetname}{goal}/lib'
+                    source_h = WOLFSSL + f'/build/{targetname}{goal}/include/wolfssl'
 
             link(libname,targetname,source_lib,'*.a')
             link(libname,targetname,source_h,'*.h')
@@ -109,7 +116,7 @@ if __name__ == '__main__':
     levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
     parser.add_argument('--log-level', default='INFO', choices=levels)
     parser.add_argument('--preset', default='minSizeRel', type=str)
-    goals = ('small','balanced')
+    goals = ('small','balanced','fast')
     parser.add_argument('--goal', default='small', choices=goals)
     
     args = parser.parse_args()

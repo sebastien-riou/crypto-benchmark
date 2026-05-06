@@ -17,3 +17,4 @@ target/ext/
 STM32_Cryptographic/
 *.pickle
 git_untracked.log
+goal.txt

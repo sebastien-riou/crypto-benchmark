@@ -250,15 +250,21 @@ if __name__ == '__main__':
         'pqcrystals-mldsa-lowram':'pqcrystals-lowram',
         'umldsa-small':'pqshield',
         'umldsa-balanced':'pqshield',
-        'wolfssl-lowram':'wolfssl',
-        'stm32pqc-lowram':'stm32pqc'
+        'wolfssl-small':'wolfssl',
+        'wolfssl-balanced':'wolfssl',
+        'wolfssl-fast':'wolfssl',
+        'stm32pqc-small':'stm32pqc',
+        'stm32pqc-balanced':'stm32pqc'
     }
     impl_to_goal_name = {
         'pqcrystals-mldsa-lowram':'small',
         'umldsa-small':'small',
         'umldsa-balanced':'balanced',
-        'wolfssl-lowram':'small',
-        'stm32pqc-lowram':'small'
+        'wolfssl-small':'small',
+        'wolfssl-balanced':'balanced',
+        'wolfssl-fast':'fast',
+        'stm32pqc-small':'small',
+        'stm32pqc-balanced':'balanced'
     }
     build_target_to_lib_name = {
         'OPEN_SOURCE':'pqcrystals-lowram',

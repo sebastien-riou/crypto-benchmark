@@ -1,6 +1,19 @@
 #pragma once
 
 
+#define STM32PQC_small 1
+#define STM32PQC_balanced 2
+
+#define STM32PQC_INDEX CAT(STM32PQC_,GOAL)
+
+#if STM32PQC_INDEX == STM32PQC_small
+  #define IMPL_NAME "stm32pqc-small"
+  #define LOWRAM
+#endif
+
+#if STM32PQC_INDEX == STM32PQC_balanced
+  #define IMPL_NAME "stm32pqc-balanced"
+#endif
 
 #include <stm32pqc/include/cmox_crypto.h>
 #include <stm32pqc/include/pqc/cmox_pqc_dsa.h>
@@ -13,13 +26,11 @@ static cmox_pqc_dsa_verify_algo_t pset_to_verify_algo(unsigned int pset){
     case 87: return CMOX_PQC_ML_DSA_87_VERIFY_ALGO;break;
     default: throw_exception(ERROR_PSET);
   }
-  //unreachable();
   __builtin_unreachable();
 }
 
-#define LOWRAM
 #ifdef LOWRAM
-  #define IMPL_NAME "stm32pqc-lowram"
+  //#define IMPL_NAME "stm32pqc-lowram"
   #if PSET == 44
     static uint8_t membuf[11340];
   #endif
@@ -36,11 +47,10 @@ static cmox_pqc_dsa_verify_algo_t pset_to_verify_algo(unsigned int pset){
       case 87: return CMOX_PQC_ML_DSA_87_DET_SIGN_LOWRAM_ALGO;break;
       default: throw_exception(ERROR_PSET);
     }
-    //unreachable();
     __builtin_unreachable();
   }
 #else
-  #define IMPL_NAME "stm32pqc-fast"
+  //#define IMPL_NAME "stm32pqc-fast"
   #if PSET == 44
     static uint8_t membuf[30796];
   #endif
@@ -57,7 +67,6 @@ static cmox_pqc_dsa_verify_algo_t pset_to_verify_algo(unsigned int pset){
       case 87: return CMOX_PQC_ML_DSA_87_DET_SIGN_ALGO;break;
       default: throw_exception(ERROR_PSET);
     }
-    //unreachable();
     __builtin_unreachable();
   }
 #endif
@@ -69,7 +78,6 @@ static cmox_pqc_dsa_keygen_algo_t pset_to_keygen_algo(unsigned int pset){
     case 87: return CMOX_PQC_ML_DSA_87_KEYGEN_ALGO;break;
     default: throw_exception(ERROR_PSET);
   }
-  //unreachable();
   __builtin_unreachable();
 }
 

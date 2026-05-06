@@ -12,14 +12,18 @@ PRESET=${5:-minSizeRel}
 ./clean
 python3 link_ext.py --preset=$PRESET --goal=$GOAL
 
+BUILDIT_ARGS="$1 $2 $3 $5 ${@:6}"
+
 #allow some build to fail
 set +e
-#./buildit on/linux     $*
-./buildit on/cortex-m3 $*
-./buildit on/cortex-m4 $*
-./buildit on/cortex-m7 $*
-./buildit on/cortex-m33 $*
-./buildit on/cortex-m55 $*
-./buildit on/rv32imc   $*
-./buildit on/rv32imcb  $*
-./buildit on/rv64imc   $*
+#./buildit on/linux     $BUILDIT_ARGS
+./buildit on/cortex-m3  $BUILDIT_ARGS
+./buildit on/cortex-m4  $BUILDIT_ARGS
+./buildit on/cortex-m7  $BUILDIT_ARGS
+./buildit on/cortex-m33 $BUILDIT_ARGS
+./buildit on/cortex-m55 $BUILDIT_ARGS
+./buildit on/rv32imc    $BUILDIT_ARGS
+./buildit on/rv32imcb   $BUILDIT_ARGS
+./buildit on/rv64imc    $BUILDIT_ARGS
+
+echo "build-all-targets: Done"

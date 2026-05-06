@@ -8,5 +8,6 @@ CRYPTOLIB=${3:-OPEN_SOURCE}
 GOAL=${4:-small}
 
 ./build-all-targets $ALGO $PSET $CRYPTOLIB $GOAL minSizeRel
+set +e #allow failure as not all libs compile for all targets
 ./test-renode $ALGO $PSET
 ./show-all-results --details=0 --write=1

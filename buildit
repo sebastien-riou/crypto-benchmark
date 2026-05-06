@@ -6,14 +6,23 @@ TOOLCHAIN=${1:-on/linux}
 ALGO=${2:-mldsa}
 PSET=${3:-44}
 CRYPTO_LIB=${4:-OPEN_SOURCE}
-GOAL=${5:-small}
-PRESET=${6:-minSizeRel}
+PRESET=${5:-minSizeRel}
 
 TARGET=$(basename ${TOOLCHAIN})
 OUTDIR="build/$TARGET/$ALGO/$PSET"
 
+set +x
+GOAL_FILE=goal.txt
+if [ ! -f $GOAL_FILE ]; then
+    echo
+    echo "ERROR $GOAL_FILE not found, run link_ext.py first"
+    exit 1
+fi
+set -x
+GOAL=`cat goal.txt`
+
 rm -rf $OUTDIR
 mkdir -p $OUTDIR
 
-cmake -B $OUTDIR -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DALGO=$ALGO -DPSET=$PSET -DCRYPTO_LIB=$CRYPTO_LIB ${@:7} -DGOAL=$GOAL --preset $PRESET .
+cmake -B $OUTDIR -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DALGO=$ALGO -DPSET=$PSET -DCRYPTO_LIB=$CRYPTO_LIB ${@:6} -DGOAL=$GOAL --preset $PRESET .
 cmake --build $OUTDIR --verbose --clean-first 
