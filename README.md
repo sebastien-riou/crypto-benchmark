@@ -32,88 +32,50 @@ This has been tested with:
 - Python 3.12.3
 - Renode 1.16 portable
 
-## Setup by script
+## Setup 
+See [Setup.md](Setup.md).
+
+## Benchmarking using Renode
+
+### Single algorithm and parameter set
 ````
-git clone https://github.com/sebastien-riou/crypto-benchmark.git
-cd crypto-benchmark
-./initial-setup
+./test-renode
 ````
 
-The script `initial-setup` is going to:
-- clone `lean-benchmark` and `dilithium-lowram` 
-- build them
-- build crypto-benchmark 
-- run MLDSA-44 benchmark on Renode
-- show the results
+This benchmark a default aglorithm with its default parameter set (ML-DSA-44). 
+It try to run the following simulations:
+- cortex-m3
+- cortex-m33
+- rv32imc
+- rv64imc
 
-if you want to skip Renode:
+You can tweak that by editing [renode.robot](renode.robot).
+
+It uses the latest binaries built for those target CPUs.
+
+### ML-DSA, all parameter sets
 ````
-./initial-setup 0
+./renode-benchmark-mldsa
 ````
 
-## Setup step by step
-This section is a step by step guide, to do the same as the [previous sections](#Setup-by-script).
+This successively build and benchmark all parameter sets for ML-DSA.
+You can optionally specify:
 
-### Clone repositories
-Clone 3 repositories at the same level:
-
-````
-git clone https://github.com/sebastien-riou/crypto-benchmark.git
-git clone https://github.com/sebastien-riou/lean-benchmark.git
-git clone https://github.com/sebastien-riou/dilithium-lowram.git
-````
+- a crypto-library
+  - `OPEN_SOURCE`
+  - `PQSHIELD`
+  - `STM32PQC`
+  - `WOLFSSL`
+- an optimization goal:
+  - `small`
+  - `balanced`
+  - `fast`
 
 ----
 **NOTE**
 
-Clone any other repository you want to benchmark similarly.
-
+PQSHIELD, STM32PQC and WOLFSSL require additional setup.
 ----
-
-
-### Build 'lowram' implementation
-````
-cd dilithium-lowram
-./build-all-targets
-cd ..
-````
-
-### Build lean-benchmark
-````
-cd lean-benchmark
-./build-all-targets
-cd ..
-````
-
-### Setup pipenv for crypto-benchmark
-````
-cd crypto-benchmark
-pipenv install
-pipenv sync
-````
-
-### Build crypto-benchmark
-
-This build all targets for MLDSA-44 benchmarking:
-````
-python3 link_ext.py
-./build-all-targets mldsa 44
-````
-
-----
-**NOTES**
-
-- `link_ext.py` is creating symlinks to other repositories. 
-It is needed only the first time, but it does not hurt if you do it everytime.
-
-- We use 'debug' builds here because it makes debug easier and does not impact benchmarking results (what is benchmarked is almost fully contained in dilithium-lowram repository).
-----
-
-## Benchmarking using Renode
-
-````
-./test-renode
-````
 
 ## Display results
 
@@ -222,7 +184,18 @@ It is setup for VSCode for the following targets:
 - rv32imcb (which has a bug, but we assume it is in Renode 1.16 implementation of B extension)
 - rv64imc
 
-NOTE: STM's CMake extension generates an error when launching debug, you can ignore it (or disable that extension for your workspace and restart VSCode)
+Example debug build:
+````
+python3 link_ext.py --preset=debug
+./testit on/cortex-m3 mldsa 44 OPEN_SOURCE debug
+````
+
+----
+**NOTES**
+
+- STM's CMake extension generates an error when launching debug, you can ignore it (or disable that extension for your workspace and restart VSCode)
+- Make sure you use a debug build, launching debug on binaries without debug information does not work well in vscode: it just runs through anything without debug info.
+----
 
 ## Debugging using Linux build
 In one terminal:
