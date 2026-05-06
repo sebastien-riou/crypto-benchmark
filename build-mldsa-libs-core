@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -ex
+
+TOOLCHAIN=${1:-on/cortex-m33}
+GOAL=${2:-small}
+PRESET=${3:-minSizeRel}
+
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET STUB ${@:4}
+
+# allow some builds to fail
+set +e 
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET OPEN_SOURCE ${@:4}
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET PQSHIELD ${@:4}
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET STM32PQC ${@:4}
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET WOLFSSL ${@:4}
+
+TARGET=$(basename ${TOOLCHAIN})
+OUTDIR="build/$TARGET"
+
+size ${OUTDIR}/crypto-benchmark-*.elf > ${OUTDIR}/sizes.txt

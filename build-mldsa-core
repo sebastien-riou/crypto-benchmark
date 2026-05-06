@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -ex
+
+TOOLCHAIN=${1:-on/cortex-m33}
+GOAL=${2:-small}
+PRESET=${3:-minSizeRel}
+LIB=${4:-OPEN_SOURCE}
+
+python3 link_ext.py --preset=$PRESET --goal=$GOAL
+./buildit $TOOLCHAIN mldsa 44 $LIB $PRESET ${@:5}
+./buildit $TOOLCHAIN mldsa 65 $LIB $PRESET ${@:5}
+./buildit $TOOLCHAIN mldsa 87 $LIB $PRESET ${@:5}
+

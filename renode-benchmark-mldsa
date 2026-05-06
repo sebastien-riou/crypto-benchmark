@@ -4,7 +4,20 @@ set -ex
 
 CRYPTOLIB=${1:-OPEN_SOURCE}
 GOAL=${2:-small}
+PRESET=${3:-minSizeRel}
 
 ./renode-benchmark mldsa 44 $CRYPTOLIB $GOAL
 ./renode-benchmark mldsa 65 $CRYPTOLIB $GOAL
 ./renode-benchmark mldsa 87 $CRYPTOLIB $GOAL
+
+declare -a TOOLCHAINS=("on/cortex-m3" "on/cortex-m33" "on/rv32imc" "on/rv64imc")
+for TOOLCHAIN in "${TOOLCHAINS[@]}"
+do
+    ./build-mldsa-core $TOOLCHAIN $GOAL $PRESET STUB ${@:4}
+    ./build-mldsa-core $TOOLCHAIN $GOAL $PRESET $CRYPTOLIB ${@:4}
+    TARGET=$(basename ${TOOLCHAIN})
+    OUTDIR="build/$TARGET"
+    size ${OUTDIR}/crypto-benchmark-*.elf > ${OUTDIR}/sizes.txt
+    pipenv run python format_results.py $TARGET mldsa csv --lib=$CRYPTOLIB --hw-platform=$TARGET > renode-mldsa-benchmark-$TARGET-$CRYPTOLIB-$GOAL.csv
+done
+

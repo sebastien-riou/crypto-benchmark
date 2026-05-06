@@ -77,3 +77,26 @@ It is needed only the first time, but it does not hurt if you do it everytime.
 - We use 'debug' builds here because it makes debug easier and does not impact benchmarking results (what is benchmarked is almost fully contained in dilithium-lowram repository).
 ----
 
+## STM32PQC library
+It is expected at the top level of this repository:
+
+````
+~/repos/crypto-benchmark$ tree -L 1 STM32_Cryptographic/
+STM32_Cryptographic/
+├── CMOX_HBS_PQC.chm
+├── _htmresc
+├── include
+├── interface
+├── lib
+├── LICENSE.txt
+├── readme.html
+└── Release_Notes.html
+
+5 directories, 4 files
+````
+
+----
+**NOTES**
+
+- This works with the package version V1.1.0 / 27-June-2025 freely available at [ST Microelectronics's X-Cube PQC](https://www.st.com/en/embedded-software/x-cube-pqc.html).
+----

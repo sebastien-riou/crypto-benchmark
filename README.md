@@ -71,6 +71,8 @@ You can optionally specify:
   - `balanced`
   - `fast`
 
+The output is a set of files `renode-mldsa-benchmark-*-*-*.csv`.
+
 ----
 **NOTE**
 
