@@ -37,9 +37,14 @@ See [Setup.md](Setup.md).
 
 ## Benchmarking using Renode
 
+Using renode is like using a physical board except that the communication is strictly one way (Renode -> uart log file).
+To achieve this, build must be done with `-DRAW_COM=1`.
+
 ### Single algorithm and parameter set
 ````
+./build-all-targets mldsa 44 OPEN_SOURCE small minSizeRel -DRAW_COM=1
 ./test-renode
+./show-all-uart-results --details=0
 ````
 
 This benchmark a default aglorithm with its default parameter set (ML-DSA-44). 

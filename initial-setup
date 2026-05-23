@@ -3,7 +3,7 @@
 set -ex
 
 RENODE=${1:-1}
-LEAN_BENCHMARK=${2:-c4bf8db7}
+LEAN_BENCHMARK=${2:-d4fe5d0}
 DILITHIUM_LOWRAM=${3:-6e6e440}
 
 
@@ -24,7 +24,7 @@ git checkout $DILITHIUM_LOWRAM
 cd ..
 
 cd lean-benchmark
-git checkout $LEAN_BENCHMARK
+git checkout --recurse-submodules $LEAN_BENCHMARK
 ./build-all-targets debug
 ./build-all-targets minSizeRel
 cd ..
@@ -33,9 +33,9 @@ cd crypto-benchmark
 pipenv install
 pipenv sync
 python3 link_ext.py
-./build-all-targets
+./build-all-targets mldsa 44 OPEN_SOURCE small minSizeRel -DRAW_COM=$RENODE
 
 if [ "$RENODE" == "1" ]; then
     ./test-renode
-    ./show-all-results --details=0
+    ./show-all-uart-results --details=0
 fi

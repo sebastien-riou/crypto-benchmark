@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "0be7e6ca76d0ff009e43c86a98596a3ba98665c693f59869f99c1ecc61fb13f6"
+            "sha256": "bb4497c0297077bfe7b1cbff8c6638ed2deab35c1336f6e93892cd3fc06f68c5"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -40,6 +40,9 @@
             ],
             "index": "pypi",
             "version": "==2.3.0"
+        },
+        "leancom": {
+            "file": "../lean-benchmark/lean-com"
         },
         "psutil": {
             "hashes": [

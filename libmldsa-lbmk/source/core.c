@@ -180,6 +180,12 @@ void com_tx(const void *const buf, unsigned int size);
 void LBMK_com_tx(const void*data, unsigned int size){
   com_tx(data,size);
 }
+
+void com_rx(void *const buf, unsigned int size);
+void LBMK_com_rx(void*const data, unsigned int size){
+  com_rx(data,size);
+}
+
 void tx_u32_str(uint32_t val){
   const uint8_t*const val8 = (const uint8_t*const)&val;
   const uint8_t hex[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};

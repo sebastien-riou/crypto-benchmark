@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.22)
 
 project(lbmk-test)
 
+if(NOT DEFINED RAW_COM)
+set(RAW_COM 0)
+ENDIF()
+MESSAGE("RAW_COM=" ${RAW_COM})
+ADD_DEFINITIONS(-DRAW_COM=${RAW_COM})
+
 #OPTION(CRYPTO_LIB "Crypto library to benchmark [OPEN_SOURCE,PQSHIELD]" "OPEN_SOURCE") 
 if(NOT DEFINED CRYPTO_LIB)
 set(CRYPTO_LIB OPEN_SOURCE)
