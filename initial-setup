@@ -17,7 +17,7 @@ else
     git clone https://github.com/sebastien-riou/dilithium-lowram.git
 fi
 
-git clone --depth=1 $LEAN_BENCHMARK_URL --branch $LEAN_BENCHMARK_TAG --single-branch
+git clone --depth=1 $LEAN_BENCHMARK_URL --branch $LEAN_BENCHMARK_TAG --single-branch --recurse-submodules
 
 cd dilithium-lowram
 git checkout $DILITHIUM_LOWRAM
