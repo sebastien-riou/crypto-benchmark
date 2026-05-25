@@ -8,7 +8,7 @@ It benchmarks the performances as well as the various memory footprints.
 
 It also produce self contained benchmarking libraries which can be easily integrated in STMCube-IDE projects and other vendors IDEs.
 
-Results can be retrieved using Python or displayed using the provided script `show-results`.
+Results can be retrieved using Python or displayed using the provided script `show-results-pickle`.
 
 ## Current status
 It has been used on two targets:
@@ -76,7 +76,10 @@ You can optionally specify:
   - `balanced`
   - `fast`
 
-The output is a set of files `renode-mldsa-benchmark-*-*-*.csv`.
+The output is a set of files `renode-mldsa-benchmark-*-*-*.csv`. You can display them in terminal using:
+````
+./show-all-results
+````
 
 You should get something like:
 ````
@@ -176,7 +179,7 @@ tv_name: mldsa87-m69-h7D444798
 ...
 ````
 
-## Import result in Python
+## Import UART log result in Python
 The following create pickle files with all data
 
 ````
