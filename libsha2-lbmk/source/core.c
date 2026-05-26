@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "lbmk.h"
 
 static jmp_buf main_exception_ctx;
 static jmp_buf*exception_ctx = &main_exception_ctx;
@@ -16,11 +17,7 @@ jmp_buf*set_exception_ctx(jmp_buf*new_exception_ctx){
 void throw_exception(uint32_t err_code){
   longjmp(*exception_ctx,err_code);
 }
-#include <lean-benchmark/lean-benchmark.h>
-void com_tx(const void *const buf, unsigned int size);
-void LBMK_com_tx(const void*data, unsigned int size){
-  com_tx(data,size);
-}
+
 #define ERROR_PSET          0x40000000
 #define ERROR_SANITY_CHECK  0x50000000
 #define ERROR_MISC          0xFFF00000
