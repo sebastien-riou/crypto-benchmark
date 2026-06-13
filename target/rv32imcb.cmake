@@ -5,6 +5,6 @@ set(CMAKE_SYSTEM_PROCESSOR riscv32)
 # Core MCU flags, CPU, instruction set and FPU setup
 set(cpu_PARAMS ${cpu_PARAMS}
   -mabi=ilp32 
-  -march=rv32imc_zbb_zbc_zbs_zicsr
+  -march=rv32imc_zbb_zbc_zbs_zbkb_zbkc_zbkx_zicsr
 )
 #_zbkb_zbkc_zbkx not supported by Renode
