@@ -3,8 +3,9 @@
 set -ex
 
 RENODE=${1:-1}
-LEAN_BENCHMARK_TAG=${2:-v0.0.6}
-DILITHIUM_LOWRAM=${3:-6e6e440}
+PIPENV_ARG=${2:---verbose} # can be used to pass --python=python3
+LEAN_BENCHMARK_TAG=${3:-v0.0.6}
+DILITHIUM_LOWRAM=${4:-6e6e440}
 
 
 cd ..
@@ -30,7 +31,7 @@ cd lean-benchmark
 cd ..
 
 cd crypto-benchmark
-pipenv install
+pipenv $PIPENV_ARG install
 pipenv sync
 python3 link_ext.py
 ./build-all-targets mldsa 44 OPEN_SOURCE small minSizeRel -DRAW_COM=$RENODE
