@@ -2,7 +2,7 @@
 Benchmarking of various cryptographic primitives on embedded devices using:
 - Framework from https://github.com/sebastien-riou/lean-benchmark
 - Renode
-- Test vectors from https://github.com/sebastien-riou/BTVG-MLDSA/releases/tag/v0.0.3
+- Test vectors for ML-DSA from https://github.com/sebastien-riou/BTVG-MLDSA/releases/tag/v0.0.3
 
 It benchmarks the performances as well as the various memory footprints.
 
@@ -11,9 +11,10 @@ It also produce self contained benchmarking libraries which can be easily integr
 Results can be retrieved using Python or displayed using the provided script `show-results-pickle`.
 
 ## Current status
-It has been used on two targets:
+It has been used on several targets:
 - STMicroelectronics [STM32U5A5](https://github.com/sebastien-riou/crypto-benchmark-stm32u5)
 - Nuvoton [M5531](https://github.com/sebastien-riou/crypto-benchmark-m5531)
+- Raspeberry Pi [RP2350](https://github.com/sebastien-riou/crypto-benchmark-rp2350)
 
 It contains proper benchmarking only for ML-DSA. SHA2 is a work in progress.
 
