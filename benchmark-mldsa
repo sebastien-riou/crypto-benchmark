@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -ex
+
+TARGET=$1
+DEVICE=$2
+TOOLCHAIN=$3
+CRYPTOLIB=${4:-OPEN_SOURCE}
+GOAL=${5:-small}
+PRESET=${6:-minSizeRel}
+
+TARGET_PATH=../crypto-benchmark-$TARGET
+
+./clean
+
+python3 link_ext.py --preset=$PRESET --goal=$GOAL
+
+./buildit $TOOLCHAIN mldsa 44 $CRYPTOLIB $PRESET 
+./benchmark-core $TARGET_PATH $DEVICE mldsa 44 $CRYPTOLIB $GOAL ${@:7}
+./buildit $TOOLCHAIN mldsa 65 $CRYPTOLIB $PRESET 
+./benchmark-core $TARGET_PATH $DEVICE mldsa 65 $CRYPTOLIB $GOAL ${@:7}
+./buildit $TOOLCHAIN mldsa 87 $CRYPTOLIB $PRESET 
+./benchmark-core $TARGET_PATH $DEVICE mldsa 87 $CRYPTOLIB $GOAL ${@:7}
+TARGET_FULL=$TARGET-$(basename $TOOLCHAIN)
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET STUB ${@:4}
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET $CRYPTOLIB ${@:4}
+TC=$(basename ${TOOLCHAIN})
+OUTDIR="build/$TC"
+size ${OUTDIR}/crypto-benchmark-*.elf > ${OUTDIR}/sizes.txt
+pipenv run python format_results.py $TC mldsa csv --lib=$CRYPTOLIB --hw-platform=$TARGET_FULL > $TARGET-mldsa-benchmark-$TC-$CRYPTOLIB-$GOAL.csv
+
+set +x
+
+echo $TARGET-$CRYPTOLIB-$GOAL
+column -s, -t < $TARGET-mldsa-benchmark-$TC-$CRYPTOLIB-$GOAL.csv
+

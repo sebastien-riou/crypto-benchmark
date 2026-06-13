@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -ex
+
+TARGET=$1
+DEVICE=${2:-/dev/ttyACM0}
+ALGO=${3:-mldsa}
+PSET=${4:-44}
+CRYPTOLIB=${5:-OPEN_SOURCE}
+GOAL=${6:-small}
+
+pushd $TARGET
+./buildit ${@:7}
+./flash
+popd
+./get-results $DEVICE --write=1 --device-timeout=180
