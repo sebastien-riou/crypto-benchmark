@@ -21,12 +21,15 @@ python3 link_ext.py --preset=$PRESET --goal=$GOAL
 ./benchmark-core $TARGET_PATH $DEVICE mldsa 65 $CRYPTOLIB $GOAL ${@:7}
 ./buildit $TOOLCHAIN mldsa 87 $CRYPTOLIB $PRESET 
 ./benchmark-core $TARGET_PATH $DEVICE mldsa 87 $CRYPTOLIB $GOAL ${@:7}
-TARGET_FULL=$TARGET-$(basename $TOOLCHAIN)
-./build-mldsa-core $TOOLCHAIN $GOAL $PRESET STUB ${@:7}
-./build-mldsa-core $TOOLCHAIN $GOAL $PRESET $CRYPTOLIB ${@:7}
+
+# build generic target for static memory sizes
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET STUB 
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET $CRYPTOLIB 
 TC=$(basename ${TOOLCHAIN})
 OUTDIR="build/$TC"
 size ${OUTDIR}/crypto-benchmark-*.elf > ${OUTDIR}/sizes.txt
+
+TARGET_FULL=$TARGET-$(basename $TOOLCHAIN)
 pipenv run python format_results.py $TC mldsa csv --lib=$CRYPTOLIB --hw-platform=$TARGET_FULL > $TARGET-mldsa-benchmark-$TC-$CRYPTOLIB-$GOAL.csv
 
 set +x
