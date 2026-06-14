@@ -11,8 +11,6 @@ PRESET=${6:-minSizeRel}
 
 TARGET_PATH=../crypto-benchmark-$TARGET
 
-./clean
-
 python3 link_ext.py --preset=$PRESET --goal=$GOAL
 
 ./buildit $TOOLCHAIN mldsa 44 $CRYPTOLIB $PRESET 
