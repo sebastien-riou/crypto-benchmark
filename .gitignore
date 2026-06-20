@@ -16,5 +16,6 @@ target/ext/
 *.a
 STM32_Cryptographic/
 *.pickle
+*.csv
 git_untracked.log
 goal.txt
