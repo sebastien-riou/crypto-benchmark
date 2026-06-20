@@ -207,43 +207,14 @@ def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> s
     out += '(b): Probability of occurrence is 2^-37 for sign.\n'
     return out
 
-if __name__ == '__main__':
-    scriptname = os.path.basename(__file__)
-    parser = argparse.ArgumentParser(scriptname)
-    levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
-    formats = ('csv', 'latex')
-    parser.add_argument('--log-level', default='INFO', choices=levels)
-    parser.add_argument(
-        '--root', help='Path to crypto-benchmark root', default='.', type=str
-    )
-    parser.add_argument(
-        '--lib', help='List of libraries to report', default=None, nargs='+', type=str
-    )
-    parser.add_argument(
-        '--pset', help='List of parameter sets to report', default=None, nargs='+', type=str
-    )
-    parser.add_argument(
-        '--op', help='List of operations to report', default=None, nargs='+', type=str
-    )
-    parser.add_argument(
-        '--hw-platform', help='Specify a hardware platform', type=str
-    )
-    parser.add_argument(
-        'target', help='Target platform to report', type=str
-    )
-    parser.add_argument(
-        'algo', help='Algorithm to report', type=str
-    )
-    parser.add_argument(
-        'format', help='Desired output format', choices=formats
-    )
-
-    args = parser.parse_args()
-
-    logformat = '%(asctime)s.%(msecs)03d %(levelname)s:\t%(message)s'
-    logdatefmt = '%Y-%m-%d %H:%M:%S'
-    logging.basicConfig(level=args.log_level, format=logformat, datefmt=logdatefmt)
-
+def main(args_target,args_algo,format,*,
+         root='.',
+         args_lib=None,
+         args_pset=None,
+         args_op=None,
+         args_hw_platform=None,
+         file=None):
+    
     libs = {}
 
     impl_to_lib_name = {
@@ -276,8 +247,8 @@ if __name__ == '__main__':
         return f'{build_target_to_lib_name[lib]}-{goal}'
 
     lib_names = []
-    if args.lib:
-        for lib in args.lib:
+    if args_lib:
+        for lib in args_lib:
             lib_names.append(build_target_to_lib_name[lib])
     else:
         for lib in build_target_to_lib_name.keys():
@@ -285,10 +256,10 @@ if __name__ == '__main__':
     logging.debug(f'lib_names: {lib_names}')
 
     #get perf results
-    result_files = glob.glob('*.pickle',root_dir=args.root)
+    result_files = glob.glob('*.pickle',root_dir=root)
     hw_platforms = {}
     for p in result_files:
-        with open(os.path.join(args.root,p),'rb') as f:
+        with open(os.path.join(root,p),'rb') as f:
             data = pickle.load(f)
             info = data['info']
             results = data['results']
@@ -296,10 +267,10 @@ if __name__ == '__main__':
             values = data['info'][1::2] #items at odd index
             info = dict(zip(keys,values))
             target = info['sw_target_cpu']
-            if target != args.target:
+            if target != args_target:
                 continue
             hw_platform = info['hw_platform']
-            if args.hw_platform and args.hw_platform != hw_platform:
+            if args_hw_platform and args_hw_platform != hw_platform:
                 continue
             hw_platforms[hw_platform] = p
             logging.debug(info)
@@ -313,7 +284,7 @@ if __name__ == '__main__':
             logging.debug(f'adding perf data for {full_name}')
             pset = info['mldsa_pset']
 
-            if args.pset and pset not in args.pset:
+            if args_pset and pset not in args_pset:
                 continue
 
             if full_name not in libs:
@@ -379,15 +350,15 @@ if __name__ == '__main__':
         logging.error(f'hw_platforms: {hw_platforms}')
         raise RuntimeError(f'More than one hw_platform found, please use --hw-platform')
     #get footprint results
-    sizes = report_footprint.report_footprint(os.path.join(args.root,'build'))
-    sizes = sizes[args.target][args.algo]
+    sizes = report_footprint.report_footprint(os.path.join(root,'build'))
+    sizes = sizes[args_target][args_algo]
     
     #re struct results by libs
     for pset in sizes.keys():
-        if args.pset and pset not in args.pset:
+        if args_pset and pset not in args_pset:
             continue
         for lib in sizes[pset].keys():
-            if args.lib and lib not in args.lib:
+            if args_lib and lib not in args_lib:
                 logging.debug(f'{lib} ignored')
                 continue
             for goal in sizes[pset][lib].keys():
@@ -410,12 +381,68 @@ if __name__ == '__main__':
 
     logging.debug(libs)
 
-    match args.format:
+    match format:
         case 'latex':
-            print(gen_latex_perf_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
-            print(gen_latex_perf_vs_msg_len_table(libs,lib_list=args.lib, pset_list=args.pset, op_list=args.op))
-            print(gen_latex_footprint_table(libs,lib_list=args.lib, pset_list=args.pset))
+            print(gen_latex_perf_table(libs,lib_list=args_lib, pset_list=args_pset, op_list=args_op),file=file)
+            print(gen_latex_perf_vs_msg_len_table(libs,lib_list=args_lib, pset_list=args_pset, op_list=args_op),file=file)
+            print(gen_latex_footprint_table(libs,lib_list=args_lib, pset_list=args_pset),file=file)
         case 'csv':
-            print(gen_csv_perf_table(libs, op_list=args.op))
-            print(gen_csv_footprint_table(libs))
+            print(gen_csv_perf_table(libs, op_list=args_op),file=file)
+            print(gen_csv_footprint_table(libs),file=file)
 
+
+
+
+
+
+if __name__ == '__main__':
+    scriptname = os.path.basename(__file__)
+    parser = argparse.ArgumentParser(scriptname)
+    levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+    formats = ('csv', 'latex')
+    parser.add_argument('--log-level', default='INFO', choices=levels)
+    parser.add_argument(
+        '--root', help='Path to crypto-benchmark root', default='.', type=str
+    )
+    parser.add_argument(
+        '--lib', help='List of libraries to report', default=None, nargs='+', type=str
+    )
+    parser.add_argument(
+        '--pset', help='List of parameter sets to report', default=None, nargs='+', type=str
+    )
+    parser.add_argument(
+        '--op', help='List of operations to report', default=None, nargs='+', type=str
+    )
+    parser.add_argument(
+        '--hw-platform', help='Specify a hardware platform', type=str
+    )
+    parser.add_argument(
+        '--file', help='Specify the output file', type=str
+    )
+    parser.add_argument(
+        'target', help='Target platform to report', type=str
+    )
+    parser.add_argument(
+        'algo', help='Algorithm to report', type=str
+    )
+    parser.add_argument(
+        'format', help='Desired output format', choices=formats
+    )
+
+    args = parser.parse_args()
+
+    logformat = '%(asctime)s.%(msecs)03d %(levelname)s:\t%(message)s'
+    logdatefmt = '%Y-%m-%d %H:%M:%S'
+    logging.basicConfig(level=args.log_level, format=logformat, datefmt=logdatefmt)
+
+    file=None
+    if args.file:
+        file = open(args.file,'w')
+
+    main(args.target,args.algo,args.format,
+         args_root=args.root,
+         args_lib=args.lib,
+         args_pset=args.pset,
+         args_op=args.op,
+         args_hw_platform=args.hw_platform,
+         file=file)
