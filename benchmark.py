@@ -299,17 +299,20 @@ if __name__ == '__main__':
             return out,res
         
     def process_cmd(full_cmd, root):
-        cwd = None
-        if 'dir' in full_cmd:
-            cwd=full_cmd['dir']
-            if os.path.relpath(cwd) == cwd:
-                # if cwd is relative, make it relative to the path of the manifest
-                cwd=os.path.join(root,cwd)
-        if cwd is None:
-            cwd=root
-        out,res = tool(cwd,*full_cmd['cmd'])
-        if res != 0:
-            raise RuntimeError(res) 
+        if full_cmd:
+            cwd = None
+            if 'dir' in full_cmd:
+                cwd=full_cmd['dir']
+                if os.path.relpath(cwd) == cwd:
+                    # if cwd is relative, make it relative to the path of the manifest
+                    cwd=os.path.join(root,cwd)
+            if cwd is None:
+                cwd=root
+            out,res = tool(cwd,*full_cmd['cmd'])
+            if res != 0:
+                raise RuntimeError(res) 
+        else:
+            logging.debug('process_cmd: full_cmd is None')
 
     link_ext_dict = runpy.run_path('link_ext.py')
     def link_ext(goal):
@@ -336,6 +339,7 @@ if __name__ == '__main__':
                                        args_hw_platform=hw_platform,
                                        file=file)
 
+    out_files = []
     for hwp in hw_platforms:
         for swt in sw_targets:
             for lib in sw_libs:
@@ -374,18 +378,22 @@ if __name__ == '__main__':
                             logging.info('build firmware')
                             process_cmd(hwp['helper'].build_cmd(swt),hwp['path'])
 
+                            logging.info('load firmware')
+                            load_cmd = hwp['helper'].load_cmd(swt)
+                            process_cmd(load_cmd,hwp['path'])
+
                             logging.info('run firmware')
                             p1 = Process(target=process_cmd, args=[hwp['helper'].run_cmd(swt),hwp['path']])
                             p1.start()
                             p2 = Process(target=tool,args=[None,'./get-results',args.device,'--device-timeout=180','--write=1'])
                             p2.start()
                             p1.join()
-                            p2.join()
                             if p1.exception:
                                 logging.error(f'Hardware platform failed to run the firmware')
                                 error,trace = p1.exception
                                 logging.error(trace)
                                 exit(-7)
+                            p2.join()
                             if p2.exception:
                                 logging.error(f'An exception occured in lean_benchmark.py')
                                 error,trace = p2.exception
@@ -409,8 +417,11 @@ if __name__ == '__main__':
                     file_name = f'{lean_benchmark.get_timestamp()}-{hwp_name}-{swt}-{lib['name']}-{algo}.csv'
                     if len(hwp_sw_target) > 1:
                         hwp_name += f'-{swt}'
+                    logging.info('Formating results')
                     format_result(swt,algo,'csv',lib=[lib_codename],hw_platform=hwp_name,file=file_name)
-                    
+                    out_files.append(file_name)
+    logging.info(f'All benchmark done, see output files:\n\t {'\n\t'.join(out_files)}')
+    
                             
                             
                             
