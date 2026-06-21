@@ -147,7 +147,8 @@ const uint8_t expected[] = {0xb8,0x24,0x4d,0x02,0x89,0x81,0xd6,0x93,0xaf,0x7b,0x
 void lean_benchmark(unsigned int ninfo, const char*info[], bool run_forever){
   const char*sw_build_info[] = {
     "sw_target_cpu", xstr(CPU),
-    "sha2_pset", xstr(PSET),
+    "algo", "sha2",
+    "pset", xstr(PSET),
     "impl_name", IMPL_NAME,
     "sw_version", xstr(GIT_VERSION),
     "tv_name", "default",

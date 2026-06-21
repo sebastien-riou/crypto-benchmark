@@ -290,7 +290,8 @@ void benchmarkit(benchmark_setup_t*sign, benchmark_setup_t*verify, const generic
 void lean_benchmark(unsigned int ninfo, const char*info[], bool run_forever){
   const char*sw_build_info[] = {
     "sw_target_cpu", xstr(CPU),
-    "mldsa_pset", xstr(PSET),
+    "algo", "mldsa",
+    "pset", xstr(PSET),
     "impl_name", IMPL_NAME,
     "sw_version", xstr(GIT_VERSION),
     "tv_name", tv->name,

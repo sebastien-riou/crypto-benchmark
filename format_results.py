@@ -166,7 +166,7 @@ def gen_latex_perf_vs_msg_len_table(libs,*, lib_list=None, pset_list=None, op_li
     return out
 
 def gen_csv_footprint_table(libs,*, pset_list=None) -> str:
-    out = 'Memory footprint for key generation; signing and verification (in KiB).\n'
+    out = 'Memory footprint for all benchmarked operations (in KiB).\n'
     out += 'Implementation,Level,Stack,Heap,Static RAM,Read-only\n'
 
     for lib in sorted(libs.keys()):
@@ -183,7 +183,7 @@ def gen_csv_footprint_table(libs,*, pset_list=None) -> str:
 
     return out
 
-def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
+def gen_csv_perf_table_mldsa(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
     out = 'Performance for a 69-byte message and zero-length context (in million cycles).\n'
     out += 'Implementation,Level,Operation,Minimum,Average(a),Worst observed(b)\n'
 
@@ -205,6 +205,31 @@ def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> s
 
     out += '(a): Match long term average for sign.\n'
     out += '(b): Probability of occurrence is 2^-37 for sign.\n'
+    return out
+
+def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
+    out = 'Performance in cycles.\n'
+    out += 'Implementation,Parameter set,Operation,Minimum,Average(a),Worst observed(b)\n'
+
+    for lib in sorted(libs.keys()):
+        #if lib_list and lib not in lib_list:
+        #    continue
+
+        for pset in sorted(libs[lib].keys()):
+            #if pset_list and pset not in pset_list:
+            #    continue
+            logging.debug(f'libs[lib][pset]={libs[lib][pset]}')
+            for op in sorted(libs[lib][pset].keys()):
+                if op in ['stack', 'heap', 'ro', 'rw']:
+                    continue
+                logging.debug(f'op={op}')
+                if op_list and op not in op_list:
+                    continue
+                min_cycles    = f'{format_number(libs[lib][pset][op]['min_cycles']):>5}'
+                ave_cycles    = f'{format_number(libs[lib][pset][op]['ave_cycles']):>5}'
+                max_cycles    = f'{format_number(libs[lib][pset][op]['max_cycles']):>5}'
+                out += f'{lib:20}'+' , '+str(pset)+f' , {op} , {min_cycles} , {ave_cycles} , {max_cycles}\n'
+
     return out
 
 def main(args_target,args_algo,format,*,
@@ -276,17 +301,21 @@ def main(args_target,args_algo,format,*,
                 continue
             hw_platforms[hw_platform] = p
             logging.debug(info)
-
+            algo = info['algo']
+            if args_algo != algo:
+                logging.debug(f'ignoring algo {algo}')
+                continue
             lib = impl_to_lib_name[info['impl_name']]
             if lib not in lib_names:
-                logging.debug(f'ignoring {lib}')
+                logging.debug(f'ignoring lib {lib}')
                 continue
             goal = impl_to_goal_name[info['impl_name']]
             full_name = f'{lib}-{goal}'
             logging.debug(f'adding perf data for {full_name}')
-            pset = info['mldsa_pset']
+            pset = info['pset']
 
             if args_pset and pset not in args_pset:
+                logging.debug(f'ignoring pset {pset}')
                 continue
 
             if full_name not in libs:
@@ -324,21 +353,28 @@ def main(args_target,args_algo,format,*,
                 max_stack = max([v['max_stack'] for v in val])
                 max_heap = max([v['max_heap'] for v in val])
                 try:
-                    setup_to_report = {
-                        'mldsa_gen_key':'key-exp',
-                        'mldsa_sign69':'sign',
-                        'mldsa_verify69':'verify',
-                        'mldsa_sign10K':'sign 10K',
-                        'mldsa_verify10K':'verify 10K',
-                        'mldsa_sign1M':'sign 1M',
-                        'mldsa_verify1M':'verify 1M',
-                    }
-                    operation = setup_to_report[value['setup']]
+                    special_case_algo = True
+                    match algo:
+                        case 'mldsa':
+                            setup_to_report = {
+                                'mldsa_gen_key':'key-exp',
+                                'mldsa_sign69':'sign',
+                                'mldsa_verify69':'verify',
+                                'mldsa_sign10K':'sign 10K',
+                                'mldsa_verify10K':'verify 10K',
+                                'mldsa_sign1M':'sign 1M',
+                                'mldsa_verify1M':'verify 1M',
+                            }
+                        case _:
+                            special_case_algo=False
+                    if special_case_algo:
+                        operation = setup_to_report[value['setup']]
+                    else:
+                        operation = value['setup']
                     libs[full_name][pset][operation] = {
                                 'min_cycles':min_cycles,
                                 'max_cycles':max_cycles,
                                 'ave_cycles':ave_cycles,
-                                
                                 }
                 except KeyError:
                     pass 
@@ -389,7 +425,11 @@ def main(args_target,args_algo,format,*,
             print(gen_latex_perf_vs_msg_len_table(libs,lib_list=args_lib, pset_list=args_pset, op_list=args_op),file=file)
             print(gen_latex_footprint_table(libs,lib_list=args_lib, pset_list=args_pset),file=file)
         case 'csv':
-            print(gen_csv_perf_table(libs, op_list=args_op),file=file)
+            match args_algo:
+                case 'mldsa':
+                    print(gen_csv_perf_table_mldsa(libs, op_list=args_op),file=file)
+                case _:
+                    print(gen_csv_perf_table(libs, op_list=args_op),file=file)
             print(gen_csv_footprint_table(libs),file=file)
 
 
