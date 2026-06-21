@@ -42,11 +42,14 @@ void throw_exception(uint32_t err_code){
 
 #define DIGEST_SIZE CAT3(SHA2_,PSET,_DIGEST_SIZE)
 
-#define IMPL_PQCLE 1
-#define IMPL_LIBTOMCRYPT 2
+#define IMPL_STUB 1
+#define IMPL_PQCLE 2
+#define IMPL_LIBTOMCRYPT 3
 #define SHA2_LIB_INDEX CAT(IMPL_,SHA2_LIB)
 
-#if SHA2_LIB_INDEX == IMPL_PQCLE
+#if SHA2_LIB_INDEX == IMPL_STUB
+  #include "impl_stub.h"
+#elif SHA2_LIB_INDEX == IMPL_PQCLE
   #include "impl_pqcle.h"
 #elif SHA2_LIB_INDEX == IMPL_LIBTOMCRYPT
   #include "impl_tomcrypt.h"

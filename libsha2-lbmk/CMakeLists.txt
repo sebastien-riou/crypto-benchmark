@@ -56,6 +56,20 @@ SET(LIB_NAME sha2-lbmk)
 SET(LIB_FILE ${CMAKE_BINARY_DIR}/lib${LIB_NAME}/lib${LIB_NAME}.a)
 SET(LIB_HEADER_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+IF(${SHA2_LIB} STREQUAL "STUB")
+MESSAGE("SHA2_LIB is STUB")
+add_custom_target(combined_target
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:sha2-lbmk-core>
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
+        
+        #build combined lib
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
+        )
+ELSE()
+MESSAGE("SHA2_LIB is NOT STUB (it is '" ${SHA2_LIB} "')")
+ENDIF()
+
 IF(${SHA2_LIB} STREQUAL "PQCLE")
 MESSAGE("SHA2_LIB is PQCLE")
 add_custom_target(combined_target
