@@ -131,36 +131,34 @@ if __name__ == '__main__':
     if args.hw_platform:
         hwp = args.hw_platform
     else:
-        hwp = glob.glob(os.path.join('..','crypto-benchmark-*'))
+        hwp = glob.glob(os.path.join('hardware-platforms','*.py'))
         logging.info(f'Detected hardware platforms: {hwp}')
     #refine hw_platforms: each entry can be 
-    # - a path, i.e., ../crypto-benchmark-<name>
+    # - a path to a python file describing the platform
     # - a name, i.e., 'rp2350'
     hw_platforms = []
     for i in range(len(hwp)):
         original = hwp[i]
         org = original
-        org_basename = os.path.basename(org)
-        if os.path.exists(org):
+        if os.path.exists(org) and org.endswith('.py'):
             #it is a path
-            name = os.path.basename(org)
-            name = name.removeprefix('crypto-benchmark-')
-            p = org
+            manifest = org
+            name = os.path.basename(org)[:-3]
         else:
             #it is a name
             name = org
-            p = os.path.join('..',f'crypto-benchmark-{name}')
+            p = os.path.join('hardware-platforms',f'{name}.py')
             if not os.path.exists(p):
                 m = f'HW platform {name}: {p} does not exist'
                 logging.error(m)
                 raise RuntimeError(m)
-        manifest = os.path.join(p,'crypto-benchmark-manifest.py')
+            manifest = p
         if not os.path.exists(manifest):
             m = f'HW platform {name} discarded: {manifest} does not exist'
             logging.warning(m)
             continue
         params = runpy.run_path(manifest)
-        hw_platform = {'name':name, 'path':p, 'helper': params['helper']}
+        hw_platform = {'name':name, 'helper': params['helper']}
         logging.debug(f'{original} -> {hw_platform}')
         hw_platforms.append(hw_platform)
     logging.info(f'Valid hardware platforms: {get_names(hw_platforms)}')
@@ -340,8 +338,14 @@ if __name__ == '__main__':
                                        file=file)
 
     out_files = []
-    for hwp in hw_platforms:
+    for hwp_dict in hw_platforms:
+        hwp = hwp_dict['helper']
+        hwp_name = hwp_dict['name']
+        hwp_path = hwp.path
+        hwp_sw_targets = hwp.sw_targets()
         for swt in sw_targets:
+            if swt not in hwp_sw_targets:
+                continue
             for lib in sw_libs:
                 lib_codename = lib['helper'].codename
                 for algo in algos:
@@ -364,7 +368,7 @@ if __name__ == '__main__':
                     for goal in all_goals:
                         for pset in all_psets:
                             
-                            logging.info(f'{hwp['name']}, {swt}, {lib['name']}, {algo}, {goal}, {pset}')
+                            logging.info(f'{hwp_name}, {swt}, {lib['name']}, {algo}, {goal}, {pset}')
                             pset_code = pset #TODO handle sha2 codes
                             
                             logging.info('build library')
@@ -376,14 +380,14 @@ if __name__ == '__main__':
                             out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,lib_codename)
                             
                             logging.info('build firmware')
-                            process_cmd(hwp['helper'].build_cmd(swt),hwp['path'])
+                            process_cmd(hwp.build_cmd(swt),hwp_path)
 
                             logging.info('load firmware')
-                            load_cmd = hwp['helper'].load_cmd(swt)
-                            process_cmd(load_cmd,hwp['path'])
+                            load_cmd = hwp.load_cmd(swt)
+                            process_cmd(load_cmd,hwp_path)
 
                             logging.info('run firmware')
-                            p1 = Process(target=process_cmd, args=[hwp['helper'].run_cmd(swt),hwp['path']])
+                            p1 = Process(target=process_cmd, args=[hwp.run_cmd(swt),hwp_path])
                             p1.start()
                             p2 = Process(target=tool,args=[None,'./get-results',args.device,'--device-timeout=180','--write=1'])
                             p2.start()
@@ -412,15 +416,13 @@ if __name__ == '__main__':
                     out,res = tool(None, 'size',*elf_files)
                     with open(f'{outdir}/sizes.txt','w') as f:
                         print(out,file=f)
-                    hwp_name = hwp['name']
-                    hwp_sw_target = hwp['helper'].sw_targets()
                     file_name = f'{lean_benchmark.get_timestamp()}-{hwp_name}-{swt}-{lib['name']}-{algo}.csv'
-                    if len(hwp_sw_target) > 1:
+                    if len(hwp_sw_targets) > 1:
                         hwp_name += f'-{swt}'
                     logging.info('Formating results')
                     format_result(swt,algo,'csv',lib=[lib_codename],hw_platform=hwp_name,file=file_name)
                     out_files.append(file_name)
-    logging.info(f'All benchmark done, see output files:\n\t {'\n\t'.join(out_files)}')
+    logging.info(f'All benchmark done, see output files:\n\t{'\n\t'.join(out_files)}')
     
                             
                             
