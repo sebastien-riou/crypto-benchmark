@@ -5,7 +5,7 @@ set -ex
 RENODE=${1:-1}
 PIPENV_ARG=${2:---verbose} # can be used to pass --python=python3
 LEAN_BENCHMARK_TAG=${3:-v0.0.8}
-DILITHIUM_LOWRAM_TAG=${4:-crypto-benchmark-0.0.13}
+DILITHIUM_LOWRAM_TAG=${4:-43af827}
 
 cd ..
 
