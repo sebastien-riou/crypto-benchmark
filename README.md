@@ -117,7 +117,7 @@ pqcrystals-lowram-small                                                         
 ----
 **NOTE**
 
-PQSHIELD, STM32PQC and WOLFSSL require additional setup.
+- PQSHIELD, STM32PQC and WOLFSSL require additional setup.
 ----
 
 ## Display raw results

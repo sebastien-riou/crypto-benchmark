@@ -5,23 +5,22 @@ set -ex
 RENODE=${1:-1}
 PIPENV_ARG=${2:---verbose} # can be used to pass --python=python3
 LEAN_BENCHMARK_TAG=${3:-v0.0.8}
-DILITHIUM_LOWRAM=${4:-crypto-benchmark-0.0.13}
-
+DILITHIUM_LOWRAM_TAG=${4:-crypto-benchmark-0.0.13}
 
 cd ..
 
 if [[ ! -z $CRYPTO_BENCHMARK_USE_GIT_SSH ]]; then
     LEAN_BENCHMARK_URL=git@github.com:sebastien-riou/lean-benchmark.git
-    git clone git@github.com:sebastien-riou/dilithium-lowram.git
+    DILITHIUM_LOWRAM_URL=git@github.com:sebastien-riou/dilithium-lowram.git 
 else
     LEAN_BENCHMARK_URL=https://github.com/sebastien-riou/lean-benchmark.git
-    git clone https://github.com/sebastien-riou/dilithium-lowram.git
+    DILITHIUM_LOWRAM_URL=https://github.com/sebastien-riou/dilithium-lowram.git 
 fi
 
+git clone --depth=1 $DILITHIUM_LOWRAM_URL --branch $DILITHIUM_LOWRAM_TAG --single-branch --recurse-submodules
 git clone --depth=1 $LEAN_BENCHMARK_URL --branch $LEAN_BENCHMARK_TAG --single-branch --recurse-submodules
 
 cd dilithium-lowram
-git checkout $DILITHIUM_LOWRAM
 ./build-all-targets
 cd ..
 
@@ -33,7 +32,6 @@ cd ..
 cd crypto-benchmark
 pipenv $PIPENV_ARG install
 pipenv sync
-python3 link_ext.py
 ./build-all-targets mldsa 44 OPEN_SOURCE small minSizeRel -DRAW_COM=$RENODE
 
 if [ "$RENODE" == "1" ]; then

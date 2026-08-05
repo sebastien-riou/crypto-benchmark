@@ -27,8 +27,8 @@ Clone 3 repositories at the same level:
 
 ````
 git clone https://github.com/sebastien-riou/crypto-benchmark.git
-git clone https://github.com/sebastien-riou/lean-benchmark.git
-git clone https://github.com/sebastien-riou/dilithium-lowram.git
+git clone https://github.com/sebastien-riou/lean-benchmark.git --recurse-submodules
+git clone https://github.com/sebastien-riou/dilithium-lowram.git 
 ````
 
 ----
