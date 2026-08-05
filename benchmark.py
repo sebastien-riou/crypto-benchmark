@@ -166,32 +166,33 @@ if __name__ == '__main__':
         logging.error('Need at least one hardware platform')
         exit(-1)
     
-    #- detect libs by looking at ../crypto-lib-*
+    #- detect sw_libs
     if args.lib:
         libs = args.lib
     else:
-        libs = glob.glob(os.path.join('..','crypto-lib-*'))
-        logging.info(f'Detected libraries: {libs}')
+        libs = glob.glob(os.path.join('crypto-libraries','*.py'))
+        logging.info(f'Detected crypto libraries: {libs}')
+    #refine sw_libs: each entry can be 
+    # - a path to a python file describing the lib
+    # - a name, i.e., 'dilithium-lowram'
+    
     sw_libs = []
     for i in range(len(libs)):
         original = libs[i]
         org = original
-        org_basename = os.path.basename(org)
-        if os.path.exists(org):
+        if os.path.exists(org) and org.endswith('.py'):
             #it is a path
-            name = os.path.basename(org)
-            if len(name) == 0:
-                name = os.path.basename(os.path.dirname(org))
-            p = org
+            manifest = org
+            name = os.path.basename(org)[:-3]
         else:
             #it is a name
             name = org
-            p = os.path.join('..',f'crypto-lib-{name}')
+            p = os.path.join('crypto-libraries',f'{name}.py')
             if not os.path.exists(p):
                 m = f'SW library {name}: {p} does not exist'
                 logging.error(m)
                 raise RuntimeError(m)
-        manifest = os.path.join(p,'crypto-benchmark-manifest.py')
+            manifest = p
         if not os.path.exists(manifest):
             m = f'SW library {name} discarded: {manifest} does not exist'
             logging.warning(m)
@@ -372,7 +373,7 @@ if __name__ == '__main__':
                             pset_code = pset #TODO handle sha2 codes
                             
                             logging.info('build library')
-                            process_cmd(lib['helper'].build_cmd(swt,goal,pset_code),lib['path'])
+                            process_cmd(lib['helper'].build_cmd(swt,goal,pset_code),lib['helper'].path)
 
                             link_ext(goal)
 

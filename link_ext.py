@@ -8,7 +8,7 @@ import argparse
 
 def main(*,preset='minSizeRel', goal=None):
     targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
-    libs = ['pqcle','pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','wolfssl']
+    libs = ['pqcle','pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','wolfssl'] #,'fpfp']
 
     PQCLE_SRC='../../../aikido/'
     PQCLE='target/ext/pqcle'
@@ -25,6 +25,9 @@ def main(*,preset='minSizeRel', goal=None):
     WOLFSSL_SRC='../../../wolfssl'
     WOLFSSL='target/ext/wolfssl'
 
+    FPFP_SRC='../../../fixed-point-fndsa-portable'
+    FPFP='target/ext/fpfp'
+
     debug=''
     if preset == 'debug':
         debug='-debug'
@@ -35,7 +38,7 @@ def main(*,preset='minSizeRel', goal=None):
         print(goal,file=f)
     goal='-'+goal
         
-    for p in [PQCLE,LOWRAM,TOMCRYPT,LBMK,WOLFSSL]:
+    for p in [PQCLE,LOWRAM,TOMCRYPT,LBMK,WOLFSSL]:#,FPFP]:
         try:
             os.remove(p)
         except FileNotFoundError:
@@ -47,6 +50,7 @@ def main(*,preset='minSizeRel', goal=None):
     os.symlink(TOMCRYPT_SRC,TOMCRYPT,target_is_directory=True)
     os.symlink(LBMK_SRC,LBMK,target_is_directory=True)
     os.symlink(WOLFSSL_SRC,WOLFSSL,target_is_directory=True)
+    #os.symlink(FPFP_SRC,FPFP,target_is_directory=True)
 
     def link(libname,targetname,source,pattern):
         dst_dir = os.path.join('target',targetname,libname)
@@ -106,6 +110,11 @@ def main(*,preset='minSizeRel', goal=None):
                         goal='-fast'
                     source_lib = WOLFSSL + f'/build/{targetname}{goal}/lib'
                     source_h = WOLFSSL + f'/build/{targetname}{goal}/include/wolfssl'
+                case 'fpfp':
+                    source_lib = f'{FPFP}/build/{targetname}/lib{libname}'
+                    source_h = f'{FPFP}/include'
+                case _:
+                    raise RuntimeError(f'missing case for "{libname}"')
 
             link(libname,targetname,source_lib,'*.a')
             link(libname,targetname,source_h,'*.h')
