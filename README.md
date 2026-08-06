@@ -2,7 +2,7 @@
 Benchmarking of various cryptographic primitives on embedded devices using:
 - Framework from https://github.com/sebastien-riou/lean-benchmark
 - Renode
-- Test vectors for ML-DSA from https://github.com/sebastien-riou/BTVG-MLDSA/releases/tag/v0.0.3
+- Test vectors for ML-DSA from https://github.com/sebastien-riou/BTVG-MLDSA/tree/v0.0.6
 
 It benchmarks the performances as well as the various memory footprints.
 
