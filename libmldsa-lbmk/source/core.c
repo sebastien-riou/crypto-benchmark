@@ -121,7 +121,7 @@ typedef void(*dsa_sign_t)(const void*const private_key,
   size_t message_size);
 
 #if PSET == 44
-  #include "mldsa44-m69-h8517CD9D.c" 
+  #include "mldsa44-m69-hBFB024F2.c" 
   static const mldsa44_m69_test_vectors_t*tv = &mldsa44_m69_test_vectors;
   #include "mldsa44-m10K-h6AA1568B.c" 
   static const mldsa44_m10K_test_vectors_t*tv10K = &mldsa44_m10K_test_vectors;
@@ -130,7 +130,7 @@ typedef void(*dsa_sign_t)(const void*const private_key,
 #endif
 
 #if PSET == 65
-  #include "mldsa65-m69-hCAD14C27.c"
+  #include "mldsa65-m69-hE1970117.c"
   static const mldsa65_m69_test_vectors_t*tv = &mldsa65_m69_test_vectors;
   #include "mldsa65-m10K-h5DD83C7E.c" 
   static const mldsa65_m10K_test_vectors_t*tv10K = &mldsa65_m10K_test_vectors;
@@ -139,7 +139,7 @@ typedef void(*dsa_sign_t)(const void*const private_key,
 #endif
 
 #if PSET == 87
-  #include "mldsa87-m69-h7D444798.c"
+  #include "mldsa87-m69-hF0AA0CAA.c"
   static const mldsa87_m69_test_vectors_t*tv = &mldsa87_m69_test_vectors;
   #include "mldsa87-m10K-hECF6652D.c" 
   static const mldsa87_m10K_test_vectors_t*tv10K = &mldsa87_m10K_test_vectors;
