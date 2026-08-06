@@ -102,7 +102,7 @@ def gen_latex_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) ->
     \footnotesize
     \raggedright
     \textsuperscript{a} Match long term average for \texttt{sign}.
-    \textsuperscript{b} Probability of occurrence is $2^{-37}$ for \texttt{sign}.
+    \textsuperscript{b} Probability of occurrence is $2^{-36}$ for \texttt{sign}.
     \end{minipage}
     \end{table}
     """
@@ -158,7 +158,7 @@ def gen_latex_perf_vs_msg_len_table(libs,*, lib_list=None, pset_list=None, op_li
     \footnotesize
     \raggedright
     \textsuperscript{a} Match long term average for \texttt{sign}.
-    \textsuperscript{b} Probability of occurrence is $2^{-37}$ for \texttt{sign}.
+    \textsuperscript{b} Probability of occurrence is $2^{-36}$ for \texttt{sign}.
     \textsuperscript{c} Extrapolated from 69-cycle baseline.
     \end{minipage}
     \end{table}
@@ -204,7 +204,7 @@ def gen_csv_perf_table_mldsa(libs,*, lib_list=None, pset_list=None, op_list=None
                 out += f'{lib:20}'+' , '+str(pset)+f' , {op} , {min_cycles} , {ave_cycles} , {max_cycles}\n'
 
     out += '(a): Match long term average for sign.\n'
-    out += '(b): Probability of occurrence is 2^-37 for sign.\n'
+    out += '(b): Probability of occurrence is 2^-36 for sign.\n'
     return out
 
 def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
