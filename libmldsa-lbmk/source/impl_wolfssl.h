@@ -23,7 +23,7 @@
 #endif
 
 #if WOLFSSL_INDEX == WOLFSSL_balanced
-  #define IMPL_NAME "wolfssl-fast" //we do not support a balanced build yet
+  #define IMPL_NAME "wolfssl-balanced"
   #ifdef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
     #error
   #endif

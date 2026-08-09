@@ -105,9 +105,6 @@ def main(*,preset='minSizeRel', goal=None):
                     source_lib = LBMK + f'/build/{targetname}/lib{libname}'
                     source_h = LBMK + '/include'
                 case 'wolfssl':
-                    if goal == '-balanced':
-                        logging.warning('No support for a "balanced" wolfssl yet, using "fast"')
-                        goal='-fast'
                     source_lib = WOLFSSL + f'/build/{targetname}{goal}/lib'
                     source_h = WOLFSSL + f'/build/{targetname}{goal}/include/wolfssl'
                 case 'fpfp':

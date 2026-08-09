@@ -310,6 +310,7 @@ def main(args_target,args_algo,format,*,
                 logging.debug(f'ignoring lib {lib}')
                 continue
             goal = impl_to_goal_name[info['impl_name']]
+            logging.debug(f"info['impl_name']={info['impl_name']}")
             full_name = f'{lib}-{goal}'
             logging.debug(f'adding perf data for {full_name}')
             pset = info['pset']
@@ -407,6 +408,7 @@ def main(args_target,args_algo,format,*,
                     libs[full_name][pset]['ro']=d['text']
                     libs[full_name][pset]['rw']=d['ram']
                 except KeyError:
+                    logging.debug(libs[full_name])
                     logging.warning(f'discarding size info for {full_name} {pset} because dynamic sizes info does not exist')
                     pass
                 #if full_name not in libs:
