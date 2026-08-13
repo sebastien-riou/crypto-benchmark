@@ -46,14 +46,32 @@ class Mldsa(object):
         return ['44','65', '87']
 
     @staticmethod
+    def pset_code(pset: str) -> str:
+        return pset
+
+    @staticmethod
     def operations():
         return ['key-exp','sign','verify']
 
 class Sha2(object):
     @staticmethod
     def psets():
-        return ['224','256', '384', '512', '512/224', '512/256']
+        return ['224','256', '384', '512', '512/224', '512/256', '256-edge', '512-edge']
 
+    @staticmethod
+    def pset_code(pset: str) -> str:
+        match pset:
+            case '512/224':
+                return '513'
+            case '512/256':
+                return '514'
+            case '256-edge':
+                return '1256'
+            case '512-edge':
+                return '1512'
+            case _:
+                return pset
+    
     @staticmethod
     def operations():
         return ['hash']
@@ -370,7 +388,7 @@ if __name__ == '__main__':
                         for pset in all_psets:
                             
                             logging.info(f'{hwp_name}, {swt}, {lib['name']}, {algo}, {goal}, {pset}')
-                            pset_code = pset #TODO handle sha2 codes
+                            pset_code = algorithms_catalog[algo].pset_code(pset)
                             
                             logging.info('build library')
                             process_cmd(lib['helper'].build_cmd(swt,goal,pset_code),lib['helper'].path)
