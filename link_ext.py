@@ -7,7 +7,7 @@ import logging
 import argparse
 
 def main(*,preset='minSizeRel', goal=None):
-    targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
+    targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m52','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
     libs = ['pqcle','pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','wolfssl'] #,'fpfp']
 
     PQCLE_SRC='../../../aikido/'
