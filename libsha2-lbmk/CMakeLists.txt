@@ -79,6 +79,7 @@ add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha2.a
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha2_secure.a
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha3.a
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libprng.a 
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libcommon.a 
         #detect non constant time instruction in Cortex-M3
         COMMAND ${CMAKE_OBJDUMP} -D --visualize-jumps *.${CMAKE_AR_O_EXT} > disassembly.asm

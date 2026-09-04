@@ -2,15 +2,19 @@
 
 import os
 import sys
-from glob import glob 
+from glob import glob
 import logging
 import argparse
+
+sys.path.insert(0, 'crypto-libraries')
+import pqmicrolib
+
 
 def main(*,preset='minSizeRel', goal=None):
     targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m52','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
     libs = ['pqcle','pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','wolfssl'] #,'fpfp']
 
-    PQCLE_SRC='../../../aikido/'
+    PQCLE_SRC='../../../pqmicrolib-library/'
     PQCLE='target/ext/pqcle'
 
     LOWRAM_SRC='../../../dilithium-lowram/libpqcrystals-mldsa-lowram'
@@ -91,7 +95,7 @@ def main(*,preset='minSizeRel', goal=None):
                     if targetname == 'linux':
                         targetdir = 'gcc-x86_64-linux-gnu'
                     else:
-                        targetdir = f'gcc-{targetname}{goal}{debug}'
+                        targetdir = f'gcc-{pqmicrolib.helper.preset(targetname)}'
                     source = f'{PQCLE}/out/build/{targetdir}'
                     source_lib = f'{PQCLE}/out/{targetdir}/lib'
                     source_h = source+'/inc/pqcle'
