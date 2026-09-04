@@ -384,6 +384,7 @@ if __name__ == '__main__':
 
                     #args.dry_run=True
                     # build and run benchmark    
+                    built_variants = []
                     for goal in all_goals:
                         for pset in all_psets:
                             
@@ -426,20 +427,34 @@ if __name__ == '__main__':
                             # build stub target for static memory sizes
                             logging.info('build crypto-benchmark STUB for size')
                             out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,'STUB')
+
+                            built_variants.append((goal,pset_code))
                     #args.dry_run=False
                     # compute sizes
                     logging.info('Compute size')
                     outdir = f'build/{swt}'
-                    elf_files = glob.glob(f'{outdir}/crypto-benchmark-{lib_codename}-*.elf')
-                    elf_files += glob.glob(f'{outdir}/crypto-benchmark-STUB-*.elf')
+                    # only report on what this run actually built: leftover elf files from
+                    # previous runs (other algos, or runs which died before the STUB build)
+                    # would otherwise end up in sizes.txt without their STUB counterpart
+                    elf_files = []
+                    for built_goal,built_pset_code in built_variants:
+                        elf_files += glob.glob(f'{outdir}/crypto-benchmark-{lib_codename}-{built_goal}-{algo}-{built_pset_code}.elf')
+                        elf_files += glob.glob(f'{outdir}/crypto-benchmark-STUB-{built_goal}-{algo}-{built_pset_code}.elf')
+                    if len(elf_files) == 0:
+                        logging.warning(f'No elf file built for {algo} on {swt} with {lib['name']}, skipping size report')
+                        continue
                     out,res = tool(None, 'size',*elf_files)
                     with open(f'{outdir}/sizes.txt','w') as f:
                         print(out,file=f)
                     file_name = f'{lean_benchmark.get_timestamp()}-{hwp_name}-{swt}-{lib['name']}-{algo}.csv'
+                    # hw_platform string as reported by the firmware in its info fields:
+                    # platforms supporting several sw targets append the one they were built
+                    # for. Must not modify hwp_name itself, it is reused by the next sw target.
+                    fw_hwp_name = hwp_name
                     if len(hwp_sw_targets) > 1:
-                        hwp_name += f'-{swt}'
+                        fw_hwp_name += f'-{swt}'
                     logging.info('Formating results')
-                    format_result(swt,algo,'csv',lib=[lib_codename],hw_platform=hwp_name,file=file_name)
+                    format_result(swt,algo,'csv',lib=[lib_codename],hw_platform=fw_hwp_name,file=file_name)
                     out_files.append(file_name)
     logging.info(f'All benchmark done, see output files:\n\t{'\n\t'.join(out_files)}')
     
