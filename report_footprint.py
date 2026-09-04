@@ -46,6 +46,9 @@ def report_footprint(build_dir):
                 stub[algo]={}
                 for pset in sizes[algo].keys():
                     stub[algo][pset]={}
+                    if 'STUB' not in sizes[algo][pset].keys():
+                        logging.warning(f'{target} {algo} {pset}: no STUB build found, skipping size report (stale or incomplete build directory)')
+                        continue
                     for goal in sizes[algo][pset]['STUB']:
                         stub_size = sizes[algo][pset]['STUB'][goal]
                         stub_text_size = stub_size['text']
@@ -55,12 +58,18 @@ def report_footprint(build_dir):
             for algo in sizes.keys():
                 out[target][algo]={}
                 for pset in sizes[algo].keys():
+                    if len(stub[algo][pset]) == 0:
+                        # already reported as missing when collecting the STUB sizes
+                        continue
                     out[target][algo][pset]={}
                     for lib in sizes[algo][pset]:
                         if lib == 'STUB':
                             continue
                         out[target][algo][pset][lib]={}
                         for goal in sizes[algo][pset][lib]:
+                            if goal not in stub[algo][pset].keys():
+                                logging.warning(f'{target} {algo} {pset} {lib} {goal}: no matching STUB build, skipping size report')
+                                continue
                             stub_size = stub[algo][pset][goal]['size']
                             stub_text_size = stub[algo][pset][goal]['text_size']
                             stub_ram_size = stub[algo][pset][goal]['ram_size']
@@ -73,6 +82,10 @@ def report_footprint(build_dir):
                                 ram_size = 0
                             d['ram'] = ram_size
                             out[target][algo][pset][lib][goal]=d
+                        if len(out[target][algo][pset][lib]) == 0:
+                            del out[target][algo][pset][lib]
+                    if len(out[target][algo][pset]) == 0:
+                        del out[target][algo][pset]
     return out
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ class PqMicroLibCore:
             case 'cortex-m4' | 'cortex-m7':
                 return 'armv7me'
             case 'cortex-m33':
-                return 'armv8m',
+                return 'armv8m'
             case 'cortex-m52' | 'cortex-m55':
                 return 'armv8_1m'
             case _:
