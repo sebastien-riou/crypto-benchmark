@@ -29,5 +29,10 @@ class M5531:
         return {
             'cmd':['./run']
         }
+
+    def com_device_cmd(self):
+        return {
+            'cmd':['./find-uart']
+        }
     
 helper = M5531()

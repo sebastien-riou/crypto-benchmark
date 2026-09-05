@@ -7,6 +7,7 @@ import subprocess
 import multiprocessing as mp
 import traceback
 import sys
+import time
 sys.path.insert(0, '../lean-benchmark')
 import lean_benchmark
 
@@ -106,7 +107,7 @@ if __name__ == '__main__':
     levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
     parser.add_argument('--log-level', default='INFO', choices=levels)
     parser.add_argument(
-        'device', help='Path to the serial device', type=str
+        '--device', default=None, help='Path to the serial device', type=str
     )
     parser.add_argument(
         '--baud', default=115200, help='Baudrate', type=int
@@ -330,6 +331,7 @@ if __name__ == '__main__':
                 raise RuntimeError(res) 
         else:
             logging.debug('process_cmd: full_cmd is None')
+        return out
 
     link_ext_dict = runpy.run_path('link_ext.py')
     def link_ext(goal):
@@ -406,10 +408,22 @@ if __name__ == '__main__':
                             load_cmd = hwp.load_cmd(swt)
                             process_cmd(load_cmd,hwp_path)
 
+                            device = args.device
+                            if device is None:
+                                logging.info('find device')
+                                for _trials in range(0,6):
+                                    try:
+                                        device = process_cmd(hwp.com_device_cmd(),hwp_path)
+                                    except:
+                                        time.sleep(1)
+                                if device is None:
+                                    logging.error('Could not find communication device, use "--device=" to specify it.')
+                                
+
                             logging.info('run firmware')
                             p1 = Process(target=process_cmd, args=[hwp.run_cmd(swt),hwp_path])
                             p1.start()
-                            p2 = Process(target=tool,args=[None,'./get-results',args.device,'--device-timeout=180','--write=1'])
+                            p2 = Process(target=tool,args=[None,'./get-results',device,'--device-timeout=180','--write=1'])
                             p2.start()
                             p1.join()
                             if p1.exception:

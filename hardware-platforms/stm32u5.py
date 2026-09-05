@@ -24,7 +24,13 @@ class Stm32u5a5:
     def run_cmd(self,sw_target):
         if self.sw_target != sw_target:
             raise RuntimeError(f'last build was targeting {self.sw_target} but run for {sw_target} is requested')
-        # target is running right after load, so nothing to do
-        return None
+        return {
+            'cmd':['./run']
+        }
+
+    def com_device_cmd(self):
+        return {
+            'cmd':['./find-uart']
+        }
     
 helper = Stm32u5a5()
