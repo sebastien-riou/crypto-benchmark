@@ -7,6 +7,7 @@ class Stm32u5a5:
     def __init__(self):
         self.sw_target = None
         self.path = '../crypto-benchmark-stm32u5'
+        self.run_in_parallel = False # wait 'run' script to exit before starting leanbenchmark
     
     def build_cmd(self,sw_target):
         self.sw_target = sw_target

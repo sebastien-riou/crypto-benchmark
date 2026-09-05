@@ -318,6 +318,7 @@ if __name__ == '__main__':
             return out,res
         
     def process_cmd(full_cmd, root):
+        out = None
         if full_cmd:
             cwd = None
             if 'dir' in full_cmd:
@@ -328,6 +329,7 @@ if __name__ == '__main__':
             if cwd is None:
                 cwd=root
             out,res = tool(cwd,*full_cmd['cmd'])
+            logging.debug(out)
             if res != 0:
                 raise RuntimeError(res) 
         else:
@@ -423,16 +425,27 @@ if __name__ == '__main__':
                                 
 
                             logging.info('run firmware')
+                            # The run command must complete before the host starts listening.
+                            # Loading the firmware already left an instance running, so a host
+                            # started in parallel handshakes with that one instead of with the
+                            # instance this reset is about to start -- and on the m5531 that
+                            # post-load instance boots while pyocd is still detaching, i.e. with
+                            # DEMCR.TRCENA cleared under it, so every cycle count reads 0.
                             p1 = Process(target=process_cmd, args=[hwp.run_cmd(swt),hwp_path])
                             p1.start()
+                            def p1_join():
+                                p1.join()
+                                if p1.exception:
+                                    logging.error(f'Hardware platform failed to run the firmware')
+                                    error,trace = p1.exception
+                                    logging.error(trace)
+                                    exit(-7)
+                            if(not hwp.run_in_parallel):
+                                p1_join()
                             p2 = Process(target=tool,args=[None,'./get-results',device,'--device-timeout=180','--write=1'])
                             p2.start()
-                            p1.join()
-                            if p1.exception:
-                                logging.error(f'Hardware platform failed to run the firmware')
-                                error,trace = p1.exception
-                                logging.error(trace)
-                                exit(-7)
+                            if(hwp.run_in_parallel):
+                                p1_join()
                             p2.join()
                             if p2.exception:
                                 logging.error(f'An exception occured in lean_benchmark.py')

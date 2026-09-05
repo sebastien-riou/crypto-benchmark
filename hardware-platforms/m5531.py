@@ -7,6 +7,7 @@ class M5531:
     def __init__(self):
         self.sw_target = None
         self.path = '../crypto-benchmark-m5531'
+        self.run_in_parallel = False # wait 'run' script to exit before starting leanbenchmark
     
     def build_cmd(self,sw_target):
         self.sw_target = sw_target
