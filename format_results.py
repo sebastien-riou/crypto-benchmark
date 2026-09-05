@@ -232,6 +232,49 @@ def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> s
 
     return out
 
+def run_info(data) -> dict:
+    keys = data['info'][::2] #items at even index
+    values = data['info'][1::2] #items at odd index
+    return dict(zip(keys,values))
+
+def run_timestamp(p, data) -> str:
+    #every record carries the timestamp of its run, the file name starts with it as well
+    timestamps = [r['timestamp'] for r in data['results'] if 'timestamp' in r]
+    if timestamps:
+        return max(timestamps)
+    return os.path.basename(p)[:len('YYYYMMDD-HH-MM-SS')]
+
+def select_latest_runs(result_files, root):
+    """Keep only the most recent result file for each benchmarked configuration.
+
+    Result files accumulate in the root directory, so the same configuration is
+    usually present several times. All of them used to be reported, each one
+    overwriting the previous, which made the outcome depend on the order glob()
+    happens to return the files in: a stale run could silently win over the
+    latest one. Only the latest run describes the current state of the target,
+    so that is the one we keep.
+    """
+    latest = {}
+    for p in result_files:
+        with open(os.path.join(root,p),'rb') as f:
+            data = pickle.load(f)
+        info = run_info(data)
+        key = (info['hw_platform'],
+               info['sw_target_cpu'],
+               info['algo'],
+               info['impl_name'],
+               info['pset'])
+        ts = run_timestamp(p,data)
+        if key not in latest or ts > latest[key][0]:
+            latest[key] = (ts,p)
+    selected = set(p for ts,p in latest.values())
+    superseded = sorted(set(result_files) - selected)
+    for p in superseded:
+        logging.debug(f'ignoring {p}: superseded by a more recent run')
+    if superseded:
+        logging.info(f'using {len(selected)} result files, {len(superseded)} superseded by more recent runs')
+    return sorted(selected)
+
 def main(args_target,args_algo,format,*,
          root='.',
          args_lib=None,
@@ -283,16 +326,13 @@ def main(args_target,args_algo,format,*,
     logging.debug(f'lib_names: {lib_names}')
 
     #get perf results
-    result_files = glob.glob('*.pickle',root_dir=root)
+    result_files = select_latest_runs(glob.glob('*.pickle',root_dir=root), root)
     hw_platforms = {}
     for p in result_files:
         with open(os.path.join(root,p),'rb') as f:
             data = pickle.load(f)
-            info = data['info']
             results = data['results']
-            keys = data['info'][::2] #items at even index
-            values = data['info'][1::2] #items at odd index
-            info = dict(zip(keys,values))
+            info = run_info(data)
             target = info['sw_target_cpu']
             if target != args_target:
                 continue
