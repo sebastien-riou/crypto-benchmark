@@ -305,9 +305,10 @@ if __name__ == '__main__':
 
     def tool(cwd, *cmd):
         if cwd:
-            logging.info(f'Executing from {cwd}: {cmd}')
+            logging.info(f'Executing from {cwd}: {' '.join(cmd)}')
         else:
-            logging.info(f'Executing {cmd}')
+            logging.info(f'Executing {' '.join(cmd)}')
+        logging.debug(f'cwd={cwd}, cmd={cmd}')
         if args.dry_run:
             return '',0
         else:
@@ -414,6 +415,7 @@ if __name__ == '__main__':
                                 for _trials in range(0,6):
                                     try:
                                         device = process_cmd(hwp.com_device_cmd(),hwp_path)
+                                        break
                                     except:
                                         time.sleep(1)
                                 if device is None:
