@@ -7,17 +7,40 @@ cd crypto-benchmark
 ./initial-setup
 ````
 
-The script `initial-setup` is going to:
-- clone `lean-benchmark` and `dilithium-lowram` 
-- build them
-- build crypto-benchmark 
-- run MLDSA-44 benchmark on Renode
-- show the results
+`initial-setup` is a Python script (stdlib only, no dependencies to install
+first). With no flags it prompts you for the choices below; pass flags to
+run non-interactively (e.g. in CI).
 
-if you want to skip Renode:
+- `--level {minimal,full,custom}` — `minimal` clones/builds only
+  `lean-benchmark` + `dilithium-lowram` (the `OPEN_SOURCE` ML-DSA-44 demo).
+  `full` additionally clones every add-on in `setup_manifest.py` (other
+  crypto libraries and hardware-platform repos). `custom` clones the
+  add-ons you list with `--addons`.
+- `--addons NAME[,NAME...]` — add-on names to include (implies
+  `--level custom`). Run `./initial-setup --list-addons` to see the catalog.
+- `--protocol {https,ssh}` — clone over HTTPS (default) or SSH.
+- `--version {pinned,latest}` — `pinned` (default) checks out each repo's
+  pinned tag from `setup_manifest.py`; `latest` clones the default branch.
+- `--test-renode {0,1,on,off,true,false}` — whether to run `./test-renode`
+  and show results afterward (default on).
+- `-y`/`--yes` — never prompt, use flags/defaults only.
+- `--dry-run` — print what would be cloned/built without doing it.
+
+Example, skipping Renode:
 ````
-./initial-setup 0
+./initial-setup --test-renode=off --yes
 ````
+
+If a sibling repo directory already exists, `initial-setup` skips cloning it
+and instead warns (immediately, and again in a "Summary of warnings" at the
+end) if its working copy is dirty or not on the expected tag/branch.
+
+----
+**NOTE**
+
+`STM32PQC` (ST's X-Cube PQC library) is proprietary and not git-cloneable —
+see the [STM32PQC library](#stm32pqc-library) section below for manual setup.
+----
 
 ## Setup step by step
 This section is a step by step guide, to do the same as the [previous sections](#Setup-by-script).
