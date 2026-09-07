@@ -19,3 +19,4 @@ STM32_Cryptographic/
 *.csv
 git_untracked.log
 goal.txt
+__pycache__
