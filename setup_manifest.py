@@ -51,21 +51,24 @@ ADDONS = {
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-rp2350",
             "default_tag": "crypto-benchmark-0.0.11",
-            "build": None,
+            "build": None,  # its own initial-setup fetches toolchains + wolfssl/pico-sdk and builds crypto-benchmark for its own targets
+            "docs_hint": "crypto-benchmark-rp2350/README.md -- run its own ./initial-setup",
         },
         {
             "name": "crypto-benchmark-stm32u5",
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-stm32u5",
             "default_tag": "crypto-benchmark-0.0.10",
-            "build": None,
+            "build": None,  # its own initial-setup clones wolfssl and builds crypto-benchmark for its own targets
+            "docs_hint": "crypto-benchmark-stm32u5/README.md -- run its own ./initial-setup",
         },
         {
             "name": "crypto-benchmark-m5531",
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-m5531",
             "default_tag": "crypto-benchmark-0.0.10",
-            "build": None,
+            "build": None,  # its own initial-setup clones wolfssl and builds crypto-benchmark for its own targets
+            "docs_hint": "crypto-benchmark-m5531/README.md -- run its own ./initial-setup",
         },
     ],
 }

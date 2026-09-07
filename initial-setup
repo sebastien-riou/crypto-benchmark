@@ -183,12 +183,17 @@ def process_repo(name, entry, protocol, version_mode, host_url_templates, dry_ru
     dest = os.path.join(SIBLINGS_DIR, name)
     try:
         if os.path.isdir(dest):
-            logging.info("%s: already exists at %s, skipping clone", name, dest)
+            # An existing sibling is treated as already set up: re-running this
+            # tool must not re-trigger a repo's build steps (e.g. lean-benchmark's
+            # own build-all-targets has no error suppression and covers ~25
+            # boards -- one flaky failure on a re-run silently wipes out its
+            # previously-working dist/ output for everything downstream).
+            logging.info("%s: already exists at %s, skipping clone and build", name, dest)
             check_existing_state(name, dest, entry, version_mode)
             record(name, "skipped-existing")
-        else:
-            clone_repo(name, entry, dest, protocol, version_mode, host_url_templates, dry_run)
-            record(name, "cloned")
+            return
+        clone_repo(name, entry, dest, protocol, version_mode, host_url_templates, dry_run)
+        record(name, "cloned")
         run_build_steps(name, entry, dest, dry_run)
     except subprocess.CalledProcessError as e:
         if required:
@@ -221,6 +226,8 @@ def main():
     parser.add_argument("--version", dest="version_mode", choices=["pinned", "latest"], default=None)
     parser.add_argument("--test-renode", dest="test_renode", type=parse_bool_flag, default=None,
                          metavar="{0,1,on,off,true,false}")
+    parser.add_argument("legacy_test_renode", nargs="?", type=parse_bool_flag, default=None,
+                         help=argparse.SUPPRESS)  # backward compat: old callers run `./initial-setup 0|1`
     parser.add_argument("--pipenv-args", default="--verbose")
     parser.add_argument("-y", "--yes", action="store_true", help="never prompt, use flags/defaults only")
     parser.add_argument("--dry-run", action="store_true")
@@ -228,6 +235,8 @@ def main():
     levels = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
     parser.add_argument("--log-level", default="INFO", choices=levels)
     args = parser.parse_args()
+    if args.test_renode is None and args.legacy_test_renode is not None:
+        args.test_renode = args.legacy_test_renode
 
     logging.basicConfig(level=args.log_level, format="%(levelname)s: %(message)s")
 
@@ -250,8 +259,14 @@ def main():
 
     for entry in core:
         process_repo(entry["name"], entry, protocol, version_mode, host_url_templates, args.dry_run, required=True)
-    for entry in minimal_demo:
-        process_repo(entry["name"], entry, protocol, version_mode, host_url_templates, args.dry_run, required=True)
+
+    # "custom" means "core + only the addons the user picked" -- it must not
+    # also drag in the (expensive, multi-toolchain) OPEN_SOURCE demo that
+    # "minimal"/"full" are about.
+    run_demo = level in ("minimal", "full")
+    if run_demo:
+        for entry in minimal_demo:
+            process_repo(entry["name"], entry, protocol, version_mode, host_url_templates, args.dry_run, required=True)
 
     flat_addons = flat_addon_list(addons)
     if level == "full":
@@ -270,15 +285,20 @@ def main():
         subprocess.run(pipenv_install_cmd, cwd=SCRIPT_DIR, check=True)
         subprocess.run(["pipenv", "sync"], cwd=SCRIPT_DIR, check=True)
 
-        # No -DRAW_COM is ever passed: this keeps CMake's own default
-        # (RAW_COM=0, leancom). RAW_COM=1 is a raw-UART fallback for
-        # bringing up brand-new hardware and is out of scope for this script.
-        subprocess.run(["./build-all-targets", "mldsa", "44", "OPEN_SOURCE", "small", "minSizeRel"],
-                        cwd=SCRIPT_DIR, check=True)
+        if run_demo:
+            # Renode's UART capture is one-way (Renode -> log file only), so
+            # firmware built with the two-way leancom default (RAW_COM=0)
+            # hangs forever waiting for a handshake response Renode can never
+            # send. -DRAW_COM=1 is only for that case; real-hardware use
+            # keeps the leancom default.
+            raw_com = "1" if test_renode else "0"
+            subprocess.run(["./build-all-targets", "mldsa", "44", "OPEN_SOURCE", "small", "minSizeRel",
+                             f"-DRAW_COM={raw_com}"],
+                            cwd=SCRIPT_DIR, check=True)
 
-        if test_renode:
-            subprocess.run(["./test-renode"], cwd=SCRIPT_DIR, check=True)
-            subprocess.run(["./show-all-uart-results", "--details=0"], cwd=SCRIPT_DIR, check=True)
+            if test_renode:
+                subprocess.run(["./test-renode"], cwd=SCRIPT_DIR, check=True)
+                subprocess.run(["./show-all-uart-results", "--details=0"], cwd=SCRIPT_DIR, check=True)
 
     print_summary(manual_only, level)
     return 0

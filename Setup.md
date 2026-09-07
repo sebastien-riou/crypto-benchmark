@@ -11,18 +11,22 @@ cd crypto-benchmark
 first). With no flags it prompts you for the choices below; pass flags to
 run non-interactively (e.g. in CI).
 
-- `--level {minimal,full,custom}` — `minimal` clones/builds only
-  `lean-benchmark` + `dilithium-lowram` (the `OPEN_SOURCE` ML-DSA-44 demo).
-  `full` additionally clones every add-on in `setup_manifest.py` (other
-  crypto libraries and hardware-platform repos). `custom` clones the
-  add-ons you list with `--addons`.
+- `--level {minimal,full,custom}` — `minimal` clones/builds `lean-benchmark`
+  + `dilithium-lowram` and builds+Renode-tests the baseline `OPEN_SOURCE`
+  ML-DSA-44 demo. `full` additionally clones every add-on in
+  `setup_manifest.py` (other crypto libraries and hardware-platform repos).
+  `custom` clones `lean-benchmark` plus only the add-ons you list with
+  `--addons` — it does **not** build or Renode-test the `OPEN_SOURCE` demo,
+  so `--test-renode` has no effect under `custom`.
 - `--addons NAME[,NAME...]` — add-on names to include (implies
   `--level custom`). Run `./initial-setup --list-addons` to see the catalog.
 - `--protocol {https,ssh}` — clone over HTTPS (default) or SSH.
 - `--version {pinned,latest}` — `pinned` (default) checks out each repo's
   pinned tag from `setup_manifest.py`; `latest` clones the default branch.
 - `--test-renode {0,1,on,off,true,false}` — whether to run `./test-renode`
-  and show results afterward (default on).
+  and show results afterward (default on). This also controls how the demo
+  is built: `-DRAW_COM=1` when on (Renode's UART capture is one-way and
+  needs it), the normal `leancom` build (`-DRAW_COM=0`) when off.
 - `-y`/`--yes` — never prompt, use flags/defaults only.
 - `--dry-run` — print what would be cloned/built without doing it.
 
@@ -34,6 +38,11 @@ Example, skipping Renode:
 If a sibling repo directory already exists, `initial-setup` skips cloning it
 and instead warns (immediately, and again in a "Summary of warnings" at the
 end) if its working copy is dirty or not on the expected tag/branch.
+
+For backward compatibility, `./initial-setup 0`/`./initial-setup 1` (the old
+positional-arg form) is still accepted as shorthand for `--test-renode`,
+since the hardware-platform sibling repos' own `initial-setup` scripts
+(`crypto-benchmark-rp2350`, `-stm32u5`, `-m5531`) call it that way.
 
 ----
 **NOTE**
