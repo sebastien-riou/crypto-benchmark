@@ -179,6 +179,71 @@ def run_build_steps(name, entry, dest, dry_run):
         subprocess.run(cmd, cwd=dest, check=True)
 
 
+def run_setup_steps(name, entry, dest, dry_run):
+    setup_steps = entry.get("setup")
+    if not setup_steps:
+        return
+    for step in setup_steps:
+        cmd = shlex.split(step)
+        logging.info("setup %s: %s", name, step)
+        if dry_run:
+            continue
+        subprocess.run(cmd, cwd=dest, check=True)
+
+
+def load_hw_platform_helper(helper_module):
+    module_path = os.path.join(SCRIPT_DIR, "hardware-platforms", f"{helper_module}.py")
+    return runpy.run_path(module_path)["helper"]
+
+
+def process_hardware_platform(entry, protocol, version_mode, host_url_templates, dry_run):
+    # Unlike process_repo, a hardware-platform add-on's setup/build steps
+    # below run every time it's selected, even if its own repo already
+    # existed -- only the initial clone is skipped. These steps are fast and
+    # idempotent, and are the actual point of selecting the add-on: a
+    # cloned-but-unbuilt platform is not a working installation. It's each
+    # platform's own setup script/command's job to make re-running it a
+    # no-op when there's nothing to do.
+    name = entry["name"]
+    dest = os.path.join(SIBLINGS_DIR, name)
+    try:
+        if os.path.isdir(dest):
+            logging.info("%s: already exists at %s, skipping clone", name, dest)
+            check_existing_state(name, dest, entry, version_mode)
+            record(name, "skipped-existing")
+        else:
+            clone_repo(name, entry, dest, protocol, version_mode, host_url_templates, dry_run)
+            record(name, "cloned")
+        run_setup_steps(name, entry, dest, dry_run)
+    except subprocess.CalledProcessError as e:
+        warn(f"{name}: {e}")
+        record(name, "failed")
+        return
+
+    helper = load_hw_platform_helper(entry["helper_module"])
+    for swt in helper.sw_targets():
+        target_label = f"{name} ({swt})"
+        try:
+            logging.info("ensuring crypto-benchmark lib for %s", target_label)
+            if not dry_run:
+                subprocess.run(["python3", "link_ext.py", "--goal=small"], cwd=SCRIPT_DIR, check=True)
+                subprocess.run(["./buildit", f"on/{swt}", "mldsa", "44", "OPEN_SOURCE", "minSizeRel"],
+                                cwd=SCRIPT_DIR, check=True)
+
+            build = helper.build_cmd(swt)
+            cwd = dest
+            if build.get("dir"):
+                d = build["dir"]
+                cwd = d if os.path.isabs(d) else os.path.join(dest, d)
+            logging.info("building firmware for %s: %s", target_label, " ".join(build["cmd"]))
+            if not dry_run:
+                subprocess.run(build["cmd"], cwd=cwd, check=True)
+            record(target_label, "planned" if dry_run else "built")
+        except subprocess.CalledProcessError as e:
+            warn(f"{target_label}: {e}")
+            record(target_label, "failed")
+
+
 def process_repo(name, entry, protocol, version_mode, host_url_templates, dry_run, required):
     dest = os.path.join(SIBLINGS_DIR, name)
     try:
@@ -268,17 +333,20 @@ def main():
         for entry in minimal_demo:
             process_repo(entry["name"], entry, protocol, version_mode, host_url_templates, args.dry_run, required=True)
 
-    flat_addons = flat_addon_list(addons)
+    tagged_addons = [(category, entry) for category, entries in addons.items() for entry in entries]
     if level == "full":
-        plan = flat_addons
+        plan = tagged_addons
     elif level == "custom":
-        by_name = {entry["name"]: entry for entry in flat_addons}
+        by_name = {entry["name"]: (category, entry) for category, entry in tagged_addons}
         plan = [by_name[n] for n in selected_addons if n in by_name]
     else:
         plan = []
 
-    for entry in plan:
-        process_repo(entry["name"], entry, protocol, version_mode, host_url_templates, args.dry_run, required=False)
+    for category, entry in plan:
+        if category == "hardware-platforms":
+            process_hardware_platform(entry, protocol, version_mode, host_url_templates, args.dry_run)
+        else:
+            process_repo(entry["name"], entry, protocol, version_mode, host_url_templates, args.dry_run, required=False)
 
     if not args.dry_run:
         pipenv_install_cmd = ["pipenv"] + shlex.split(args.pipenv_args) + ["install"]

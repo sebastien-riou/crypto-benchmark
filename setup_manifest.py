@@ -51,24 +51,24 @@ ADDONS = {
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-rp2350",
             "default_tag": "crypto-benchmark-0.0.11",
-            "build": None,  # its own initial-setup fetches toolchains + wolfssl/pico-sdk and builds crypto-benchmark for its own targets
-            "docs_hint": "crypto-benchmark-rp2350/README.md -- run its own ./initial-setup",
+            "helper_module": "rp2350",  # hardware-platforms/rp2350.py, same one benchmark.py uses
+            "setup": ["./setup-pico-sdk"],  # idempotent: clones pico-sdk if missing
         },
         {
             "name": "crypto-benchmark-stm32u5",
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-stm32u5",
             "default_tag": "crypto-benchmark-0.0.10",
-            "build": None,  # its own initial-setup clones wolfssl and builds crypto-benchmark for its own targets
-            "docs_hint": "crypto-benchmark-stm32u5/README.md -- run its own ./initial-setup",
+            "helper_module": "stm32u5",  # hardware-platforms/stm32u5.py
+            "setup": None,  # nothing extra needed beyond its own repo
         },
         {
             "name": "crypto-benchmark-m5531",
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-m5531",
             "default_tag": "crypto-benchmark-0.0.10",
-            "build": None,  # its own initial-setup clones wolfssl and builds crypto-benchmark for its own targets
-            "docs_hint": "crypto-benchmark-m5531/README.md -- run its own ./initial-setup",
+            "helper_module": "m5531",  # hardware-platforms/m5531.py
+            "setup": ["pipenv install"],  # bootstraps its own pyocd venv
         },
     ],
 }
