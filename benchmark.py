@@ -83,9 +83,18 @@ algorithms_catalog = {'mldsa':Mldsa(),'sha2':Sha2()}
 goals_catalog = {'small','balanced','fast'}
 
 
-def invoke_tool(cwd,*cmd):
+def invoke_tool(cwd,*cmd,capture=False):
+    logging.debug(cmd)
+    if not capture:
+        # Stream straight to our own stdout/stderr instead of buffering: the
+        # caller doesn't need the text back, and unbuffered output is the
+        # difference between watching a long-running command (e.g.
+        # get-results driving the lean-com handshake) live versus only
+        # finding out what happened after it exits -- or never, if it's
+        # killed via Ctrl-C first.
+        res = subprocess.run(cmd, check=True, shell=False, cwd=cwd)  # noqa: S603
+        return None,res.returncode
     try:
-        logging.debug(cmd)
         res = subprocess.run(cmd, capture_output=True, check=True, shell=False, cwd=cwd)  # noqa: S603
         outstr = res.stdout.decode()
         logging.debug(outstr)
@@ -303,7 +312,7 @@ if __name__ == '__main__':
         sw_libs = useful_sw_libs
     logging.info(f'Valid software libraries: {get_names(sw_libs)}')    
 
-    def tool(cwd, *cmd):
+    def tool(cwd, *cmd, capture=False):
         if cwd:
             logging.info(f'Executing from {cwd}: {' '.join(cmd)}')
         else:
@@ -312,12 +321,12 @@ if __name__ == '__main__':
         if args.dry_run:
             return '',0
         else:
-            out,res = invoke_tool(cwd, *cmd)
+            out,res = invoke_tool(cwd, *cmd, capture=capture)
             if res != 0:
                 raise RuntimeError(res)
             return out,res
-        
-    def process_cmd(full_cmd, root):
+
+    def process_cmd(full_cmd, root, capture=False):
         out = None
         if full_cmd:
             cwd = None
@@ -328,10 +337,10 @@ if __name__ == '__main__':
                     cwd=os.path.join(root,cwd)
             if cwd is None:
                 cwd=root
-            out,res = tool(cwd,*full_cmd['cmd'])
+            out,res = tool(cwd,*full_cmd['cmd'], capture=capture)
             logging.debug(out)
             if res != 0:
-                raise RuntimeError(res) 
+                raise RuntimeError(res)
         else:
             logging.debug('process_cmd: full_cmd is None')
         return out
@@ -416,7 +425,7 @@ if __name__ == '__main__':
                                 logging.info('find device')
                                 for _trials in range(0,6):
                                     try:
-                                        device = process_cmd(hwp.com_device_cmd(),hwp_path)
+                                        device = process_cmd(hwp.com_device_cmd(),hwp_path,capture=True)
                                         break
                                     except:
                                         time.sleep(1)
@@ -472,7 +481,7 @@ if __name__ == '__main__':
                     if len(elf_files) == 0:
                         logging.warning(f'No elf file built for {algo} on {swt} with {lib['name']}, skipping size report')
                         continue
-                    out,res = tool(None, 'size',*elf_files)
+                    out,res = tool(None, 'size',*elf_files,capture=True)
                     with open(f'{outdir}/sizes.txt','w') as f:
                         print(out,file=f)
                     file_name = f'{lean_benchmark.get_timestamp()}-{hwp_name}-{swt}-{lib['name']}-{algo}.csv'
