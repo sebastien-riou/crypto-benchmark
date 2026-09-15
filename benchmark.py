@@ -123,7 +123,12 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--exclusive', help='Exclusive access', action='store_true'
-    ) 
+    )
+    parser.add_argument(
+        '--sync-timeout', default=3, type=float,
+        help='Maximum seconds to wait for the lean-com handshake with the device to complete '
+             '(passed through to get-results/lean_benchmark.py). -1 blocks indefinitely.'
+    )
     parser.add_argument(
         '--dry-run', help='List the benchmarks without running them', action='store_true'
     ) 
@@ -451,7 +456,7 @@ if __name__ == '__main__':
                                     exit(-7)
                             if(not hwp.run_in_parallel):
                                 p1_join()
-                            p2 = Process(target=tool,args=[None,'./get-results',device,'--device-timeout=180','--write=1'])
+                            p2 = Process(target=tool,args=[None,'./get-results',device,'--device-timeout=180','--write=1',f'--sync-timeout={args.sync_timeout}'])
                             p2.start()
                             if(hwp.run_in_parallel):
                                 p1_join()
