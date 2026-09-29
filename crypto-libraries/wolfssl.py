@@ -10,10 +10,10 @@ class Wolfssl:
             'cortex-m52',
             'cortex-m55',
             'cortex-m85',
-            #'rv32i',
-            #'rv32imc',
-            #'rv32imcb',
-            #'rv64imc'
+            'rv32i',
+            'rv32imc',
+            'rv32imcb',
+            'rv64imc'
             ]
 
     @staticmethod
