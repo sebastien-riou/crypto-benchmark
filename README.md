@@ -24,6 +24,10 @@ Following ML-DSA librairies have been integrated (alphabetical order):
 - `STM32PQC`: [ST Microelectronics's X-Cube PQC](https://www.st.com/en/embedded-software/x-cube-pqc.html)
 - `WOLFSSL`: [WolfSSL](https://github.com/sebastien-riou/wolfssl) (use 'crypto-benchmark' branch)
 
+AES is a work in progress: only AES-128 CMAC verify of a 64-byte message is benchmarked (`libaes-lbmk`, `ALGO=aes`, `PSET=128`), with:
+- `STM32PQC`: goals `small` / `fast` (cmox AES small / fast implementation)
+- `WOLFSSL`: goals `small` / `fast` (`WOLFSSL_AES_SMALL_TABLES` / default tables), built by `buildit-aes-small` / `buildit-aes-fast`
+
 This has been tested with:
 - Ubuntu 24.04
 - cmake 3.28.3

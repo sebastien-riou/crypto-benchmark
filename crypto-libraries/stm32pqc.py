@@ -20,6 +20,7 @@ class Stm32pqc:
     def algorithms():
         return {
             'mldsa':['small','balanced'],
+            'aes':['small','fast'],
         }
     
     def __init__(self):
@@ -27,7 +28,7 @@ class Stm32pqc:
         self.codename = 'STM32PQC'
         self.path = 'STM32_Cryptographic'
     
-    def build_cmd(self,sw_target,goal,pset):
+    def build_cmd(self,sw_target,goal,pset,algo):
         self.sw_target = sw_target
         return None
 

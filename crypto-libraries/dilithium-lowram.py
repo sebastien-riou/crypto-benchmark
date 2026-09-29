@@ -27,7 +27,7 @@ class DilithiumLowRam:
         self.codename = 'OPEN_SOURCE'
         self.path = '../dilithium-lowram'
     
-    def build_cmd(self,sw_target,goal,pset):
+    def build_cmd(self,sw_target,goal,pset,algo):
         self.sw_target = sw_target
         return {
             'dir':'libpqcrystals-mldsa-lowram',

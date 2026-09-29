@@ -78,7 +78,22 @@ class Sha2(object):
         return ['hash']
 
 
-algorithms_catalog = {'mldsa':Mldsa(),'sha2':Sha2()}
+class Aes(object):
+    @staticmethod
+    def psets():
+        # key size in bits
+        return ['128']
+
+    @staticmethod
+    def pset_code(pset: str) -> str:
+        return pset
+
+    @staticmethod
+    def operations():
+        return ['cmac_verify']
+
+
+algorithms_catalog = {'mldsa':Mldsa(),'sha2':Sha2(),'aes':Aes()}
 
 goals_catalog = {'small','balanced','fast'}
 
@@ -299,7 +314,7 @@ if __name__ == '__main__':
                 usable_sw_libs = []
                 for lib in sw_libs:
                     lib_algos = lib['helper'].algorithms()
-                    if lib_algos[a] and g not in lib_algos[a]:
+                    if lib_algos.get(a) and g not in lib_algos[a]:
                         logging.debug(f'"{lib['name']}" discarded because it does not support goal "{g}" for algorithm "{a}"')
                     else:
                         usable_sw_libs.append(lib)
@@ -411,7 +426,7 @@ if __name__ == '__main__':
                             pset_code = algorithms_catalog[algo].pset_code(pset)
                             
                             logging.info('build library')
-                            process_cmd(lib['helper'].build_cmd(swt,goal,pset_code),lib['helper'].path)
+                            process_cmd(lib['helper'].build_cmd(swt,goal,pset_code,algo),lib['helper'].path)
 
                             link_ext(goal)
 

@@ -20,6 +20,7 @@ class Wolfssl:
     def algorithms():
         return {
             'mldsa':['small','balanced','fast'],
+            'aes':['small','fast'],
         }
     
     def __init__(self):
@@ -27,11 +28,11 @@ class Wolfssl:
         self.codename = 'WOLFSSL'
         self.path = '../wolfssl'
     
-    def build_cmd(self,sw_target,goal,pset):
+    def build_cmd(self,sw_target,goal,pset,algo):
         self.sw_target = sw_target
         return {
             'dir':'.',
-            'cmd':[f'./buildit-mldsa-{goal}',f'{self.sw_target}','no']
+            'cmd':[f'./buildit-{algo}-{goal}',f'{self.sw_target}','no']
         }
 
     

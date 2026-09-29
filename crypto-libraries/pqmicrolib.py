@@ -39,7 +39,7 @@ class PqMicroLibCore:
         self.codename = 'PQSHIELD'
         self.path = '../pqmicrolib-library'
     
-    def build_cmd(self,sw_target,goal,pset):
+    def build_cmd(self,sw_target,goal,pset,algo):
         self.sw_target = sw_target
         preset = f'gcc-{self.preset(sw_target)}'
         return {
