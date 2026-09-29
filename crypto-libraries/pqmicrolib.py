@@ -42,9 +42,11 @@ class PqMicroLibCore:
     def build_cmd(self,sw_target,goal,pset,algo):
         self.sw_target = sw_target
         preset = f'gcc-{self.preset(sw_target)}'
+        # CMake prepends $CFLAGS to the toolchain's initial flags, but only when (re)configuring
+        # from scratch, hence --fresh (buildit forwards extra arguments to cmake).
         return {
             'dir':'utl/tools',
-            'cmd':['./buildit',preset]
+            'cmd':['env','CFLAGS=-flto -ffat-lto-objects','./buildit',preset,'--fresh']
         }
 
     
