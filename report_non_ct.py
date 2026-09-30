@@ -14,7 +14,7 @@ import sys
 
 # Arm instructions with a documented data-dependent timing on at least one Cortex-M core:
 # - long multiplies: early termination on Cortex-M3 (measured on the STM32F207: 1 cycle plus 1 per non-zero
-#   16-bit half of the operands, see notes_git_ignore/wolfssl-mlkem-umull.md)
+#   16-bit half of the operands)
 # - divides: 2 to 12 cycles depending on the operands on Cortex-M3 and M4
 ARM_INSTRUCTIONS = ('umull', 'smull', 'umlal', 'smlal', 'sdiv', 'udiv')
 ARM_CONDITIONS = r'(eq|ne|cs|cc|hs|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al)?'  # inside IT blocks
