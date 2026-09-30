@@ -1,0 +1,63 @@
+#!/bin/bash
+
+set -ex
+
+CRYPTOLIB=${1:-PQSHIELD}
+GOAL=${2:-balanced}
+PRESET=${3:-minSizeRel}
+
+# only the smallest parameter set for now
+declare -a PSETS=("512")
+declare -a TOOLCHAINS=("on/cortex-m3" "on/cortex-m33" "on/rv32imc" "on/rv64imc")
+
+set +x
+if [ "$CRYPTOLIB" == "STM32PQC" ]; then
+    echo "ERROR: STM32PQC runs only on STM32 hardware, it cannot be benchmarked using Renode"
+    exit 1
+fi
+set -x
+
+for PSET in "${PSETS[@]}"
+do
+    ./renode-benchmark mlkem $PSET $CRYPTOLIB $GOAL
+done
+
+# build generic target for static memory sizes
+python3 link_ext.py --preset=$PRESET --goal=$GOAL
+declare -a TARGETS=()
+for TOOLCHAIN in "${TOOLCHAINS[@]}"
+do
+    TARGET=$(basename ${TOOLCHAIN})
+    OUTDIR="build/$TARGET"
+    ELFS=()
+    BUILT=1
+    for PSET in "${PSETS[@]}"
+    do
+        for LIB in STUB $CRYPTOLIB
+        do
+            # not all libraries are available for all targets
+            if ./buildit $TOOLCHAIN mlkem $PSET $LIB $PRESET ${@:4}; then
+                ELFS+=("${OUTDIR}/crypto-benchmark-$LIB-$GOAL-mlkem-$PSET.elf")
+            else
+                BUILT=0
+            fi
+        done
+    done
+    if [ $BUILT == 0 ]; then
+        set +x
+        echo "$TARGET skipped: $CRYPTOLIB $GOAL does not build for it"
+        set -x
+        continue
+    fi
+    # only this run's elf files: leftovers from previous runs have no matching STUB build
+    size "${ELFS[@]}" > ${OUTDIR}/sizes.txt
+    pipenv run python format_results.py $TARGET mlkem csv --lib=$CRYPTOLIB --pset "${PSETS[@]}" --hw-platform=$TARGET > renode-mlkem-benchmark-$TARGET-$CRYPTOLIB-$GOAL.csv
+    TARGETS+=($TARGET)
+done
+
+set +x
+for TARGET in "${TARGETS[@]}"
+do
+    echo $TARGET-$CRYPTOLIB-$GOAL
+    column -s, -t < renode-mlkem-benchmark-$TARGET-$CRYPTOLIB-$GOAL.csv
+done

@@ -140,6 +140,24 @@ pqcrystals-lowram-small                                                         
 - PQSHIELD, STM32PQC and WOLFSSL require additional setup.
 ----
 
+### ML-KEM
+````
+./renode-benchmark-mlkem
+````
+
+Same as above for ML-KEM, limited to ML-KEM-512 for now.
+You can optionally specify:
+
+- a crypto-library
+  - `PQSHIELD` (default, goal `balanced`)
+  - `WOLFSSL` (goal `small` or `fast`)
+- an optimization goal
+
+The external library must be built for each target beforehand (for WolfSSL: `./buildit-mlkem-<goal> <target>` in the wolfssl repository), targets for which it is not available are skipped.
+`STM32PQC` is not supported: it runs only on STM32 hardware.
+
+The output is a set of files `renode-mlkem-benchmark-*-*-*.csv`.
+
 ## Display raw results
 
 ````
