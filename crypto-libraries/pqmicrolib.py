@@ -31,6 +31,7 @@ class PqMicroLibCore:
     def algorithms():
         return {
             'mldsa':None, #['small','balanced'],
+            'mlkem':['balanced'],
             'sha2':None
         }
     

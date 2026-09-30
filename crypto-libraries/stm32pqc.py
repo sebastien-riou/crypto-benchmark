@@ -20,6 +20,7 @@ class Stm32pqc:
     def algorithms():
         return {
             'mldsa':['small','balanced'],
+            'mlkem':['balanced'],
             'aes':['small','fast'],
         }
     

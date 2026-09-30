@@ -35,7 +35,11 @@ void com_tx(const void *const buf, unsigned int size){
     }
 }
 void com_rx(void *const buf, unsigned int size){
-
+  //there is no receive path on this target, but the compiler must not know it:
+  //otherwise LTO proves the lean-com synchronization never completes and discards
+  //everything after it, including the benchmarked code (RAW_COM=0 builds are used to
+  //measure the static memory footprint)
+  __asm__ volatile("" : : "r"(buf), "r"(size) : "memory");
 }
 void delay_ms(unsigned int ms){
 

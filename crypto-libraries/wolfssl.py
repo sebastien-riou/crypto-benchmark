@@ -20,6 +20,7 @@ class Wolfssl:
     def algorithms():
         return {
             'mldsa':['small','balanced','fast'],
+            'mlkem':['small','fast'],
             'aes':['small','fast'],
         }
     

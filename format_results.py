@@ -207,6 +207,25 @@ def gen_csv_perf_table_mldsa(libs,*, lib_list=None, pset_list=None, op_list=None
     out += '(b): Probability of occurrence is 2^-36 for sign.\n'
     return out
 
+def gen_csv_perf_table_mlkem(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
+    out = 'Performance over all test cases (in million cycles).\n'
+    out += 'Implementation,Level,Operation,Minimum,Average,Worst observed(a)\n'
+
+    for lib in sorted(libs.keys()):
+        for pset in sorted(libs[lib].keys(), key=int):
+            logging.debug(f'libs[lib][pset]={libs[lib][pset]}')
+            for op in ['key-exp','encaps','decaps','decaps-reject']:
+                if op_list and op not in op_list:
+                    continue
+                min_cycles    = f'{format_number_millions(libs[lib][pset][op]['min_cycles'],precision=3):>5}'
+                ave_cycles    = f'{format_number_millions(libs[lib][pset][op]['ave_cycles'],precision=3):>5}'
+                max_cycles    = f'{format_number_millions(libs[lib][pset][op]['max_cycles'],precision=3):>5}'
+                out += f'{lib:20}'+' , '+str(pset)+f' , {op} , {min_cycles} , {ave_cycles} , {max_cycles}\n'
+
+    out += '(a): The test cases include keys whose matrix A generation needs a 4th SHAKE128 block for some polynomials.\n'
+    out += 'decaps-reject: decapsulation of an invalid ciphertext (implicit rejection).\n'
+    return out
+
 def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
     out = 'Performance in cycles.\n'
     out += 'Implementation,Parameter set,Operation,Minimum,Average(a),Worst observed(b)\n'
@@ -289,6 +308,7 @@ def main(args_target,args_algo,format,*,
         'pqcrystals-mldsa-lowram':'pqcrystals-lowram',
         'umldsa-small':'pqshield',
         'umldsa-balanced':'pqshield',
+        'umlkem-balanced':'pqshield',
         'pqcle':'pqshield',
         'wolfssl-small':'wolfssl',
         'wolfssl-balanced':'wolfssl',
@@ -301,6 +321,7 @@ def main(args_target,args_algo,format,*,
         'pqcrystals-mldsa-lowram':'small',
         'umldsa-small':'small',
         'umldsa-balanced':'balanced',
+        'umlkem-balanced':'balanced',
         'pqcle':'balanced',
         'wolfssl-small':'small',
         'wolfssl-balanced':'balanced',
@@ -408,6 +429,13 @@ def main(args_target,args_algo,format,*,
                                 'mldsa_sign1M':'sign 1M',
                                 'mldsa_verify1M':'verify 1M',
                             }
+                        case 'mlkem':
+                            setup_to_report = {
+                                'mlkem_keygen':'key-exp',
+                                'mlkem_encaps':'encaps',
+                                'mlkem_decaps':'decaps',
+                                'mlkem_decaps_reject':'decaps-reject',
+                            }
                         case _:
                             special_case_algo=False
                     if special_case_algo:
@@ -472,6 +500,8 @@ def main(args_target,args_algo,format,*,
             match args_algo:
                 case 'mldsa':
                     print(gen_csv_perf_table_mldsa(libs, op_list=args_op),file=file)
+                case 'mlkem':
+                    print(gen_csv_perf_table_mlkem(libs, op_list=args_op),file=file)
                 case _:
                     print(gen_csv_perf_table(libs, op_list=args_op),file=file)
             print(gen_csv_footprint_table(libs),file=file)

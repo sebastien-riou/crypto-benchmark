@@ -54,6 +54,19 @@ class Mldsa(object):
     def operations():
         return ['key-exp','sign','verify']
 
+class Mlkem(object):
+    @staticmethod
+    def psets():
+        return ['512','768','1024']
+
+    @staticmethod
+    def pset_code(pset: str) -> str:
+        return pset
+
+    @staticmethod
+    def operations():
+        return ['key-exp','encaps','decaps','decaps-reject']
+
 class Sha2(object):
     @staticmethod
     def psets():
@@ -93,7 +106,7 @@ class Aes(object):
         return ['cmac_verify']
 
 
-algorithms_catalog = {'mldsa':Mldsa(),'sha2':Sha2(),'aes':Aes()}
+algorithms_catalog = {'mldsa':Mldsa(),'mlkem':Mlkem(),'sha2':Sha2(),'aes':Aes()}
 
 goals_catalog = {'small','balanced','fast'}
 
