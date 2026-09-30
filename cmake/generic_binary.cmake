@@ -164,9 +164,13 @@ target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
     ${linker_OPTS}
 )
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
 # Execute post-build to print size, generate hex and bin
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_OBJDUMP} -h -D $<TARGET_FILE:${CMAKE_PROJECT_NAME}> > $<TARGET_FILE:${CMAKE_PROJECT_NAME}>.sections
+    #list the instructions with data-dependent timing in the linked code
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/report_non_ct.py --objdump ${CMAKE_OBJDUMP} --output ${CMAKE_BINARY_DIR}/non_ct.report $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
     COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.hex
     COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.bin
     COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${CMAKE_PROJECT_NAME}> > $<TARGET_FILE:${CMAKE_PROJECT_NAME}>.size

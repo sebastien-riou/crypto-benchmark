@@ -104,14 +104,6 @@ add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha3.a
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libprng.a 
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libcommon.a 
-        #detect non constant time instruction in Cortex-M3
-        COMMAND ${CMAKE_OBJDUMP} -D --visualize-jumps *.${CMAKE_AR_O_EXT} > disassembly.asm
-        COMMAND grep smull disassembly.asm >> non_ct.report || true
-        COMMAND grep umull disassembly.asm >> non_ct.report || true
-        COMMAND grep smlal disassembly.asm >> non_ct.report || true
-        COMMAND grep umlal disassembly.asm >> non_ct.report || true
-        COMMAND grep sdiv disassembly.asm >> non_ct.report || true
-        COMMAND grep udiv disassembly.asm >> non_ct.report || true
         #build combined lib
         COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
@@ -128,14 +120,6 @@ add_custom_target(combined_target
         #COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcrystals_lowram/libmldsa_release_sha3_asm.a
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcrystals-mldsa-lowram/libpqcrystals-mldsa-${PSET}-lowram.a
         
-        #detect non constant time instruction in Cortex-M3
-        COMMAND ${CMAKE_OBJDUMP} -D --visualize-jumps *.${CMAKE_AR_O_EXT} > disassembly.asm
-        COMMAND grep smull disassembly.asm >> non_ct.report || true
-        COMMAND grep umull disassembly.asm >> non_ct.report || true
-        COMMAND grep smlal disassembly.asm >> non_ct.report || true
-        COMMAND grep umlal disassembly.asm >> non_ct.report || true
-        COMMAND grep sdiv disassembly.asm >> non_ct.report || true
-        COMMAND grep udiv disassembly.asm >> non_ct.report || true
         #build combined lib
         COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
@@ -152,14 +136,6 @@ add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/stm32pqc/lib/libSTM32PQC_CM33.a
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/stm32pqc/lib/libSTM32Cryptographic_CM33.a
         
-        #detect non constant time instruction in Cortex-M3
-        COMMAND ${CMAKE_OBJDUMP} -D --visualize-jumps *.${CMAKE_AR_O_EXT} > disassembly.asm
-        COMMAND grep smull disassembly.asm >> non_ct.report || true
-        COMMAND grep umull disassembly.asm >> non_ct.report || true
-        COMMAND grep smlal disassembly.asm >> non_ct.report || true
-        COMMAND grep umlal disassembly.asm >> non_ct.report || true
-        COMMAND grep sdiv disassembly.asm >> non_ct.report || true
-        COMMAND grep udiv disassembly.asm >> non_ct.report || true
         #build combined lib
         COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT} *.o
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
@@ -175,14 +151,6 @@ add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/wolfssl/libwolfssl.a
         
-        #detect non constant time instruction in Cortex-M3
-        COMMAND ${CMAKE_OBJDUMP} -D --visualize-jumps *.${CMAKE_AR_O_EXT} > disassembly.asm
-        COMMAND grep smull disassembly.asm >> non_ct.report || true
-        COMMAND grep umull disassembly.asm >> non_ct.report || true
-        COMMAND grep smlal disassembly.asm >> non_ct.report || true
-        COMMAND grep umlal disassembly.asm >> non_ct.report || true
-        COMMAND grep sdiv disassembly.asm >> non_ct.report || true
-        COMMAND grep udiv disassembly.asm >> non_ct.report || true
         #build combined lib
         COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT} *.o
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}

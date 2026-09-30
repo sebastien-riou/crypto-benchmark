@@ -247,6 +247,14 @@ cortex-m33 mldsa 87 OPEN_SOURCE         : ro =    12.13 KiB, rw =      0 bytes
 cortex-m33 mldsa 87 STM32PQC            : ro =    17.92 KiB, rw =    19.09 KiB
 ````
 
+## Instructions with data-dependent timing
+Each build writes `build/<target>/<algo>/<pset>/non_ct.report`.
+It lists, by function, the instructions of the linked firmware whose execution time can depend on their operands:
+`umull`, `smull`, `umlal`, `smlal`, `sdiv` and `udiv`.
+Each one is safe only if no secret value reaches its operands, which must be checked by hand.
+The report is built by `report_non_ct.py` from `objdump -d` of the linked ELF, so it covers the code that actually runs, after LTO.
+Only Arm targets are checked; for the others, the report says so.
+
 ## Debugging using Renode
 It is setup for VSCode for the following targets:
 - cortex-m3
