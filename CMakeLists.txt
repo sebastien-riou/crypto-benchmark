@@ -26,7 +26,16 @@ if(NOT DEFINED GOAL)
 set(GOAL small)
 ENDIF()
 MESSAGE("GOAL=" ${GOAL})
-ADD_DEFINITIONS(-DGOAL=${GOAL})
+# the C code pastes GOAL into identifiers (CAT(WOLFSSL_,GOAL)): small-armasm becomes small_armasm there
+string(REPLACE "-" "_" GOAL_ID ${GOAL})
+ADD_DEFINITIONS(-DGOAL=${GOAL_ID})
+
+option(DEBUG_INFO "add -g (debug info only, the generated code is unchanged)" OFF)
+if(DEBUG_INFO)
+add_compile_options(-g)
+# LTO: the final code generation, and so the line information, happens at link time
+add_link_options(-g)
+ENDIF()
 
 if(NOT DEFINED LARGE_TV)
 set(LARGE_TV 0)

@@ -20,10 +20,15 @@ class Wolfssl:
     def algorithms():
         return {
             'mldsa':['small','balanced','fast'],
-            'mlkem':['small','fast'],
+            'mlkem':['small','fast','small-armasm','fast-armasm'],
             'aes':['small','fast'],
         }
-    
+
+    @staticmethod
+    def supports(sw_target, goal):
+        # the -armasm goals use wolfSSL's Thumb-2 assembly: cortex-m* only
+        return not goal.endswith('-armasm') or sw_target.startswith('cortex-m')
+
     def __init__(self):
         self.sw_target = None
         self.codename = 'WOLFSSL'

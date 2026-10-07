@@ -10,21 +10,40 @@
 
 #define WOLFSSL_small 1
 #define WOLFSSL_fast 2
+//same options as small / fast, with wolfSSL's Thumb-2 assembly (cortex-m* only)
+#define WOLFSSL_small_armasm 3
+#define WOLFSSL_fast_armasm 4
 
 #define WOLFSSL_INDEX CAT(WOLFSSL_,GOAL)
 
-#if WOLFSSL_INDEX == WOLFSSL_small
-  #define IMPL_NAME "wolfssl-small"
+#if WOLFSSL_INDEX == WOLFSSL_small || WOLFSSL_INDEX == WOLFSSL_small_armasm
   #if !defined(WOLFSSL_MLKEM_SMALL) || !defined(WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM) || !defined(WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM)
-    #error "wolfssl-small expects a build with WOLFSSL_MLKEM_SMALL, WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM and WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM (buildit-mlkem-small)"
+    #error "wolfssl-small expects a build with WOLFSSL_MLKEM_SMALL, WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM and WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM (buildit-mlkem-small or buildit-mlkem-small-armasm)"
   #endif
-#elif WOLFSSL_INDEX == WOLFSSL_fast
-  #define IMPL_NAME "wolfssl-fast"
+#elif WOLFSSL_INDEX == WOLFSSL_fast || WOLFSSL_INDEX == WOLFSSL_fast_armasm
   #if defined(WOLFSSL_MLKEM_SMALL) || defined(WOLFSSL_MLKEM_NO_LARGE_CODE) || defined(WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM) || defined(WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM)
-    #error "wolfssl-fast expects a build without the ML-KEM small code/memory options (buildit-mlkem-fast)"
+    #error "wolfssl-fast expects a build without the ML-KEM small code/memory options (buildit-mlkem-fast or buildit-mlkem-fast-armasm)"
   #endif
 #else
-  #error "WOLFSSL ML-KEM supports GOAL small or fast"
+  #error "WOLFSSL ML-KEM supports GOAL small, fast, small-armasm or fast-armasm"
+#endif
+
+#if WOLFSSL_INDEX == WOLFSSL_small_armasm || WOLFSSL_INDEX == WOLFSSL_fast_armasm
+  #ifndef WOLFSSL_ARMASM_THUMB2
+    #error "wolfssl-*-armasm expects a build with wolfSSL's Thumb-2 assembly (buildit-mlkem-small-armasm or buildit-mlkem-fast-armasm)"
+  #endif
+#elif defined(WOLFSSL_ARMASM)
+  #error "wolfssl-small and wolfssl-fast expect a build without wolfSSL's ARM assembly (buildit-mlkem-small or buildit-mlkem-fast)"
+#endif
+
+#if WOLFSSL_INDEX == WOLFSSL_small
+  #define IMPL_NAME "wolfssl-small"
+#elif WOLFSSL_INDEX == WOLFSSL_fast
+  #define IMPL_NAME "wolfssl-fast"
+#elif WOLFSSL_INDEX == WOLFSSL_small_armasm
+  #define IMPL_NAME "wolfssl-small-armasm"
+#else
+  #define IMPL_NAME "wolfssl-fast-armasm"
 #endif
 
 #include <stddef.h>

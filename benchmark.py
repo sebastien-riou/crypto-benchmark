@@ -108,7 +108,7 @@ class Aes(object):
 
 algorithms_catalog = {'mldsa':Mldsa(),'mlkem':Mlkem(),'sha2':Sha2(),'aes':Aes()}
 
-goals_catalog = {'small','balanced','fast'}
+goals_catalog = {'small','balanced','fast','small-armasm','fast-armasm'}
 
 
 def invoke_tool(cwd,*cmd,capture=False):
@@ -433,6 +433,11 @@ if __name__ == '__main__':
                     # build and run benchmark    
                     built_variants = []
                     for goal in all_goals:
+                        # optional: a library can restrict a goal to some software targets
+                        supports = getattr(lib['helper'], 'supports', None)
+                        if supports and not supports(swt, goal):
+                            logging.info(f'{lib['name']} does not support goal "{goal}" on {swt}, skipped')
+                            continue
                         for pset in all_psets:
                             
                             logging.info(f'{hwp_name}, {swt}, {lib['name']}, {algo}, {goal}, {pset}')

@@ -78,10 +78,12 @@ MANUAL_ONLY = [
         "name": "STM32_Cryptographic",
         "codename": "STM32PQC",
         "note": (
-            "Proprietary ST X-Cube PQC package, not git-cloneable. Download "
-            "from https://www.st.com/en/embedded-software/x-cube-pqc.html "
-            "and extract to STM32_Cryptographic/ at the crypto-benchmark "
-            "repo root. See Setup.md."
+            "Proprietary ST STM32 Cryptographic middleware package (V5.0.0 "
+            "or later, which includes ML-KEM and ML-DSA), not git-cloneable. "
+            "Download X-CUBE-CRYPTOLIB from "
+            "https://www.st.com/en/embedded-software/x-cube-cryptolib.html "
+            "and extract it to STM32_Cryptographic/ "
+            "at the crypto-benchmark repo root. See Setup.md."
         ),
     },
 ]

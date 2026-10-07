@@ -83,32 +83,7 @@ static cmox_pqc_dsa_keygen_algo_t pset_to_keygen_algo(unsigned int pset){
 
 static cmox_pqc_handle_t Pqc_Ctx;
 
-/**
-  * @brief          CMOX library low level initialization
-  * @param          pArg User defined parameter that is transmitted from initialize service
-  * @retval         Initialization status: @ref CMOX_INIT_SUCCESS / @ref CMOX_INIT_FAIL
-  */
-__attribute__((weak)) cmox_init_retval_t cmox_ll_init(void *pArg)
-{
-  (void)pArg;
-  /* Ensure CRC is enabled for cryptographic processing */
-  //__HAL_RCC_CRC_RELEASE_RESET();
-  //__HAL_RCC_CRC_CLK_ENABLE();
-  while(1);//we really need to execute on STM32 hardware, override this function in your STM32 application
-  return CMOX_INIT_SUCCESS;
-}
-
-/**
-  * @brief          CMOX library low level de-initialization
-  * @param          pArg User defined parameter that is transmitted from finalize service
-  * @retval         De-initialization status: @ref CMOX_INIT_SUCCESS / @ref CMOX_INIT_FAIL
-  */
-__attribute__((weak)) cmox_init_retval_t cmox_ll_deInit(void *pArg)
-{
-  (void)pArg;
-  /* Do not turn off CRC to avoid side effect on other SW parts using it */
-  return CMOX_INIT_SUCCESS;
-}
+//cmox_ll_init() and cmox_ll_deInit(): placeholders in common/stm32pqc_ll.c, an STM32 application defines them
 
 static void dsa_init(){
   const cmox_pqc_retval_t r = cmox_initialize(NULL);

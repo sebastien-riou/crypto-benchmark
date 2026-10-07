@@ -63,28 +63,7 @@ static cmox_pqc_kem_dec_algo_t pset_to_dec_algo(unsigned int pset){
 
 static cmox_pqc_handle_t Pqc_Ctx;
 
-/**
-  * @brief          CMOX library low level initialization
-  * @param          pArg User defined parameter that is transmitted from initialize service
-  * @retval         Initialization status: @ref CMOX_INIT_SUCCESS / @ref CMOX_INIT_FAIL
-  */
-__attribute__((weak)) cmox_init_retval_t cmox_ll_init(void *pArg)
-{
-  (void)pArg;
-  while(1);//we really need to execute on STM32 hardware, override this function in your STM32 application
-  return CMOX_INIT_SUCCESS;
-}
-
-/**
-  * @brief          CMOX library low level de-initialization
-  * @param          pArg User defined parameter that is transmitted from finalize service
-  * @retval         De-initialization status: @ref CMOX_INIT_SUCCESS / @ref CMOX_INIT_FAIL
-  */
-__attribute__((weak)) cmox_init_retval_t cmox_ll_deInit(void *pArg)
-{
-  (void)pArg;
-  return CMOX_INIT_SUCCESS;
-}
+//cmox_ll_init() and cmox_ll_deInit(): placeholders in common/stm32pqc_ll.c, an STM32 application defines them
 
 static void kem_init(void){
   const cmox_init_retval_t r = cmox_initialize(NULL);

@@ -47,7 +47,7 @@ since the hardware-platform sibling repos' own `initial-setup` scripts
 ----
 **NOTE**
 
-`STM32PQC` (ST's X-Cube PQC library) is proprietary and not git-cloneable —
+`STM32PQC` (ST's STM32 Cryptographic middleware) is proprietary and not git-cloneable —
 see the [STM32PQC library](#stm32pqc-library) section below for manual setup.
 ----
 
@@ -115,20 +115,28 @@ It is expected at the top level of this repository:
 ````
 ~/repos/crypto-benchmark$ tree -L 1 STM32_Cryptographic/
 STM32_Cryptographic/
-├── CMOX_HBS_PQC.chm
+├── CMOX.chm
 ├── _htmresc
 ├── include
-├── interface
+├── interfaces
 ├── lib
-├── LICENSE.txt
+├── LICENSE.html
 ├── readme.html
-└── Release_Notes.html
+├── Release_Notes.html
+├── SW_Security_Level.md
+└── templates
 
-5 directories, 4 files
+5 directories, 5 files
 ````
 
 ----
 **NOTES**
 
-- This works with the package version V1.1.0 / 27-June-2025 freely available at [ST Microelectronics's X-Cube PQC](https://www.st.com/en/embedded-software/x-cube-pqc.html).
+- This works with the STM32 Cryptographic middleware V5.0.0 / 15-May-2026 (X-CUBE-CRYPTOLIB, available at
+  <https://www.st.com/en/embedded-software/x-cube-cryptolib.html>), which includes ML-KEM and ML-DSA. They used to
+  come as a separate package, X-CUBE-PQC V1.1.0, which the benchmark no longer supports.
+- `lib/` has one library per core, `libSTM32Cryptographic_CM<n>.a`. The build picks the one of the target
+  (`cmake/stm32_cryptographic.cmake`) through `target/<cpu>/stm32pqc`, a link to this directory, for cortex-m3, m4,
+  m7, m33 and m55. There is no Cortex-M52 library.
+- The library runs only on STM32 devices.
 ----

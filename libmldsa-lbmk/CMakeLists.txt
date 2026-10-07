@@ -24,6 +24,7 @@ ADD_DEFINITIONS(-DMLDSA_LIB=${MLDSA_LIB})
 set( EXTRA_INCLUDES "" )
 
 IF ( ${MLDSA_LIB} STREQUAL "STM32PQC" )
+	include(${CMAKE_SOURCE_DIR}/cmake/stm32_cryptographic.cmake)
 	set( EXTRA_INCLUDES 
         ${TARGET_DIR}/stm32pqc/include
     )
@@ -133,11 +134,11 @@ MESSAGE("MLDSA_LIB is STM32PQC")
 add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mldsa-lbmk-core>
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/stm32pqc/lib/libSTM32PQC_CM33.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/stm32pqc/lib/libSTM32Cryptographic_CM33.a
+        COMMAND ${CMAKE_AR} -x ${STM32_CRYPTO_LIB}
         
         #build combined lib
-        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT} *.o
+        # the STM32 Cryptographic archives (V5) contain only .obj members, so there is no *.o to add
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
         )
 ELSE()

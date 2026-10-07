@@ -7,7 +7,8 @@ import argparse
 import humanfriendly
 
 def report_footprint(build_dir):
-    size_report_str = r"(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\w+).*crypto-benchmark-(\w+)-(\w+)-(\w+)-(\w+).elf"
+    # the goal may contain '-' (small-armasm)
+    size_report_str = r"(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\w+).*crypto-benchmark-(\w+)-([\w-]+)-(\w+)-(\w+).elf"
     size_report_pattern = re.compile(size_report_str)
 
     targets = [ f.path for f in os.scandir(build_dir) if f.is_dir() ]
@@ -107,7 +108,7 @@ if __name__ == '__main__':
                 for lib in out[target][algo][pset].keys():
                     for goal in out[target][algo][pset][lib].keys():
                         d = out[target][algo][pset][lib][goal]
-                        print(f"{target} {algo} {pset} {lib:20} {goal:8}: ro = {humanfriendly.format_size(d['text'],binary=True):>12}, rw = {humanfriendly.format_size(d['ram'],binary=True):>12}")
+                        print(f"{target} {algo} {pset} {lib:20} {goal:12}: ro = {humanfriendly.format_size(d['text'],binary=True):>12}, rw = {humanfriendly.format_size(d['ram'],binary=True):>12}")
 
 
 
