@@ -1,5 +1,9 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <errno.h>
+
+bool LBMK_is_within_benchmarked_func();
 
 typedef struct
 {
@@ -61,4 +65,31 @@ void LBMK_init_heap_usage(){
 }
 uint64_t LBMK_get_heap_usage(){
   return heap_usage;
+}
+
+//newlib's malloc gets its memory from _sbrk (libnosys is not linked because of -nostdlib)
+//the heap starts at _end and must not grow into the stack reserved by _Min_Stack_Size (see link.ld)
+void *_sbrk(ptrdiff_t incr){
+  extern uint8_t _end;
+  extern uint8_t _estack;
+  extern uint8_t _Min_Stack_Size;
+  static uint8_t *heap_end = NULL;
+  const uintptr_t max_heap = (uintptr_t)&_estack - (uintptr_t)&_Min_Stack_Size;
+
+  if(LBMK_is_within_benchmarked_func()){
+    heap_usage += incr;
+  }
+
+  if(NULL == heap_end){
+    heap_end = &_end;
+  }
+
+  if((uintptr_t)(heap_end + incr) > max_heap){
+    errno = ENOMEM;
+    return (void *)-1;
+  }
+
+  uint8_t *const prev_heap_end = heap_end;
+  heap_end += incr;
+  return prev_heap_end;
 }

@@ -12,6 +12,7 @@ pqcle/
 pqcrystals-mldsa-lowram/
 libtomcrypt/
 wolfssl/
+pqrv/
 target/ext/
 *.a
 STM32_Cryptographic/

@@ -30,6 +30,14 @@ IF ( ${MLDSA_LIB} STREQUAL "STM32PQC" )
     )
 ENDIF()
 
+get_filename_component(TARGET_CPU ${TARGET_DIR} NAME)
+
+IF ( ${MLDSA_LIB} STREQUAL "PQRV" )
+	IF ( NOT EXISTS ${TARGET_DIR}/pqrv/libpqrv.a )
+		MESSAGE( FATAL_ERROR "PQRV is not built for ${TARGET_CPU} (${TARGET_DIR}/pqrv/libpqrv.a is missing). Run '(cd ../PQRV/libpqrv && ./buildit ${TARGET_CPU})' then 'python3 link_ext.py --goal=${GOAL}'" )
+	ENDIF()
+ENDIF()
+
 # OPTION(IMPL_PQCLE "use PQCLE implementation" OFF) # Disabled by default, activate using "cmake -DIMPL_PQCLE=ON .."
 # MESSAGE("IMPL_PQCLE=" ${IMPL_PQCLE})
 # IF(IMPL_PQCLE)
@@ -158,6 +166,22 @@ add_custom_target(combined_target
         )
 ELSE()
 MESSAGE("MLDSA_LIB is NOT WOLFSSL (it is '" ${MLDSA_LIB} "')")
+ENDIF()
+
+IF(${MLDSA_LIB} STREQUAL "PQRV")
+MESSAGE("MLDSA_LIB is PQRV")
+add_custom_target(combined_target
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mldsa-lbmk-core>
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqrv/libpqrv.a
+
+        #build combined lib
+        # libpqrv contains only .obj members (one per parameter set)
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
+        )
+ELSE()
+MESSAGE("MLDSA_LIB is NOT PQRV (it is '" ${MLDSA_LIB} "')")
 ENDIF()
 
 add_library(${LIB_NAME} STATIC IMPORTED GLOBAL)

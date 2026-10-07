@@ -67,6 +67,7 @@ void throw_exception(uint32_t err_code){
 #define IMPL_PQCRYSTALS_LOWRAM 3
 #define IMPL_STM32PQC 4
 #define IMPL_WOLFSSL 5
+#define IMPL_PQRV 6
 #define MLDSA_LIB_INDEX CAT(IMPL_,MLDSA_LIB)
 
 #if MLDSA_LIB_INDEX == IMPL_STUB
@@ -79,8 +80,15 @@ void throw_exception(uint32_t err_code){
   #include "impl_stm32pqc.h"
 #elif MLDSA_LIB_INDEX == IMPL_WOLFSSL
   #include "impl_wolfssl.h"
+#elif MLDSA_LIB_INDEX == IMPL_PQRV
+  #include "impl_pqrv.h"
 #else
   #error "No implementation defined. To fix this, you need to define MLDSA_LIB"
+#endif
+
+//size of the stack area in which the stack usage is measured, an implementation can increase it
+#ifndef DSA_MAX_STACK_SIZE
+  #define DSA_MAX_STACK_SIZE (40*1024)
 #endif
 
 
@@ -233,7 +241,7 @@ benchmark_setup_t mldsa_gen_key_benchmark_setup = {
   .args_setup = mldsa_gen_key,
   .nargs = 1,
   .ntrials = 5,
-  .max_stack_size = 40*1024,
+  .max_stack_size = DSA_MAX_STACK_SIZE,
   .post_exec = mldsa_gen_key_post_exec,
   .nextra_data = 0
 };
@@ -244,7 +252,7 @@ benchmark_setup_t mldsa_sign_benchmark_setup = {
   .args_setup = mldsa_sign,
   .nargs = 3,
   .ntrials = 5,
-  .max_stack_size = 40*1024,
+  .max_stack_size = DSA_MAX_STACK_SIZE,
   .post_exec = mldsa_sign_post_exec,
   .nextra_data = 0
 };
@@ -255,7 +263,7 @@ benchmark_setup_t mldsa_verify_benchmark_setup = {
   .args_setup = mldsa_verify,
   .nargs = 3,
   .ntrials = 5,
-  .max_stack_size = 40*1024,
+  .max_stack_size = DSA_MAX_STACK_SIZE,
   .post_exec = mldsa_verify_post_exec,
   .nextra_data = 0
 };

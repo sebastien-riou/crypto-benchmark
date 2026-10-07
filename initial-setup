@@ -145,9 +145,13 @@ def check_existing_state(name, dest, entry, version_mode):
     else:
         branch = subprocess.run(["git", "-C", dest, "symbolic-ref", "--short", "HEAD"], capture_output=True, text=True)
         # We can't reliably know the remote's default branch name offline, so
-        # for 'latest' we only check that HEAD isn't detached at some fixed tag.
+        # for 'latest' we only check that HEAD isn't detached at some fixed tag,
+        # unless the manifest names the branch to use.
         if branch.returncode != 0:
             warn(f"{name}: expected to be on a branch (version=latest) but HEAD is detached")
+        elif entry.get("branch") and branch.stdout.strip() != entry["branch"]:
+            warn(f"{name}: expected to be on branch {entry['branch']!r} (version=latest) "
+                 f"but found {branch.stdout.strip()!r}")
 
 
 def clone_repo(name, entry, dest, protocol, version_mode, host_url_templates, dry_run):
@@ -155,6 +159,8 @@ def clone_repo(name, entry, dest, protocol, version_mode, host_url_templates, dr
     cmd = ["git", "clone", "--depth=1"]
     if version_mode == "pinned":
         cmd += ["--branch", entry["default_tag"], "--single-branch"]
+    elif entry.get("branch"):
+        cmd += ["--branch", entry["branch"], "--single-branch"]
     if entry.get("recurse_submodules"):
         cmd.append("--recurse-submodules")
     cmd += [url, dest]

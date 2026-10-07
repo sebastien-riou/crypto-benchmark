@@ -13,7 +13,7 @@ MESSAGE("PSET=" ${PSET})
 ADD_DEFINITIONS(-DPSET=${PSET})
 
 if(NOT DEFINED MLKEM_LIB)
-MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} has no ML-KEM implementation. Supported: PQSHIELD, STUB, STM32PQC, WOLFSSL" )
+MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} has no ML-KEM implementation. Supported: PQSHIELD, PQRV, STUB, STM32PQC, WOLFSSL" )
 ENDIF()
 MESSAGE("MLKEM_LIB=" ${MLKEM_LIB})
 ADD_DEFINITIONS(-DMLKEM_LIB=${MLKEM_LIB})
@@ -44,6 +44,12 @@ ENDIF()
 IF ( ${MLKEM_LIB} STREQUAL "WOLFSSL" )
 	IF ( NOT EXISTS ${TARGET_DIR}/wolfssl/options.h )
 		MESSAGE( FATAL_ERROR "wolfssl is not built for ${TARGET_CPU} with goal ${GOAL} (${TARGET_DIR}/wolfssl/options.h is missing). Run '(cd ../wolfssl && ./buildit-mlkem-${GOAL} ${TARGET_CPU})' then 'python3 link_ext.py --goal=${GOAL}'" )
+	ENDIF()
+ENDIF()
+
+IF ( ${MLKEM_LIB} STREQUAL "PQRV" )
+	IF ( NOT EXISTS ${TARGET_DIR}/pqrv/libpqrv.a )
+		MESSAGE( FATAL_ERROR "PQRV is not built for ${TARGET_CPU} (${TARGET_DIR}/pqrv/libpqrv.a is missing). Run '(cd ../PQRV/libpqrv && ./buildit ${TARGET_CPU})' then 'python3 link_ext.py --goal=${GOAL}'" )
 	ENDIF()
 ENDIF()
 
@@ -147,6 +153,22 @@ add_custom_target(combined_target
         )
 ELSE()
 MESSAGE("MLKEM_LIB is NOT WOLFSSL (it is '" ${MLKEM_LIB} "')")
+ENDIF()
+
+IF(${MLKEM_LIB} STREQUAL "PQRV")
+MESSAGE("MLKEM_LIB is PQRV")
+add_custom_target(combined_target
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mlkem-lbmk-core>
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqrv/libpqrv.a
+
+        #build combined lib
+        # libpqrv contains only .obj members (one per parameter set)
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
+        )
+ELSE()
+MESSAGE("MLKEM_LIB is NOT PQRV (it is '" ${MLKEM_LIB} "')")
 ENDIF()
 
 add_library(${LIB_NAME} STATIC IMPORTED GLOBAL)

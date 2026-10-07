@@ -22,7 +22,10 @@ run non-interactively (e.g. in CI).
   `--level custom`). Run `./initial-setup --list-addons` to see the catalog.
 - `--protocol {https,ssh}` — clone over HTTPS (default) or SSH.
 - `--version {pinned,latest}` — `pinned` (default) checks out each repo's
-  pinned tag from `setup_manifest.py`; `latest` clones the default branch.
+  pinned tag from `setup_manifest.py`; `latest` clones the default branch,
+  or the `branch` named in `setup_manifest.py` (`crypto-benchmark` for
+  `wolfssl` and `PQRV`, whose default branch lacks the crypto-benchmark
+  integration).
 - `--test-renode {0,1,on,off,true,false}` — whether to run `./test-renode`
   and show results afterward (default on). This also controls how the demo
   is built: `-DRAW_COM=1` when on (Renode's UART capture is one-way and

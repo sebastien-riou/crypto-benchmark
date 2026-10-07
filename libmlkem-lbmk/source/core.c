@@ -77,6 +77,7 @@ void throw_exception(uint32_t err_code){
 #define IMPL_PQCLE 2
 #define IMPL_STM32PQC 3
 #define IMPL_WOLFSSL 4
+#define IMPL_PQRV 5
 #define MLKEM_LIB_INDEX CAT(IMPL_,MLKEM_LIB)
 
 //each implementation provides:
@@ -97,6 +98,8 @@ void throw_exception(uint32_t err_code){
   #include "impl_stm32pqc.h"
 #elif MLKEM_LIB_INDEX == IMPL_WOLFSSL
   #include "impl_wolfssl.h"
+#elif MLKEM_LIB_INDEX == IMPL_PQRV
+  #include "impl_pqrv.h"
 #else
   #error "No implementation defined. To fix this, you need to define MLKEM_LIB"
 #endif

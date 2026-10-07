@@ -12,7 +12,7 @@ import pqmicrolib
 
 def main(*,preset='minSizeRel', goal=None):
     targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m52','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
-    libs = ['pqcle','pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','wolfssl'] #,'fpfp']
+    libs = ['pqcle','pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','wolfssl','pqrv'] #,'fpfp']
 
     PQCLE_SRC='../../../pqmicrolib-library/'
     PQCLE='target/ext/pqcle'
@@ -29,6 +29,9 @@ def main(*,preset='minSizeRel', goal=None):
     WOLFSSL_SRC='../../../wolfssl'
     WOLFSSL='target/ext/wolfssl'
 
+    PQRV_SRC='../../../PQRV/libpqrv'
+    PQRV='target/ext/libpqrv'
+
     FPFP_SRC='../../../fixed-point-fndsa-portable'
     FPFP='target/ext/fpfp'
 
@@ -42,7 +45,7 @@ def main(*,preset='minSizeRel', goal=None):
         print(goal,file=f)
     goal='-'+goal
         
-    for p in [PQCLE,LOWRAM,TOMCRYPT,LBMK,WOLFSSL]:#,FPFP]:
+    for p in [PQCLE,LOWRAM,TOMCRYPT,LBMK,WOLFSSL,PQRV]:#,FPFP]:
         try:
             os.remove(p)
         except FileNotFoundError:
@@ -54,6 +57,7 @@ def main(*,preset='minSizeRel', goal=None):
     os.symlink(TOMCRYPT_SRC,TOMCRYPT,target_is_directory=True)
     os.symlink(LBMK_SRC,LBMK,target_is_directory=True)
     os.symlink(WOLFSSL_SRC,WOLFSSL,target_is_directory=True)
+    os.symlink(PQRV_SRC,PQRV,target_is_directory=True)
     #os.symlink(FPFP_SRC,FPFP,target_is_directory=True)
 
     def link(libname,targetname,source,pattern):
@@ -111,6 +115,9 @@ def main(*,preset='minSizeRel', goal=None):
                 case 'wolfssl':
                     source_lib = WOLFSSL + f'/build/{targetname}{goal}/lib'
                     source_h = WOLFSSL + f'/build/{targetname}{goal}/include/wolfssl'
+                case 'pqrv':
+                    source_lib = f'{PQRV}/build/{targetname}/lib'
+                    source_h = f'{PQRV}/include'
                 case 'fpfp':
                     source_lib = f'{FPFP}/build/{targetname}/lib{libname}'
                     source_h = f'{FPFP}/include'

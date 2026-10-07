@@ -29,9 +29,20 @@ ADDONS = {
             "host": "github",
             "path": "sebastien-riou/wolfssl",
             "default_tag": "crypto-benchmark-0.0.8",
+            "branch": "crypto-benchmark",  # for --version latest: the default branch (master) is upstream wolfSSL
             "recurse_submodules": False,
             "build": None,  # see repo's own README -- no proven single command
             "docs_hint": "wolfssl/README.md",
+        },
+        {
+            "name": "PQRV",  # link_ext.py expects ../PQRV/libpqrv
+            "codename": "PQRV",
+            "host": "github",
+            "path": "sebastien-riou/PQRV",
+            "default_tag": "crypto-benchmark-0.0.1",
+            "branch": "crypto-benchmark",  # for --version latest: the default branch (main) has no libpqrv
+            "recurse_submodules": False,
+            "build": ["./libpqrv/buildit rv32imcb rv32imc"],  # the only targets PQRV supports
         },
         {
             "name": "pqmicrolib-library",

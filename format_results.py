@@ -317,7 +317,8 @@ def main(args_target,args_algo,format,*,
         'wolfssl-fast-armasm':'wolfssl',
         'stm32pqc-small':'stm32pqc',
         'stm32pqc-balanced':'stm32pqc',
-        'stm32pqc-fast':'stm32pqc'
+        'stm32pqc-fast':'stm32pqc',
+        'pqrv':'pqrv'
     }
     impl_to_goal_name = {
         'pqcrystals-mldsa-lowram':'small',
@@ -332,13 +333,15 @@ def main(args_target,args_algo,format,*,
         'wolfssl-fast-armasm':'fast-armasm',
         'stm32pqc-small':'small',
         'stm32pqc-balanced':'balanced',
-        'stm32pqc-fast':'fast'
+        'stm32pqc-fast':'fast',
+        'pqrv':'fast'
     }
     build_target_to_lib_name = {
         'OPEN_SOURCE':'pqcrystals-lowram',
         'PQSHIELD':'pqshield',
         'WOLFSSL':'wolfssl',
-        'STM32PQC':'stm32pqc'
+        'STM32PQC':'stm32pqc',
+        'PQRV':'pqrv'
     }
     def build_target_to_full_lib_name(lib,goal):
         return f'{build_target_to_lib_name[lib]}-{goal}'

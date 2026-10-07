@@ -20,11 +20,10 @@ It contains proper benchmarking only for ML-DSA. ML-KEM, AES and SHA2 are a work
 
 Following ML-DSA librairies have been integrated (alphabetical order):
 - `OPEN_SOURCE`: [Dilithium-lowram](https://github.com/sebastien-riou/dilithium-lowram.git) 
+- `PQRV`: [PQRV](https://github.com/Ji-Peng/PQRV) (sibling `../PQRV` repository with its `libpqrv` folder), RISC-V targets `rv32imc` and `rv32imcb` only (goal `fast`), library built by `./buildit <target>` in `libpqrv`
 - `PQSHIELD`: [PQShield's PQMicroLib-Core](https://pqshield.com/products/pqm-cor/)
 - `STM32PQC`: ST Microelectronics's [X-CUBE-CRYPTOLIB](https://www.st.com/en/embedded-software/x-cube-cryptolib.html), V5.0.0 or later, which includes ML-KEM and ML-DSA (see [Setup.md](Setup.md))
 - `WOLFSSL`: [WolfSSL](https://github.com/sebastien-riou/wolfssl) (use 'crypto-benchmark' branch)
-
-TODO: https://github.com/Ji-Peng/PQRV
 
 AES is a work in progress: only AES-128 CMAC verify of a 64-byte message is benchmarked (`libaes-lbmk`, `ALGO=aes`, `PSET=128`), with:
 - `STM32PQC`: goals `small` / `fast` (cmox AES small / fast implementation)
@@ -39,6 +38,7 @@ ML-KEM is a work in progress (`libmlkem-lbmk`, `ALGO=mlkem`, `PSET=512`, `768` o
 Keys and ciphertexts are byte strings as specified by FIPS 203, any encoding/decoding done by a library is part of the benchmarked operation.
 Every output is checked against the test vectors (outside of the benchmarked code).
 The following libraries are integrated (`OPEN_SOURCE` has no ML-KEM implementation):
+- `PQRV`: goal `fast`, `rv32imc` and `rv32imcb` targets only
 - `PQSHIELD`: goal `balanced`
 - `STM32PQC`: goal `balanced`. ST does not document the size of the working buffer, the default (`STM32PQC_MLKEM_MEMBUF_SIZE`, 32 KiB) is an upper bound which inflates the static RAM footprint. The peak usage is reported as extra data `membuf peak` (visible with `--details=1`), rebuild with `-DSTM32PQC_MLKEM_MEMBUF_SIZE=<peak>` to get an accurate footprint.
 - `WOLFSSL`: goals `small` / `fast` (`WOLFSSL_MLKEM_SMALL` + `WOLFSSL_MLKEM_*_SMALL_MEM` / default), built by `buildit-mlkem-small` / `buildit-mlkem-fast`.

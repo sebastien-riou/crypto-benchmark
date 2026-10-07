@@ -175,10 +175,6 @@ int _execve(char *name, char **argv, char **env)
   return -1;
 }
 
-int _sbrk(){
-  while(1);
-}
-
 void abort(){
   while(1);
 }
