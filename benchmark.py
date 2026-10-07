@@ -415,6 +415,11 @@ if __name__ == '__main__':
             for lib in sw_libs:
                 lib_codename = lib['helper'].codename
                 for algo in algos:
+                    # optional: a library can restrict an algorithm to some software targets
+                    supports_algo = getattr(lib['helper'], 'supports_algo', None)
+                    if supports_algo and not supports_algo(swt, algo):
+                        logging.info(f'{lib['name']} does not support {algo} on {swt}, skipped')
+                        continue
                     if psets is None:
                         all_psets = algorithms_catalog[algo].psets()
                     else:

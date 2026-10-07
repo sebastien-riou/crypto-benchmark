@@ -10,6 +10,10 @@ class PqMicroLibCore:
                 return 'armv8m'
             case 'cortex-m52' | 'cortex-m55':
                 return 'armv8_1m'
+            case 'rv32imcb':
+                # no preset uses the bit manipulation extensions: RV32IMAC code, free of
+                # atomic instructions, also runs on the rv32imcb target (no A extension)
+                return 'rv32imac'
             case _:
                 return sw_target
         
@@ -23,6 +27,7 @@ class PqMicroLibCore:
             'cortex-m33',
             'cortex-m52',
             'cortex-m55',
+            'rv32imcb',
             'rv32imac',
             'rv64imac'
             ]
@@ -34,7 +39,12 @@ class PqMicroLibCore:
             'mlkem':['balanced'],
             'sha2':None
         }
-    
+
+    @staticmethod
+    def supports_algo(sw_target, algo):
+        # the sha2 benchmark includes the secure SHA-2 (libsha2_secure.a): built by the Arm presets only
+        return algo != 'sha2' or sw_target.startswith('cortex-m')
+
     def __init__(self):
         self.sw_target = None
         self.codename = 'PQSHIELD'
