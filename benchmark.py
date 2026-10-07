@@ -440,7 +440,7 @@ if __name__ == '__main__':
                     for goal in all_goals:
                         # optional: a library can restrict a goal to some software targets
                         supports = getattr(lib['helper'], 'supports', None)
-                        if supports and not supports(swt, goal):
+                        if supports and not supports(swt, goal, algo):
                             logging.info(f'{lib['name']} does not support goal "{goal}" on {swt}, skipped')
                             continue
                         for pset in all_psets:

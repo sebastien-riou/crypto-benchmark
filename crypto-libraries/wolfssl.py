@@ -25,7 +25,7 @@ class Wolfssl:
         }
 
     @staticmethod
-    def supports(sw_target, goal):
+    def supports(sw_target, goal, algo=None):
         # the -armasm goals use wolfSSL's Thumb-2 assembly: cortex-m* only
         return not goal.endswith('-armasm') or sw_target.startswith('cortex-m')
 

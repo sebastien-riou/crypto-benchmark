@@ -21,7 +21,7 @@ It contains proper benchmarking only for ML-DSA. ML-KEM, AES and SHA2 are a work
 Following ML-DSA librairies have been integrated (alphabetical order):
 - `OPEN_SOURCE`: [Dilithium-lowram](https://github.com/sebastien-riou/dilithium-lowram.git) 
 - `PQRV`: [PQRV](https://github.com/Ji-Peng/PQRV) (sibling `../PQRV` repository with its `libpqrv` folder), RISC-V targets `rv32imc` and `rv32imcb` only (goal `fast`), library built by `./buildit <target>` in `libpqrv`
-- `PQSHIELD`: [PQShield's PQMicroLib-Core](https://pqshield.com/products/pqm-cor/)
+- `PQSHIELD`: [PQShield's PQMicroLib-Core](https://pqshield.com/products/pqm-cor/) (sibling `../pqmicrolib-library` repository). The goals `small` / `balanced` / `fast` are the ML-DSA tiers of the library (`PQS_MLDSA_TIER`): `cortex-m33` and `rv32imcb` have one preset per tier (`gcc-armv8m-<goal>`, `gcc-rv32imcb-<goal>`), the other targets a single preset with a fixed tier (`cortex-m3`: `small`; `cortex-m4`/`m7`/`m52`/`m55`, `rv32imac`, `rv64imac`: `balanced`). `benchmark.py` builds the library with `utl/tools/buildit gcc-<preset>` (`crypto-libraries/pqmicrolib.py`).
 - `STM32PQC`: ST Microelectronics's [X-CUBE-CRYPTOLIB](https://www.st.com/en/embedded-software/x-cube-cryptolib.html), V5.0.0 or later, which includes ML-KEM and ML-DSA (see [Setup.md](Setup.md))
 - `WOLFSSL`: [WolfSSL](https://github.com/sebastien-riou/wolfssl) (use 'crypto-benchmark' branch)
 
@@ -39,7 +39,7 @@ Keys and ciphertexts are byte strings as specified by FIPS 203, any encoding/dec
 Every output is checked against the test vectors (outside of the benchmarked code).
 The following libraries are integrated (`OPEN_SOURCE` has no ML-KEM implementation):
 - `PQRV`: goal `fast`, `rv32imc` and `rv32imcb` targets only
-- `PQSHIELD`: goal `balanced`
+- `PQSHIELD`: goal `balanced` (single ML-KEM implementation, built from the `balanced` preset of the target)
 - `STM32PQC`: goal `balanced`. ST does not document the size of the working buffer, the default (`STM32PQC_MLKEM_MEMBUF_SIZE`, 32 KiB) is an upper bound which inflates the static RAM footprint. The peak usage is reported as extra data `membuf peak` (visible with `--details=1`), rebuild with `-DSTM32PQC_MLKEM_MEMBUF_SIZE=<peak>` to get an accurate footprint.
 - `WOLFSSL`: goals `small` / `fast` (`WOLFSSL_MLKEM_SMALL` + `WOLFSSL_MLKEM_*_SMALL_MEM` / default), built by `buildit-mlkem-small` / `buildit-mlkem-fast`.
   Goals `small-armasm` / `fast-armasm` are the same with wolfSSL's Thumb-2 assembly (`--enable-armasm`), built by `buildit-mlkem-small-armasm` / `buildit-mlkem-fast-armasm`, Cortex-M targets only.
