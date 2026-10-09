@@ -3,7 +3,7 @@ CORE = [
         "name": "lean-benchmark",
         "host": "github",
         "path": "sebastien-riou/lean-benchmark",
-        "default_tag": "v0.0.9",
+        "default_tag": "v0.0.10",
         "recurse_submodules": True,
         "build": ["./build-all-targets debug", "./build-all-targets minSizeRel"],
     },
@@ -15,7 +15,7 @@ MINIMAL_DEMO = [
         "codename": "OPEN_SOURCE",
         "host": "github",
         "path": "sebastien-riou/dilithium-lowram",
-        "default_tag": "v0.0.14",
+        "default_tag": "crypto-benchmark-0.0.16",
         "recurse_submodules": True,
         "build": ["./build-all-targets"],
     },
@@ -28,7 +28,7 @@ ADDONS = {
             "codename": "WOLFSSL",
             "host": "github",
             "path": "sebastien-riou/wolfssl",
-            "default_tag": "crypto-benchmark-0.0.8",
+            "default_tag": "crypto-benchmark-0.0.16",
             "branch": "crypto-benchmark",  # for --version latest: the default branch (master) is upstream wolfSSL
             "recurse_submodules": False,
             "build": None,  # see repo's own README -- no proven single command
@@ -39,7 +39,7 @@ ADDONS = {
             "codename": "PQRV",
             "host": "github",
             "path": "sebastien-riou/PQRV",
-            "default_tag": "crypto-benchmark-0.0.1",
+            "default_tag": "crypto-benchmark-0.0.16",
             "branch": "crypto-benchmark",  # for --version latest: the default branch (main) has no libpqrv
             "recurse_submodules": False,
             "build": ["./libpqrv/buildit rv32imcb rv32imc"],  # the only targets PQRV supports
@@ -49,7 +49,8 @@ ADDONS = {
             "codename": "PQSHIELD",
             "host": "gitlab.pqsh.net",
             "path": "engineering/sw/pqmicrolib/pqmicrolib-library",
-            "default_tag": "v1.4.0",
+            "default_tag": "crypto-benchmark-0.0.16",
+            "branch": "dev/sru/mldsa-tiers",  # for --version latest: the per-tier presets are not merged yet
             "recurse_submodules": False,
             "internal": True,  # requires gitlab.pqsh.net access; clone may fail
             "build": None,
@@ -61,7 +62,7 @@ ADDONS = {
             "name": "crypto-benchmark-rp2350",
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-rp2350",
-            "default_tag": "crypto-benchmark-0.0.11",
+            "default_tag": "crypto-benchmark-0.0.16",
             "helper_module": "rp2350",  # hardware-platforms/rp2350.py, same one benchmark.py uses
             "setup": ["./setup-pico-sdk"],  # idempotent: clones pico-sdk if missing
         },
@@ -69,7 +70,7 @@ ADDONS = {
             "name": "crypto-benchmark-stm32u5",
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-stm32u5",
-            "default_tag": "crypto-benchmark-0.0.10",
+            "default_tag": "crypto-benchmark-0.0.16",
             "helper_module": "stm32u5",  # hardware-platforms/stm32u5.py
             "setup": None,  # nothing extra needed beyond its own repo
         },
@@ -77,7 +78,7 @@ ADDONS = {
             "name": "crypto-benchmark-m5531",
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-m5531",
-            "default_tag": "crypto-benchmark-0.0.10",
+            "default_tag": "crypto-benchmark-0.0.16",
             "helper_module": "m5531",  # hardware-platforms/m5531.py
             "setup": ["pipenv install"],  # bootstraps its own pyocd venv
         },

@@ -25,7 +25,8 @@ run non-interactively (e.g. in CI).
   pinned tag from `setup_manifest.py`; `latest` clones the default branch,
   or the `branch` named in `setup_manifest.py` (`crypto-benchmark` for
   `wolfssl` and `PQRV`, whose default branch lacks the crypto-benchmark
-  integration).
+  integration, and the not yet merged branch with the per-tier presets
+  for `pqmicrolib-library`).
 - `--test-renode {0,1,on,off,true,false}` — whether to run `./test-renode`
   and show results afterward (default on). This also controls how the demo
   is built: `-DRAW_COM=1` when on (Renode's UART capture is one-way and
@@ -44,8 +45,10 @@ end) if its working copy is dirty or not on the expected tag/branch.
 
 For backward compatibility, `./initial-setup 0`/`./initial-setup 1` (the old
 positional-arg form) is still accepted as shorthand for `--test-renode`,
-since the hardware-platform sibling repos' own `initial-setup` scripts
-(`crypto-benchmark-rp2350`, `-stm32u5`, `-m5531`) call it that way.
+since older checkouts of the hardware-platform sibling repos
+(`crypto-benchmark-rp2350`, `-stm32u5`, `-m5531`, up to their
+`crypto-benchmark-0.0.11` tag) have their own `initial-setup` that calls it
+that way. Their current versions point to this script instead.
 
 ----
 **NOTE**
