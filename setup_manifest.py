@@ -62,7 +62,7 @@ ADDONS = {
             "name": "crypto-benchmark-rp2350",
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-rp2350",
-            "default_tag": "crypto-benchmark-0.0.17",
+            "default_tag": "crypto-benchmark-0.0.18",
             "helper_module": "rp2350",  # hardware-platforms/rp2350.py, same one benchmark.py uses
             # idempotent: clone pico-sdk if missing, build picotool with USB support if missing
             "setup": ["./setup-pico-sdk", "./setup-picotool"],
