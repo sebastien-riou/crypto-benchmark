@@ -1,17 +1,23 @@
 #pragma once
 
 
+// ML-DSA tiers of PQMicroLib-Core (PQS_MLDSA_TIER), selected by the preset the library was built with
 #define UMLDSA_small 1
 #define UMLDSA_balanced 2
+#define UMLDSA_fast 3
 
 #define UMLDSA_INDEX CAT(UMLDSA_,GOAL)
 
 #if UMLDSA_INDEX == UMLDSA_small
   #define IMPL_NAME "umldsa-small"
-#endif
-
-#if UMLDSA_INDEX == UMLDSA_balanced
+#elif UMLDSA_INDEX == UMLDSA_balanced
   #define IMPL_NAME "umldsa-balanced"
+#elif UMLDSA_INDEX == UMLDSA_fast
+  #define IMPL_NAME "umldsa-fast"
+  // the fast tier keeps the expanded matrix A in RAM: up to ~115 KB of stack while signing ML-DSA-87
+  #define DSA_MAX_STACK_SIZE (160*1024)
+#else
+  #error "PQCLE ML-DSA supports GOAL small, balanced or fast only"
 #endif
 
 #include <pqcle/pqs_mldsa.h>
