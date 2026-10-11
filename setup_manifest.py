@@ -3,7 +3,7 @@ CORE = [
         "name": "lean-benchmark",
         "host": "github",
         "path": "sebastien-riou/lean-benchmark",
-        "default_tag": "v0.0.10",
+        "default_tag": "v0.0.11",
         "recurse_submodules": True,
         "build": ["./build-all-targets debug", "./build-all-targets minSizeRel"],
     },
