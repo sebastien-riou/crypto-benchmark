@@ -1,36 +1,25 @@
 class PqMicroLibCore:
-    # pqmicrolib-library CMake preset (without the 'gcc-' prefix) of each software target, and
-    # the ML-DSA tiers (PQS_MLDSA_TIER, same names as the crypto-benchmark goals) it can be
-    # built with. Targets with several tiers have one preset per tier, gcc-<preset>-<goal>;
-    # the other targets have a single preset with a fixed tier.
-    PRESETS = {
-        'cortex-m3':  ('armv7m',           ('small',)),
-        'cortex-m4':  ('armv7em',          ('balanced',)),
-        'cortex-m7':  ('armv7em',          ('balanced',)),
-        'cortex-m33': ('armv8m',           ('small', 'balanced', 'fast')),
-        'cortex-m52': ('armv8_1m',         ('balanced',)),
-        'cortex-m55': ('armv8_1m',         ('balanced',)),
-        'rv32imcb':   ('rv32imcb',         ('small', 'balanced', 'fast')),
-        'rv32imac':   ('rv32imac',         ('balanced',)),
-        'rv64imac':   ('rv64imac',         ('balanced',)),
-        'linux':      ('x86_64-linux-gnu', ('small',)),
-    }
+    # The pqmicrolib-library presets used here are defined in its presets/crypto-benchmark.json
+    # (branch 'crypto-benchmark'): one per software target and ML-DSA goal, named
+    # <sw_target>-<goal>, for every target of sw_targets() and for 'linux' (host).
+    # small: PQS_MLDSA_SIGN_HIGH_RAM / PQS_MLDSA_VERIFY_HIGH_RAM OFF, balanced: ON,
+    # fast: balanced built for speed (same as balanced on some targets).
+    TIERS = ('small', 'balanced', 'fast')
 
     @classmethod
     def preset(cls, sw_target, goal=None):
-        """pqmicrolib-library preset name of 'sw_target', without the 'gcc-' prefix.
+        """pqmicrolib-library preset name of 'sw_target' for 'goal'.
 
-        For the targets that have one preset per ML-DSA tier, 'goal' selects the preset.
-        It is ignored for the other targets (single preset, fixed tier)."""
-        base, tiers = cls.PRESETS.get(sw_target, (sw_target, ()))
-        if len(tiers) > 1 and goal in tiers:
-            return f'{base}-{goal}'
-        return base
+        A goal that is not an ML-DSA tier (None, or a goal of another algorithm) selects the
+        'balanced' preset: the other algorithms have a single implementation."""
+        if goal not in cls.TIERS:
+            goal = 'balanced'
+        return f'{sw_target}-{goal}'
 
     @classmethod
     def mldsa_tiers(cls, sw_target):
         """ML-DSA tiers (goals) the library can be built with for 'sw_target'."""
-        return cls.PRESETS.get(sw_target, (sw_target, ()))[1]
+        return cls.TIERS if sw_target in cls.sw_targets() + ['linux'] else ()
 
     @staticmethod
     def sw_targets():
@@ -42,14 +31,14 @@ class PqMicroLibCore:
             'cortex-m52',
             'cortex-m55',
             'rv32imcb',
-            'rv32imac',
-            'rv64imac'
+            'rv32imc',
+            'rv64imc'
             ]
 
     @staticmethod
     def algorithms():
         return {
-            # restricted per target by supports(): only the tiers of the target's preset(s)
+            # restricted per target by supports(): only the targets that have presets
             'mldsa':['small','balanced','fast'],
             # single ML-KEM implementation, 'balanced' is only a label
             'mlkem':['balanced'],
@@ -63,7 +52,7 @@ class PqMicroLibCore:
 
     @classmethod
     def supports(cls, sw_target, goal, algo=None):
-        # ML-DSA: the goal must be a tier the target's preset(s) can be built with.
+        # ML-DSA: the goal must be a tier the target has a preset for.
         if algo in (None, 'mldsa'):
             return goal in cls.mldsa_tiers(sw_target)
         # other algorithms: single implementation, only the goals listed in algorithms()
@@ -77,12 +66,13 @@ class PqMicroLibCore:
 
     def build_cmd(self,sw_target,goal,pset,algo):
         self.sw_target = sw_target
-        preset = f'gcc-{self.preset(sw_target, goal)}'
-        # CMake prepends $CFLAGS to the toolchain's initial flags, but only when (re)configuring
-        # from scratch, hence --fresh (buildit forwards extra arguments to cmake).
+        preset = self.preset(sw_target, goal)
+        # The presets build with LTO: they set CFLAGS=-flto -ffat-lto-objects in their
+        # environment. CMake prepends $CFLAGS to the toolchain's initial flags, but only when
+        # (re)configuring from scratch, hence --fresh (buildit forwards extra arguments to cmake).
         return {
             'dir':'utl/tools',
-            'cmd':['env','CFLAGS=-flto -ffat-lto-objects','./buildit',preset,'--fresh']
+            'cmd':['./buildit',preset,'--fresh']
         }
 
 

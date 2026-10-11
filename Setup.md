@@ -25,8 +25,8 @@ run non-interactively (e.g. in CI).
   pinned tag from `setup_manifest.py`; `latest` clones the default branch,
   or the `branch` named in `setup_manifest.py` (`crypto-benchmark` for
   `wolfssl` and `PQRV`, whose default branch lacks the crypto-benchmark
-  integration, and the not yet merged branch with the per-tier presets
-  for `pqmicrolib-library`).
+  integration, and for `pqmicrolib-library`, whose `crypto-benchmark`
+  branch adds the `<target>-<goal>` presets).
 - `--test-renode {0,1,on,off,true,false}` — whether to run `./test-renode`
   and show results afterward (default on). This also controls how the demo
   is built: `-DRAW_COM=1` when on (Renode's UART capture is one-way and

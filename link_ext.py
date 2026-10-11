@@ -97,9 +97,9 @@ def main(*,preset='minSizeRel', goal=None):
         for targetname in targets:
             match(libname):
                 case 'pqcle':
-                    # one pqmicrolib-library preset per target; cortex-m33 and rv32imcb have
-                    # one preset per ML-DSA tier, selected by the goal
-                    targetdir = f'gcc-{pqmicrolib.helper.preset(targetname, goal_name)}'
+                    # one pqmicrolib-library preset per target and ML-DSA tier, selected by
+                    # the goal (presets/crypto-benchmark.json in pqmicrolib-library)
+                    targetdir = pqmicrolib.helper.preset(targetname, goal_name)
                     source = f'{PQCLE}/out/build/{targetdir}'
                     source_lib = f'{PQCLE}/out/{targetdir}/lib'
                     source_h = source+'/inc/pqcle'
