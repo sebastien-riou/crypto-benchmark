@@ -314,6 +314,8 @@ def main(args_target,args_algo,format,*,
         'wolfssl-small':'wolfssl',
         'wolfssl-balanced':'wolfssl',
         'wolfssl-fast':'wolfssl',
+        # results of the former goals small-armasm and fast-armasm: existing result files still use these names (the
+        # goals small and fast now use wolfSSL's Thumb-2 assembly on cortex-m*)
         'wolfssl-small-armasm':'wolfssl',
         'wolfssl-fast-armasm':'wolfssl',
         'stm32pqc-small':'stm32pqc',
@@ -331,6 +333,7 @@ def main(args_target,args_algo,format,*,
         'wolfssl-small':'small',
         'wolfssl-balanced':'balanced',
         'wolfssl-fast':'fast',
+        # results of the former goals small-armasm and fast-armasm (see impl_to_lib_name)
         'wolfssl-small-armasm':'small-armasm',
         'wolfssl-fast-armasm':'fast-armasm',
         'stm32pqc-small':'small',

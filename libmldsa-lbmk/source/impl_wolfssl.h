@@ -15,6 +15,16 @@
 
 #define WOLFSSL_INDEX CAT(WOLFSSL_,GOAL)
 
+//on Cortex-M, buildit-mldsa-<goal> uses wolfSSL's Thumb-2 assembly (for ML-DSA, only Keccak): this rejects a build
+//from before that, or for another CPU
+#if defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M')
+  #ifndef WOLFSSL_ARMASM_THUMB2
+    #error "on Cortex-M, wolfssl-<goal> expects a build with wolfSSL's Thumb-2 assembly (rebuild with buildit-mldsa-<goal>)"
+  #endif
+#elif defined(WOLFSSL_ARMASM)
+  #error "wolfSSL's ARM assembly is only expected on Cortex-M (rebuild with buildit-mldsa-<goal>)"
+#endif
+
 #if WOLFSSL_INDEX == WOLFSSL_small
   #define IMPL_NAME "wolfssl-small"
   #ifndef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM

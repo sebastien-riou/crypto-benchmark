@@ -108,7 +108,7 @@ class Aes(object):
 
 algorithms_catalog = {'mldsa':Mldsa(),'mlkem':Mlkem(),'sha2':Sha2(),'aes':Aes()}
 
-goals_catalog = {'small','balanced','fast','small-armasm','fast-armasm'}
+goals_catalog = {'small','balanced','fast'}
 
 
 def invoke_tool(cwd,*cmd,capture=False):

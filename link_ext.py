@@ -133,7 +133,7 @@ if __name__ == '__main__':
     levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
     parser.add_argument('--log-level', default='INFO', choices=levels)
     parser.add_argument('--preset', default='minSizeRel', type=str)
-    goals = ('small','balanced','fast','small-armasm','fast-armasm')
+    goals = ('small','balanced','fast')
     parser.add_argument('--goal', default='small', choices=goals)
     
     args = parser.parse_args()

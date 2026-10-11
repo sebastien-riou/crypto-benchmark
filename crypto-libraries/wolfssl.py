@@ -18,16 +18,13 @@ class Wolfssl:
 
     @staticmethod
     def algorithms():
+        # on cortex-m*, the ML-DSA and ML-KEM goals use wolfSSL's Thumb-2 assembly (see buildit-toolchain in the
+        # wolfssl repository); AES stays C
         return {
             'mldsa':['small','balanced','fast'],
-            'mlkem':['small','fast','small-armasm','fast-armasm'],
+            'mlkem':['small','fast'],
             'aes':['small','fast'],
         }
-
-    @staticmethod
-    def supports(sw_target, goal, algo=None):
-        # the -armasm goals use wolfSSL's Thumb-2 assembly: cortex-m* only
-        return not goal.endswith('-armasm') or sw_target.startswith('cortex-m')
 
     def __init__(self):
         self.sw_target = None

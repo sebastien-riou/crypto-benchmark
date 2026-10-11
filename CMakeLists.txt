@@ -26,9 +26,7 @@ if(NOT DEFINED GOAL)
 set(GOAL small)
 ENDIF()
 MESSAGE("GOAL=" ${GOAL})
-# the C code pastes GOAL into identifiers (CAT(WOLFSSL_,GOAL)): small-armasm becomes small_armasm there
-string(REPLACE "-" "_" GOAL_ID ${GOAL})
-ADD_DEFINITIONS(-DGOAL=${GOAL_ID})
+ADD_DEFINITIONS(-DGOAL=${GOAL})
 
 option(DEBUG_INFO "add -g (debug info only, the generated code is unchanged)" OFF)
 if(DEBUG_INFO)
