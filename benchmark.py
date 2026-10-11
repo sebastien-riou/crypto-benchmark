@@ -468,7 +468,7 @@ if __name__ == '__main__':
                                 logging.info('find device')
                                 for _trials in range(0,6):
                                     try:
-                                        device = process_cmd(hwp.com_device_cmd(),hwp_path,capture=True)
+                                        device = process_cmd(hwp.com_device_cmd(),hwp_path,capture=True).strip()
                                         break
                                     except:
                                         time.sleep(1)
