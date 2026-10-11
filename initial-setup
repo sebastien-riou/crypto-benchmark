@@ -138,10 +138,14 @@ def check_existing_state(name, dest, entry, version_mode):
 
     if version_mode == "pinned":
         expected = entry["default_tag"]
-        described = subprocess.run(["git", "-C", dest, "describe", "--tags", "--exact-match"], capture_output=True, text=True)
-        current = described.stdout.strip()
-        if described.returncode != 0 or current != expected:
-            warn(f"{name}: expected to be on tag {expected!r} but found {current or '(none / detached HEAD)'!r}")
+        # Not `git describe --exact-match`: it reports a single tag, so when
+        # several lightweight tags share HEAD (e.g. PQRV's crypto-benchmark-0.0.1
+        # and crypto-benchmark-0.0.16) it may name another one and warn wrongly.
+        tagged = subprocess.run(["git", "-C", dest, "tag", "--points-at", "HEAD"], capture_output=True, text=True)
+        current = tagged.stdout.split()
+        if tagged.returncode != 0 or expected not in current:
+            found = ", ".join(current) if current else "no tag at HEAD"
+            warn(f"{name}: expected to be on tag {expected!r} but found {found!r}")
     else:
         branch = subprocess.run(["git", "-C", dest, "symbolic-ref", "--short", "HEAD"], capture_output=True, text=True)
         # We can't reliably know the remote's default branch name offline, so
