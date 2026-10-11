@@ -50,7 +50,7 @@ ADDONS = {
             "host": "gitlab.pqsh.net",
             "path": "engineering/sw/pqmicrolib/pqmicrolib-library",
             "default_tag": "crypto-benchmark-0.0.16",
-            "branch": "dev/sru/mldsa-tiers",  # for --version latest: the per-tier presets are not merged yet
+            "branch": "crypto-benchmark",  # for --version latest: presets/crypto-benchmark.json is not on the default branch
             "recurse_submodules": False,
             "internal": True,  # requires gitlab.pqsh.net access; clone may fail
             "build": None,
