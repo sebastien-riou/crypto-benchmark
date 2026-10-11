@@ -49,7 +49,7 @@ ADDONS = {
             "codename": "PQSHIELD",
             "host": "gitlab.pqsh.net",
             "path": "engineering/sw/pqmicrolib/pqmicrolib-library",
-            "default_tag": "crypto-benchmark-0.0.19",
+            "default_tag": "crypto-benchmark-v0.0.19",
             "branch": "crypto-benchmark",  # for --version latest: presets/crypto-benchmark.json is not on the default branch
             "recurse_submodules": False,
             "internal": True,  # requires gitlab.pqsh.net access; clone may fail
