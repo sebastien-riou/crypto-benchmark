@@ -1,6 +1,34 @@
 #!/bin/bash
 
-set -ex 
+# Usage: ./get-results DEVICE [lean_benchmark.py options]
+#   DEVICE: serial device, or hwbridge:<board> for a board reached through lean-hwbridge
+#           (`hwbridge`, or the command in HWBRIDGE), e.g. from a sandboxed session
+# Environment:
+#   PYTHON: python with the packages of Pipfile (default: pipenv run python)
+
+set -ex
 
 UART=${1}
-pipenv run python ../lean-benchmark/lean_benchmark.py --write=0 --device=$UART ${@:2}
+PYTHON=${PYTHON:-pipenv run python}
+
+if [[ $UART == hwbridge:* ]]; then
+    # a pseudo-terminal wired to the board's serial port through the bridge, for this run only
+    BOARD=${UART#hwbridge:}
+    HWBRIDGE=${HWBRIDGE:-hwbridge}
+    UART=$(mktemp -u "${TMPDIR:-/tmp}/hwbridge-$BOARD.XXXXXX")
+    $HWBRIDGE serial open $BOARD
+    # nothing can be sent before the port is open, and the board's own USB serial port takes a
+    # moment to show up after a flash or a reset
+    set +x
+    while :; do
+        STATE=$($HWBRIDGE status --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["ports"].get(sys.argv[1],{}).get("state",""))' $BOARD)
+        [ "$STATE" = open ] && break
+        sleep 0.2
+    done
+    set -x
+    $HWBRIDGE serial pty $BOARD --link $UART &
+    PTY_PID=$!
+    trap 'kill $PTY_PID' EXIT
+fi
+
+$PYTHON ../lean-benchmark/lean_benchmark.py --write=0 --device=$UART ${@:2}
