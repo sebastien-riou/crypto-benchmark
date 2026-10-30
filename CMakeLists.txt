@@ -79,8 +79,22 @@ IF ( ${CRYPTO_LIB} STREQUAL "STUB" )
 	set( CRYPTO_LIB_SUPPORTED TRUE )
 ENDIF()
 
+# External library: a folder outside of version control, see "External libraries" in README.md
+if(NOT DEFINED EXTERNAL_LIBS_DIR)
+set(EXTERNAL_LIBS_DIR ${CMAKE_SOURCE_DIR}/external-libs_git_ignore)
+ENDIF()
 IF ( NOT DEFINED CRYPTO_LIB_SUPPORTED )
-	MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} is not supported. Supported: OPEN_SOURCE, PQSHIELD, PQRV, STUB, STM32PQC, WOLFSSL" )
+	string( TOLOWER ${CRYPTO_LIB} EXTERNAL_LIB_NAME )
+	set( EXTERNAL_LIB_DIR ${EXTERNAL_LIBS_DIR}/${EXTERNAL_LIB_NAME} )
+	IF ( EXISTS ${EXTERNAL_LIB_DIR}/mldsa.cmake )
+		MESSAGE("External library: " ${EXTERNAL_LIB_DIR})
+		set( MLDSA_LIB "EXTERNAL" )
+		set( CRYPTO_LIB_SUPPORTED TRUE )
+	ENDIF()
+ENDIF()
+
+IF ( NOT DEFINED CRYPTO_LIB_SUPPORTED )
+	MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} is not supported. Supported: OPEN_SOURCE, PQSHIELD, PQRV, STUB, STM32PQC, WOLFSSL, or an external library in ${EXTERNAL_LIBS_DIR}/<lower case CRYPTO_LIB>" )
 ENDIF()
 
 add_subdirectory(lib${ALGO}-lbmk)

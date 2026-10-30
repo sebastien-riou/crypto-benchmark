@@ -236,7 +236,8 @@ if __name__ == '__main__':
     #refine sw_libs: each entry can be 
     # - a path to a python file describing the lib
     # - a name, i.e., 'dilithium-lowram'
-    
+    #   or the name of an external library, i.e., 'foo' for external-libs_git_ignore/foo/foo.py
+
     sw_libs = []
     for i in range(len(libs)):
         original = libs[i]
@@ -250,16 +251,19 @@ if __name__ == '__main__':
             name = org
             p = os.path.join('crypto-libraries',f'{name}.py')
             if not os.path.exists(p):
-                m = f'SW library {name}: {p} does not exist'
-                logging.error(m)
-                raise RuntimeError(m)
+                p_ext = os.path.join('external-libs_git_ignore',name,f'{name}.py')
+                if not os.path.exists(p_ext):
+                    m = f'SW library {name}: neither {p} nor {p_ext} exist'
+                    logging.error(m)
+                    raise RuntimeError(m)
+                p = p_ext
             manifest = p
         if not os.path.exists(manifest):
             m = f'SW library {name} discarded: {manifest} does not exist'
             logging.warning(m)
             continue
         params = runpy.run_path(manifest)
-        sw_lib = {'name':name, 'path':p, 'helper': params['helper']}
+        sw_lib = {'name':name, 'path':manifest, 'helper': params['helper']}
         logging.debug(f'{original} -> {sw_lib}')
         sw_libs.append(sw_lib)
     logging.info(f'Valid software libraries (preliminary): {get_names(sw_libs)}')

@@ -348,13 +348,24 @@ def main(args_target,args_algo,format,*,
         'STM32PQC':'stm32pqc',
         'PQRV':'pqrv'
     }
+    # External libraries are not in the tables above: their library name is the build target name
+    # in lower case, and their implementation name is '<library name>-<goal>'
+    def lib_name(build_target):
+        return build_target_to_lib_name.get(build_target, build_target.lower())
+    def impl_to_lib_and_goal_name(impl_name):
+        if impl_name in impl_to_lib_name:
+            return impl_to_lib_name[impl_name], impl_to_goal_name[impl_name]
+        lib, _, goal = impl_name.rpartition('-')
+        if lib and goal in ('small', 'balanced', 'fast'):
+            return lib, goal
+        raise RuntimeError(f'unknown implementation name "{impl_name}", the implementation name of an external library must be "<library name>-<goal>"')
     def build_target_to_full_lib_name(lib,goal):
-        return f'{build_target_to_lib_name[lib]}-{goal}'
+        return f'{lib_name(lib)}-{goal}'
 
     lib_names = []
     if args_lib:
         for lib in args_lib:
-            lib_names.append(build_target_to_lib_name[lib])
+            lib_names.append(lib_name(lib))
     else:
         for lib in build_target_to_lib_name.keys():
             lib_names.append(build_target_to_lib_name[lib])
@@ -380,11 +391,10 @@ def main(args_target,args_algo,format,*,
             if args_algo != algo:
                 logging.debug(f'ignoring algo {algo}')
                 continue
-            lib = impl_to_lib_name[info['impl_name']]
+            lib,goal = impl_to_lib_and_goal_name(info['impl_name'])
             if lib not in lib_names:
                 logging.debug(f'ignoring lib {lib}')
                 continue
-            goal = impl_to_goal_name[info['impl_name']]
             logging.debug(f"info['impl_name']={info['impl_name']}")
             full_name = f'{lib}-{goal}'
             logging.debug(f'adding perf data for {full_name}')

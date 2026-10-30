@@ -38,6 +38,21 @@ IF ( ${MLDSA_LIB} STREQUAL "PQRV" )
 	ENDIF()
 ENDIF()
 
+IF ( ${MLDSA_LIB} STREQUAL "EXTERNAL" )
+	# sets EXTERNAL_MLDSA_ARCHIVES and optionally EXTERNAL_INCLUDE_DIRS
+	include(${EXTERNAL_LIB_DIR}/mldsa.cmake)
+	foreach( ARCHIVE ${EXTERNAL_MLDSA_ARCHIVES} )
+		IF ( NOT EXISTS ${ARCHIVE} )
+			MESSAGE( FATAL_ERROR "${CRYPTO_LIB} is not built for ${TARGET_CPU} (${ARCHIVE} is missing)" )
+		ENDIF()
+	endforeach()
+	# impl_mldsa.h is in EXTERNAL_LIB_DIR
+	set( EXTRA_INCLUDES
+        ${EXTERNAL_LIB_DIR}
+        ${EXTERNAL_INCLUDE_DIRS}
+    )
+ENDIF()
+
 # OPTION(IMPL_PQCLE "use PQCLE implementation" OFF) # Disabled by default, activate using "cmake -DIMPL_PQCLE=ON .."
 # MESSAGE("IMPL_PQCLE=" ${IMPL_PQCLE})
 # IF(IMPL_PQCLE)
@@ -182,6 +197,26 @@ add_custom_target(combined_target
         )
 ELSE()
 MESSAGE("MLDSA_LIB is NOT PQRV (it is '" ${MLDSA_LIB} "')")
+ENDIF()
+
+IF(${MLDSA_LIB} STREQUAL "EXTERNAL")
+MESSAGE("MLDSA_LIB is EXTERNAL")
+set( EXTERNAL_EXTRACT_COMMANDS "" )
+foreach( ARCHIVE ${EXTERNAL_MLDSA_ARCHIVES} )
+	list( APPEND EXTERNAL_EXTRACT_COMMANDS COMMAND ${CMAKE_AR} -x ${ARCHIVE} )
+endforeach()
+add_custom_target(combined_target
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mldsa-lbmk-core>
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
+        ${EXTERNAL_EXTRACT_COMMANDS}
+
+        #build combined lib
+        # like libpqrv, the external archives must contain only .obj members
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
+        )
+ELSE()
+MESSAGE("MLDSA_LIB is NOT EXTERNAL (it is '" ${MLDSA_LIB} "')")
 ENDIF()
 
 add_library(${LIB_NAME} STATIC IMPORTED GLOBAL)

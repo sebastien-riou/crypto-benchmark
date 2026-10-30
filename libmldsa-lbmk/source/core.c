@@ -68,6 +68,7 @@ void throw_exception(uint32_t err_code){
 #define IMPL_STM32PQC 4
 #define IMPL_WOLFSSL 5
 #define IMPL_PQRV 6
+#define IMPL_EXTERNAL 7
 #define MLDSA_LIB_INDEX CAT(IMPL_,MLDSA_LIB)
 
 #if MLDSA_LIB_INDEX == IMPL_STUB
@@ -82,6 +83,9 @@ void throw_exception(uint32_t err_code){
   #include "impl_wolfssl.h"
 #elif MLDSA_LIB_INDEX == IMPL_PQRV
   #include "impl_pqrv.h"
+#elif MLDSA_LIB_INDEX == IMPL_EXTERNAL
+  //in the folder of the external library (see "External libraries" in README.md)
+  #include "impl_mldsa.h"
 #else
   #error "No implementation defined. To fix this, you need to define MLDSA_LIB"
 #endif
