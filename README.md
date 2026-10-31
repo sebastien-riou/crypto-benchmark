@@ -143,7 +143,7 @@ pqcrystals-lowram-small                                                         
 (a): Match long term average for sign.                                                                                                               
 (b): Probability of occurrence is 2^-37 for sign.                                                                                                    
 Memory footprint for key generation                                              signing and verification (in KiB).                                  
-Implementation                                                                  Level                                Stack      Heap     Static RAM  Read-only
+Implementation                                                                  Level                                Stack      Heap     Static RAM      Flash
 pqcrystals-lowram-small                                                          44                                    5.19       0.00     3.77       12.52 
 pqcrystals-lowram-small                                                          65                                    6.69       0.00     5.84       11.96 
 pqcrystals-lowram-small                                                          87                                    8.19       0.00     7.30       12.21 
@@ -254,7 +254,10 @@ See [lean-benchmarck README.md](https://github.com/sebastien-riou/lean-benchmark
 
 ## Benchmark memory footprints
 The performance benchmark is reporting the dynamic memory usage (stack, heap).
-Static memory footprint is computed by the script `report_footprint.py`.
+Static memory footprint is computed by the script `report_footprint.py`, as the difference with the `STUB` build (no crypto library):
+- flash: what the library adds to flash, i.e. its code, its constants and the initial values of its initialized data;
+- rw (the "Static RAM" column of the results): the RAM it adds, initialized and zero-initialized data.
+
 The helper script `report-mldsa-footprint` provides an easy way to use it:
 
 ````
@@ -263,12 +266,12 @@ The helper script `report-mldsa-footprint` provides an easy way to use it:
 
 After the build of all libraries has completed, you should get something like:
 ````
-cortex-m33 mldsa 44 OPEN_SOURCE         : ro =    12.44 KiB, rw =      0 bytes
-cortex-m33 mldsa 44 STM32PQC            : ro =    17.93 KiB, rw =    11.09 KiB
-cortex-m33 mldsa 65 OPEN_SOURCE         : ro =    11.89 KiB, rw =      0 bytes
-cortex-m33 mldsa 65 STM32PQC            : ro =    17.92 KiB, rw =    15.09 KiB
-cortex-m33 mldsa 87 OPEN_SOURCE         : ro =    12.13 KiB, rw =      0 bytes
-cortex-m33 mldsa 87 STM32PQC            : ro =    17.92 KiB, rw =    19.09 KiB
+cortex-m33 mldsa 44 OPEN_SOURCE         : flash =    12.44 KiB, rw =      0 bytes
+cortex-m33 mldsa 44 STM32PQC            : flash =    17.93 KiB, rw =    11.09 KiB
+cortex-m33 mldsa 65 OPEN_SOURCE         : flash =    11.89 KiB, rw =      0 bytes
+cortex-m33 mldsa 65 STM32PQC            : flash =    17.92 KiB, rw =    15.09 KiB
+cortex-m33 mldsa 87 OPEN_SOURCE         : flash =    12.13 KiB, rw =      0 bytes
+cortex-m33 mldsa 87 STM32PQC            : flash =    17.92 KiB, rw =    19.09 KiB
 ````
 
 ## Instructions with data-dependent timing

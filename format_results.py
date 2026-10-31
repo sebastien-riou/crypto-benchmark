@@ -39,7 +39,7 @@ def gen_latex_footprint_table(libs,*, lib_list=None, pset_list=None) -> str:
     \textbf{Stack} &
     \textbf{Heap} &
     \textbf{Static RAM} &
-    \textbf{Read-only} \\
+    \textbf{Flash} \\
     """
 
     for lib in sorted(libs.keys()):
@@ -52,8 +52,8 @@ def gen_latex_footprint_table(libs,*, lib_list=None, pset_list=None) -> str:
             stack = f'{format_size_kib(libs[lib][pset]['stack']):>5}'
             heap  = f'{format_size_kib(libs[lib][pset]['heap']):>5}'
             rw    = f'{format_size_kib(libs[lib][pset]['rw']):>5}'
-            ro    = f'{format_size_kib(libs[lib][pset]['ro']):>5}'
-            out += r'\texttt{'+f'{lib:20}'+'} & '+str(pset)+f' & {stack} & {heap} & {rw} & {ro} \\\\\n'
+            flash = f'{format_size_kib(libs[lib][pset]['flash']):>5}'
+            out += r'\texttt{'+f'{lib:20}'+'} & '+str(pset)+f' & {stack} & {heap} & {rw} & {flash} \\\\\n'
     
     out += r"""    \hline
     \end{tabular*}
@@ -167,7 +167,7 @@ def gen_latex_perf_vs_msg_len_table(libs,*, lib_list=None, pset_list=None, op_li
 
 def gen_csv_footprint_table(libs,*, pset_list=None) -> str:
     out = 'Memory footprint for all benchmarked operations (in KiB).\n'
-    out += 'Implementation,Level,Stack,Heap,Static RAM,Read-only\n'
+    out += 'Implementation,Level,Stack,Heap,Static RAM,Flash\n'
 
     for lib in sorted(libs.keys()):
         for pset in sorted(libs[lib].keys()):
@@ -175,8 +175,8 @@ def gen_csv_footprint_table(libs,*, pset_list=None) -> str:
                 stack = f'{format_size_kib(libs[lib][pset]['stack']):>5}'
                 heap  = f'{format_size_kib(libs[lib][pset]['heap']):>5}'
                 rw    = f'{format_size_kib(libs[lib][pset]['rw']):>5}'
-                ro    = f'{format_size_kib(libs[lib][pset]['ro']):>5}'
-                out += f'{lib:20}'+' , '+str(pset)+f' , {stack} , {heap} , {rw} , {ro} \n'
+                flash = f'{format_size_kib(libs[lib][pset]['flash']):>5}'
+                out += f'{lib:20}'+' , '+str(pset)+f' , {stack} , {heap} , {rw} , {flash} \n'
             except KeyError:
                 logging.warning(f'no size data for lib {lib}, pset {pset}')
                 pass
@@ -239,7 +239,7 @@ def gen_csv_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> s
             #    continue
             logging.debug(f'libs[lib][pset]={libs[lib][pset]}')
             for op in sorted(libs[lib][pset].keys()):
-                if op in ['stack', 'heap', 'ro', 'rw']:
+                if op in ['stack', 'heap', 'flash', 'rw']:
                     continue
                 logging.debug(f'op={op}')
                 if op_list and op not in op_list:
@@ -497,7 +497,7 @@ def main(args_target,args_algo,format,*,
                 logging.debug(f'process {full_name} sizes')
                 d = sizes[pset][lib][goal]
                 try:
-                    libs[full_name][pset]['ro']=d['text']
+                    libs[full_name][pset]['flash']=d['flash']
                     libs[full_name][pset]['rw']=d['ram']
                 except KeyError:
                     logging.debug(libs.get(full_name))
@@ -507,7 +507,7 @@ def main(args_target,args_algo,format,*,
                 #    libs[full_name] = {}
                 #if pset not in libs[full_name]:
                 #    libs[full_name][pset] = {}
-                #libs[full_name][pset]['ro']=d['text']
+                #libs[full_name][pset]['flash']=d['flash']
                 #libs[full_name][pset]['rw']=d['ram']
                 
 

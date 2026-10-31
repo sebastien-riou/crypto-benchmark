@@ -51,9 +51,10 @@ def report_footprint(build_dir):
                         continue
                     for goal in sizes[algo][pset]['STUB']:
                         stub_size = sizes[algo][pset]['STUB'][goal]
-                        stub_text_size = stub_size['text']
+                        # flash holds the code and constants (text) and the initial values of the initialized data
+                        stub_flash_size = stub_size['text']+stub_size['data']
                         stub_ram_size = stub_size['data']+stub_size['bss']
-                        stub[algo][pset][goal] = {'size':stub_size,'text_size':stub_text_size,'ram_size':stub_ram_size}
+                        stub[algo][pset][goal] = {'size':stub_size,'flash_size':stub_flash_size,'ram_size':stub_ram_size}
             out[target]={}
             for algo in sizes.keys():
                 out[target][algo]={}
@@ -71,11 +72,11 @@ def report_footprint(build_dir):
                                 logging.warning(f'{target} {algo} {pset} {lib} {goal}: no matching STUB build, skipping size report')
                                 continue
                             stub_size = stub[algo][pset][goal]['size']
-                            stub_text_size = stub[algo][pset][goal]['text_size']
+                            stub_flash_size = stub[algo][pset][goal]['flash_size']
                             stub_ram_size = stub[algo][pset][goal]['ram_size']
                             lib_size = sizes[algo][pset][lib][goal]
                             d = {}
-                            d['text'] = lib_size['text'] - stub_text_size 
+                            d['flash'] = lib_size['text'] + lib_size['data'] - stub_flash_size
                             ram_size = lib_size['data'] + lib_size['bss'] - stub_ram_size 
                             if ram_size < 0:
                                 logging.warning(f'{algo} {pset} {lib} {goal} ram size is {ram_size}, correcting to 0')
@@ -107,7 +108,7 @@ if __name__ == '__main__':
                 for lib in out[target][algo][pset].keys():
                     for goal in out[target][algo][pset][lib].keys():
                         d = out[target][algo][pset][lib][goal]
-                        print(f"{target} {algo} {pset} {lib:20} {goal:8}: ro = {humanfriendly.format_size(d['text'],binary=True):>12}, rw = {humanfriendly.format_size(d['ram'],binary=True):>12}")
+                        print(f"{target} {algo} {pset} {lib:20} {goal:8}: flash = {humanfriendly.format_size(d['flash'],binary=True):>12}, rw = {humanfriendly.format_size(d['ram'],binary=True):>12}")
 
 
 
