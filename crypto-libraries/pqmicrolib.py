@@ -11,7 +11,7 @@ class PqMicroLibCore:
         """pqmicrolib-library preset name of 'sw_target' for 'goal'.
 
         A goal that is not an ML-DSA tier (None, or a goal of another algorithm) selects the
-        'balanced' preset: the other algorithms have a single implementation."""
+        'balanced' preset. ML-KEM uses the 'balanced' and 'fast' ones."""
         if goal not in cls.TIERS:
             goal = 'balanced'
         return f'{sw_target}-{goal}'
@@ -40,8 +40,8 @@ class PqMicroLibCore:
         return {
             # restricted per target by supports(): only the targets that have presets
             'mldsa':['small','balanced','fast'],
-            # single ML-KEM implementation, 'balanced' is only a label
-            'mlkem':['balanced'],
+            # single ML-KEM implementation, built from the <target>-balanced or <target>-fast preset
+            'mlkem':['balanced','fast'],
             'sha2':None
         }
 

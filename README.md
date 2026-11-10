@@ -40,7 +40,7 @@ Keys and ciphertexts are byte strings as specified by FIPS 203, any encoding/dec
 Every output is checked against the test vectors (outside of the benchmarked code).
 The following libraries are integrated (`OPEN_SOURCE` has no ML-KEM implementation):
 - `PQRV`: goal `fast`, `rv32imc` and `rv32imcb` targets only
-- `PQSHIELD`: goal `balanced` (single ML-KEM implementation, built from the `<target>-balanced` preset)
+- `PQSHIELD`: goals `balanced` / `fast` (single ML-KEM implementation, built from the `<target>-balanced` / `<target>-fast` preset, see `presets/crypto-benchmark.json` in pqmicrolib-library)
 - `STM32PQC`: goal `balanced`. ST does not document the size of the working buffer, the default (`STM32PQC_MLKEM_MEMBUF_SIZE`, 32 KiB) is an upper bound which inflates the static RAM footprint. The peak usage is reported as extra data `membuf peak` (visible with `--details=1`), rebuild with `-DSTM32PQC_MLKEM_MEMBUF_SIZE=<peak>` to get an accurate footprint.
 - `WOLFSSL`: goals `small` / `fast` (`WOLFSSL_MLKEM_SMALL` + `WOLFSSL_MLKEM_*_SMALL_MEM` / default), built by `buildit-mlkem-small` / `buildit-mlkem-fast`.
   On the Cortex-M targets, both goals use wolfSSL's Thumb-2 assembly (`--enable-armasm`).
@@ -173,7 +173,7 @@ Same as above for ML-KEM, limited to ML-KEM-512 for now.
 You can optionally specify:
 
 - a crypto-library
-  - `PQSHIELD` (default, goal `balanced`)
+  - `PQSHIELD` (default, goal `balanced` or `fast`)
   - `WOLFSSL` (goal `small` or `fast`)
 - an optimization goal
 

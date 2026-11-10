@@ -1,14 +1,18 @@
 #pragma once
 
-//PQShield's PQMicroLib-Core has a single ML-KEM implementation
+//PQShield's PQMicroLib-Core has a single ML-KEM implementation, the goal selects the
+//pqmicrolib-library preset it is built with: <target>-balanced or <target>-fast (built for speed)
 #define UMLKEM_balanced 1
+#define UMLKEM_fast 2
 
 #define UMLKEM_INDEX CAT(UMLKEM_,GOAL)
 
 #if UMLKEM_INDEX == UMLKEM_balanced
   #define IMPL_NAME "umlkem-balanced"
+#elif UMLKEM_INDEX == UMLKEM_fast
+  #define IMPL_NAME "umlkem-fast"
 #else
-  #error "PQCLE ML-KEM supports GOAL balanced only"
+  #error "PQCLE ML-KEM supports GOAL balanced or fast only"
 #endif
 
 #include <pqcle/pqs_mlkem.h>
