@@ -74,6 +74,11 @@ static void kem_decaps(
   if (r != PQS_MLKEM_SUCCESS) {
     throw_exception(ERROR_DECAPS|ERROR_LIB_INIT|r);
   }
+  //FIPS 203 section 7.3 hash check: pqs_mlkem_decaps leaves key validation to the caller (pqs_mlkem.h);
+  //pqs_mlkem_secret_key_validate does it with the library's SHA3-256
+  if (pqs_mlkem_secret_key_validate(pset_to_algid(PSET), secret_key, KEM_SECRET_KEY_SIZE) != PQS_MLKEM_SUCCESS) {
+    throw_exception(ERROR_DECAPS|ERROR_DK_CHECK);
+  }
   r = pqs_mlkem_decaps((struct pqs_mlkem_ctx*)ctx, secret_key, shared_secret, ciphertext);
   if (r != PQS_MLKEM_SUCCESS) {
     throw_exception(ERROR_DECAPS|r);

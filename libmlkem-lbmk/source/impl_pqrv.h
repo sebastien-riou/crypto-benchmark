@@ -44,6 +44,11 @@ static void kem_decaps(
   const void*const ciphertext,
   void*shared_secret
 ){
+  //FIPS 203 section 7.3 hash check: PQRV_MLKEM(_dec) does not do it, PQRV_MLKEM(_check_sk) does, with the
+  //library's SHA3-256
+  if (PQRV_MLKEM(_check_sk)(secret_key)) {
+    throw_exception(ERROR_DECAPS|ERROR_DK_CHECK);
+  }
   int r = PQRV_MLKEM(_dec)(shared_secret, ciphertext, secret_key);
   if (r) {
     throw_exception(ERROR_DECAPS|r);

@@ -128,6 +128,15 @@ static void kem_decaps(
   void*shared_secret
 ){
   size_t shared_secret_size = KEM_SHARED_SECRET_SIZE;
+  //FIPS 203 section 7.3 hash check: cmox_pqc_kem_decapsulate accepts a key whose stored H(ek) is wrong (found
+  //with core.c's check_dk_hash_check on the STM32U5A5), so it is done here with the library's SHA3-256
+  uint8_t h[32];
+  size_t h_size;
+  if (cmox_hash_compute(CMOX_SHA3_256_ALGO, (const uint8_t*)secret_key + KEM_DK_EK_OFFSET, KEM_PUBLIC_KEY_SIZE,
+                        h, sizeof h, &h_size) != CMOX_HASH_SUCCESS
+      || h_size != sizeof h || !kem_dk_hash_matches(h, secret_key)) {
+    throw_exception(ERROR_DECAPS|ERROR_DK_CHECK);
+  }
   kem_construct();
   const cmox_pqc_retval_t r = cmox_pqc_kem_decapsulate(&Pqc_Ctx,
     pset_to_dec_algo(PSET),

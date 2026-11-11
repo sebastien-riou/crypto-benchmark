@@ -111,6 +111,7 @@ static void kem_decaps(
   if (r) {
     throw_exception(ERROR_DECAPS|ERROR_LIB_INIT|WOLFSSL_ERR(r));
   }
+  //includes the FIPS 203 section 7.3 hash check (MLKEM_PUB_HASH_E), and the modulus checks of both vectors
   r = wc_MlKemKey_DecodePrivateKey(&key, secret_key, KEM_SECRET_KEY_SIZE);
   if (0 == r) {
     r = wc_MlKemKey_Decapsulate(&key, shared_secret, ciphertext, KEM_CIPHERTEXT_SIZE);

@@ -31,6 +31,7 @@ void throw_exception(uint32_t err_code){
 #define ERROR_CIPHERTEXT    0x00000003
 #define ERROR_SHARED_SECRET 0x00000004
 #define ERROR_REJECT        0x00000005
+#define ERROR_NO_DK_CHECK   0x00000006 //decapsulation accepted a key failing the FIPS 203 hash check
 
 #define MLKEM512_SECRETKEYBYTES 1632
 #define MLKEM512_PUBLICKEYBYTES 800
@@ -81,11 +82,25 @@ void throw_exception(uint32_t err_code){
 #define IMPL_EXTERNAL 6
 #define MLKEM_LIB_INDEX CAT(IMPL_,MLKEM_LIB)
 
+//for wrappers doing the FIPS 203 section 7.3 hash check: dk = dk_PKE || ek || H(ek) || z
+#define ERROR_DK_CHECK 0x00DC0000 //with ERROR_DECAPS: the wrapper's hash check rejected the decapsulation key
+#define KEM_DK_EK_OFFSET (KEM_SECRET_KEY_SIZE - KEM_PUBLIC_KEY_SIZE - 2*32)
+#define KEM_DK_H_OFFSET  (KEM_SECRET_KEY_SIZE - 2*32)
+//non-zero when h, the hash of the decapsulation key's ek, matches the H(ek) stored in it
+__attribute__((unused)) static int kem_dk_hash_matches(const uint8_t h[32], const void*const secret_key){
+  const uint8_t*const stored = (const uint8_t*)secret_key + KEM_DK_H_OFFSET;
+  uint8_t d = 0;
+  for(unsigned int i=0;i<32;i++) d |= h[i] ^ stored[i];
+  return 0 == d;
+}
+
 //each implementation provides:
 //  kem_init(): one-time library initialization, not benchmarked
 //  kem_keygen(seed,public_key,secret_key): deterministic key generation from d || z (FIPS 203 ML-KEM.KeyGen_internal)
 //  kem_encaps(public_key,seed,ciphertext,shared_secret): deterministic encapsulation from m (FIPS 203 ML-KEM.Encaps_internal)
-//  kem_decaps(secret_key,ciphertext,shared_secret): decapsulation (FIPS 203 ML-KEM.Decaps_internal)
+//  kem_decaps(secret_key,ciphertext,shared_secret): decapsulation (FIPS 203 ML-KEM.Decaps_internal), with the
+//    decapsulation key hash check of FIPS 203 section 7.3: done by the library, or else by the wrapper, with the
+//    library's own SHA3-256 when it has one. A failed check throws ERROR_DECAPS (check_dk_hash_check verifies it).
 //keys and ciphertext are byte strings as specified by FIPS 203, any decoding/encoding is part of the benchmarked operation.
 //errors are reported using throw_exception.
 //optionally, an implementation can report extra data after each operation, it shall then define
@@ -296,6 +311,38 @@ static benchmark_setup_t bench_decaps_reject_setup = {
   .nextra_data = KEM_NEXTRA_DATA
 };
 
+//Every implementation is benchmarked with the decapsulation key hash check of FIPS 203 section 7.3: the key
+//dk = dk_PKE || ek || H(ek) || z is rejected when its stored H(ek) does not match ek. The library does it, or else
+//its wrapper (impl_*.h) does it inside kem_decaps, so the check is part of the measured decapsulation either way.
+//This verifies it after the measurements of each pass, before their end is announced: a decapsulation that accepts
+//such a key stops the run with an exception, and the host records no results. It runs after the measurements so
+//that their heap usage is not hidden: some platforms measure the growth of the heap end, which this would cause.
+//The stub does nothing, so it cannot pass: it runs the same code without the verdict, which keeps the firmware the
+//same apart from the library (the footprint is the size of a firmware minus that of the stub's).
+static volatile uint8_t dk_check_verdict = MLKEM_LIB_INDEX == IMPL_STUB ? 1 : 2; //non-zero: in .data for both
+static void check_dk_hash_check(void){
+  jmp_buf ctx;
+  jmp_buf*const outer = set_exception_ctx(&ctx);
+  volatile uint32_t err;
+  tv_case = &tv->cases[0];
+  if(0 == (err = setjmp(ctx))){
+    kem_keygen(tv_case->keygen_seed, bench_public_key, bench_secret_key);
+    kem_encaps(bench_public_key, tv_case->encaps_seed, bench_ciphertext, bench_shared_secret);
+    bench_secret_key[KEM_DK_H_OFFSET] ^= 1; //first byte of the stored H(ek)
+    kem_decaps(bench_secret_key, bench_ciphertext, bench_shared_secret);
+  }
+  set_exception_ctx(outer);
+  if(2 != dk_check_verdict){
+    return;
+  }
+  if(0 == err){
+    throw_exception(ERROR_SANITY_CHECK | ERROR_NO_DK_CHECK);
+  }
+  if((err & 0xF0000000) != ERROR_DECAPS){
+    throw_exception(err); //key generation or encapsulation failed
+  }
+}
+
 void lean_benchmark(unsigned int ninfo, const char*info[], bool run_forever){
   const char*sw_build_info[] = {
     "sw_target_cpu", xstr(CPU),
@@ -329,6 +376,7 @@ void lean_benchmark(unsigned int ninfo, const char*info[], bool run_forever){
         LBMK_benchmarkit(&bench_decaps_setup,tv_case_index);
         LBMK_benchmarkit(&bench_decaps_reject_setup,tv_case_index);
       }
+      check_dk_hash_check();
       LBMK_announce_end();
       if(!run_forever) break;
     }
