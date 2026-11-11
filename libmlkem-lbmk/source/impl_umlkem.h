@@ -59,6 +59,11 @@ static void kem_encaps(
   if (r != PQS_MLKEM_SUCCESS) {
     throw_exception(ERROR_ENCAPS|ERROR_LIB_INIT|r);
   }
+  //FIPS 203 section 7.2 modulus check: pqs_mlkem_encaps leaves key validation to the caller (pqs_mlkem.h);
+  //pqs_mlkem_public_key_validate does it
+  if (pqs_mlkem_public_key_validate(pset_to_algid(PSET), public_key, KEM_PUBLIC_KEY_SIZE) != PQS_MLKEM_SUCCESS) {
+    throw_exception(ERROR_ENCAPS|ERROR_EK_CHECK);
+  }
   r = pqs_mlkem_encaps((struct pqs_mlkem_ctx*)ctx, seed, public_key, shared_secret, ciphertext);
   if (r != PQS_MLKEM_SUCCESS) {
     throw_exception(ERROR_ENCAPS|r);

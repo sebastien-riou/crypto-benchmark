@@ -92,6 +92,7 @@ static void kem_encaps(
   if (r) {
     throw_exception(ERROR_ENCAPS|ERROR_LIB_INIT|WOLFSSL_ERR(r));
   }
+  //includes the FIPS 203 section 7.2 modulus check (mlkem_check_reduced)
   r = wc_MlKemKey_DecodePublicKey(&key, public_key, KEM_PUBLIC_KEY_SIZE);
   if (0 == r) {
     r = wc_MlKemKey_EncapsulateWithRandom(&key, ciphertext, shared_secret, seed, MLKEM_ENCAPS_SEEDBYTES);

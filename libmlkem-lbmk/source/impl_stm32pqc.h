@@ -110,6 +110,8 @@ static void kem_encaps(
   size_t ciphertext_size = KEM_CIPHERTEXT_SIZE;
   size_t shared_secret_size = KEM_SHARED_SECRET_SIZE;
   kem_construct();
+  //includes the FIPS 203 section 7.2 modulus check: the library decodes and re-encodes each polynomial of ek,
+  //compares, and returns CMOX_PQC_ERR_INVALID_PUBKEY on a difference (seen in its code: kem768.obj)
   const cmox_pqc_retval_t r = cmox_pqc_kem_encapsulate(&Pqc_Ctx,
     pset_to_enc_algo(PSET),
     seed, MLKEM_ENCAPS_SEEDBYTES, /* m */

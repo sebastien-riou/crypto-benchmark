@@ -33,6 +33,10 @@ static void kem_encaps(
   void*ciphertext,
   void*shared_secret
 ){
+  //FIPS 203 section 7.2 modulus check: PQRV_MLKEM(_enc_derand) does not do it, PQRV_MLKEM(_check_pk) does
+  if (PQRV_MLKEM(_check_pk)(public_key)) {
+    throw_exception(ERROR_ENCAPS|ERROR_EK_CHECK);
+  }
   int r = PQRV_MLKEM(_enc_derand)(ciphertext, shared_secret, public_key, seed);
   if (r) {
     throw_exception(ERROR_ENCAPS|r);
