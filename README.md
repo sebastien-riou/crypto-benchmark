@@ -72,12 +72,16 @@ You can view the results in terminal using:
 ````
 
 ## External libraries
-An ML-DSA library which shall not be part of this repository (e.g. not public) can be benchmarked from a folder `external-libs_git_ignore/<name>/` (`<name>` in lower case, git ignores that folder), containing:
+An ML-DSA or ML-KEM library which shall not be part of this repository (e.g. not public) can be benchmarked from a folder `external-libs_git_ignore/<name>/` (`<name>` in lower case, git ignores that folder), containing:
 - `<name>.py`: the manifest used by `benchmark.py`, same interface as the files in `crypto-libraries`. Its `codename` is the `CRYPTO_LIB` value, i.e., `<name>` in upper case.
-- `mldsa.cmake`: sets `EXTERNAL_MLDSA_ARCHIVES` to the list of archives to link (`TARGET_CPU` gives the target, e.g. `rv32imcb`) and optionally `EXTERNAL_INCLUDE_DIRS`. Like `libpqrv.a`, the archives must contain only `.obj` members.
-- `impl_mldsa.h`: the glue between [libmldsa-lbmk/source/core.c](libmldsa-lbmk/source/core.c) and the library, same interface as [libmldsa-lbmk/source/impl_pqrv.h](libmldsa-lbmk/source/impl_pqrv.h). `IMPL_NAME` must be `<name>-<goal>`.
+- for ML-DSA:
+  - `mldsa.cmake`: sets `EXTERNAL_MLDSA_ARCHIVES` to the list of archives to link (`TARGET_CPU` gives the target, e.g. `rv32imcb`) and optionally `EXTERNAL_INCLUDE_DIRS`. Like `libpqrv.a`, the archives must contain only `.obj` members.
+  - `impl_mldsa.h`: the glue between [libmldsa-lbmk/source/core.c](libmldsa-lbmk/source/core.c) and the library, same interface as [libmldsa-lbmk/source/impl_pqrv.h](libmldsa-lbmk/source/impl_pqrv.h). `IMPL_NAME` must be `<name>-<goal>`.
+- for ML-KEM: the same with `mlkem.cmake` (setting `EXTERNAL_MLKEM_ARCHIVES`; `PSET` and `GOAL` are available) and `impl_mlkem.h` (same interface as [libmlkem-lbmk/source/impl_pqrv.h](libmlkem-lbmk/source/impl_pqrv.h)).
 
-The library is then selected like the others, e.g. `./buildit on/rv32imcb mldsa 44 <NAME>` or `pipenv run python benchmark.py --hw-platform rp2350 --lib <name> --algo mldsa`.
+The goals of an external library are those its manifest lists in `algorithms()`: `small`, `balanced`, `fast`, or names of its own, e.g. one per variant of the library. A goal name is made of word characters only (letters, digits, `_`), since it ends up in file names.
+
+The library is then selected like the others, e.g. `./buildit on/rv32imcb mldsa 44 <NAME>` (after `python3 link_ext.py --goal=<goal>`) or `pipenv run python benchmark.py --hw-platform rp2350 --lib <name> --algo mldsa`.
 Use `-DEXTERNAL_LIBS_DIR=<path>` to look for external libraries in another folder.
 
 ## Benchmarking using Renode

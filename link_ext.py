@@ -1,6 +1,7 @@
 #!bin/python3
 
 import os
+import re
 import sys
 from glob import glob
 import logging
@@ -133,8 +134,15 @@ if __name__ == '__main__':
     levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
     parser.add_argument('--log-level', default='INFO', choices=levels)
     parser.add_argument('--preset', default='minSizeRel', type=str)
-    goals = ('small','balanced','fast')
-    parser.add_argument('--goal', default='small', choices=goals)
+    def goal_name(s):
+        # small, balanced, fast, or a goal of an external library: word characters only, since goals end up
+        # in the file names that report_footprint.py parses. A goal other than small/balanced/fast selects the
+        # balanced pqmicrolib-library preset (see crypto-libraries/pqmicrolib.py); the other libraries have no
+        # build for it, which is reported as a warning.
+        if not re.fullmatch(r'\w+', s):
+            raise argparse.ArgumentTypeError(f'invalid goal "{s}": word characters only')
+        return s
+    parser.add_argument('--goal', default='small', type=goal_name)
     
     args = parser.parse_args()
 

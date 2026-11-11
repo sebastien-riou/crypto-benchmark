@@ -1,6 +1,7 @@
 import logging
 import argparse
 import os
+import re
 import sys
 import report_footprint
 import humanfriendly
@@ -357,8 +358,9 @@ def main(args_target,args_algo,format,*,
     def impl_to_lib_and_goal_name(impl_name):
         if impl_name in impl_to_lib_name:
             return impl_to_lib_name[impl_name], impl_to_goal_name[impl_name]
+        # the goal is small, balanced, fast or one of the external library's own goals
         lib, _, goal = impl_name.rpartition('-')
-        if lib and goal in ('small', 'balanced', 'fast'):
+        if lib and re.fullmatch(r'\w+', goal):
             return lib, goal
         raise RuntimeError(f'unknown implementation name "{impl_name}", the implementation name of an external library must be "<library name>-<goal>"')
     def build_target_to_full_lib_name(lib,goal):

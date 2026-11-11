@@ -78,6 +78,7 @@ void throw_exception(uint32_t err_code){
 #define IMPL_STM32PQC 3
 #define IMPL_WOLFSSL 4
 #define IMPL_PQRV 5
+#define IMPL_EXTERNAL 6
 #define MLKEM_LIB_INDEX CAT(IMPL_,MLKEM_LIB)
 
 //each implementation provides:
@@ -100,6 +101,9 @@ void throw_exception(uint32_t err_code){
   #include "impl_wolfssl.h"
 #elif MLKEM_LIB_INDEX == IMPL_PQRV
   #include "impl_pqrv.h"
+#elif MLKEM_LIB_INDEX == IMPL_EXTERNAL
+  //in the folder of the external library (see "External libraries" in README.md)
+  #include "impl_mlkem.h"
 #else
   #error "No implementation defined. To fix this, you need to define MLKEM_LIB"
 #endif

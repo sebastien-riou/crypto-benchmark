@@ -1,5 +1,6 @@
-import os 
-import argparse 
+import os
+import re
+import argparse
 import logging
 import runpy
 import glob
@@ -167,7 +168,8 @@ if __name__ == '__main__':
         '--sw-target', help='Specify one or more software build targets', default=None, nargs='+', type=str
     )  
     parser.add_argument(
-        '--goal', help='List of goals to benchmark', default=None, nargs='+', choices=goals_catalog
+        '--goal', default=None, nargs='+', type=str,
+        help=f'List of goals to benchmark: {", ".join(sorted(goals_catalog))}, or a goal of an external library'
     )
     parser.add_argument(
         '--lib', help='List of libraries to benchmark', default=None, nargs='+', type=str
@@ -325,6 +327,16 @@ if __name__ == '__main__':
     
     goals = args.goal
     if goals:
+        # goal names: the usual ones or any declared by a selected library (an external library can have
+        # its own goals, word characters only since they end up in the file names that report_footprint.py parses)
+        known_goals = set(goals_catalog)
+        for lib in sw_libs:
+            for lib_goals in lib['helper'].algorithms().values():
+                known_goals.update(lib_goals or [])
+        for g in goals:
+            if g not in known_goals or not re.fullmatch(r'\w+', g):
+                logging.error(f'Unknown goal "{g}", the selected software libraries know: {", ".join(sorted(known_goals))}')
+                exit(-9)
         # check specified goal exist for the selected libraries and algorithms
         for g in goals:
             for a in algos:

@@ -13,7 +13,7 @@ MESSAGE("PSET=" ${PSET})
 ADD_DEFINITIONS(-DPSET=${PSET})
 
 if(NOT DEFINED MLKEM_LIB)
-MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} has no ML-KEM implementation. Supported: PQSHIELD, PQRV, STUB, STM32PQC, WOLFSSL" )
+MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} has no ML-KEM implementation. Supported: PQSHIELD, PQRV, STUB, STM32PQC, WOLFSSL, or an external library with an mlkem.cmake" )
 ENDIF()
 MESSAGE("MLKEM_LIB=" ${MLKEM_LIB})
 ADD_DEFINITIONS(-DMLKEM_LIB=${MLKEM_LIB})
@@ -51,6 +51,21 @@ IF ( ${MLKEM_LIB} STREQUAL "PQRV" )
 	IF ( NOT EXISTS ${TARGET_DIR}/pqrv/libpqrv.a )
 		MESSAGE( FATAL_ERROR "PQRV is not built for ${TARGET_CPU} (${TARGET_DIR}/pqrv/libpqrv.a is missing). Run '(cd ../PQRV/libpqrv && ./buildit ${TARGET_CPU})' then 'python3 link_ext.py --goal=${GOAL}'" )
 	ENDIF()
+ENDIF()
+
+IF ( ${MLKEM_LIB} STREQUAL "EXTERNAL" )
+	# sets EXTERNAL_MLKEM_ARCHIVES and optionally EXTERNAL_INCLUDE_DIRS
+	include(${EXTERNAL_LIB_DIR}/mlkem.cmake)
+	foreach( ARCHIVE ${EXTERNAL_MLKEM_ARCHIVES} )
+		IF ( NOT EXISTS ${ARCHIVE} )
+			MESSAGE( FATAL_ERROR "${CRYPTO_LIB} is not built for ${TARGET_CPU} (${ARCHIVE} is missing)" )
+		ENDIF()
+	endforeach()
+	# impl_mlkem.h is in EXTERNAL_LIB_DIR
+	set( EXTRA_INCLUDES
+        ${EXTERNAL_LIB_DIR}
+        ${EXTERNAL_INCLUDE_DIRS}
+    )
 ENDIF()
 
 target_include_directories(${LIB}
@@ -169,6 +184,26 @@ add_custom_target(combined_target
         )
 ELSE()
 MESSAGE("MLKEM_LIB is NOT PQRV (it is '" ${MLKEM_LIB} "')")
+ENDIF()
+
+IF(${MLKEM_LIB} STREQUAL "EXTERNAL")
+MESSAGE("MLKEM_LIB is EXTERNAL")
+set( EXTERNAL_EXTRACT_COMMANDS "" )
+foreach( ARCHIVE ${EXTERNAL_MLKEM_ARCHIVES} )
+	list( APPEND EXTERNAL_EXTRACT_COMMANDS COMMAND ${CMAKE_AR} -x ${ARCHIVE} )
+endforeach()
+add_custom_target(combined_target
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mlkem-lbmk-core>
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
+        ${EXTERNAL_EXTRACT_COMMANDS}
+
+        #build combined lib
+        # like libpqrv, the external archives must contain only .obj members
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
+        )
+ELSE()
+MESSAGE("MLKEM_LIB is NOT EXTERNAL (it is '" ${MLKEM_LIB} "')")
 ENDIF()
 
 add_library(${LIB_NAME} STATIC IMPORTED GLOBAL)
