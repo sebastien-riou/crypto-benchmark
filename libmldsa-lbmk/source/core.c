@@ -27,6 +27,7 @@ void throw_exception(uint32_t err_code){
 #define ERROR_MISC          0xFFF00000
 #define ERROR_PUBLIC_KEY    0x00000001
 #define ERROR_PRIVATE_KEY   0x00000002
+#define ERROR_PREPARED      0x00000003
 
 #define ERROR_NOT_IMPLEMENTED 1
 
@@ -95,6 +96,13 @@ void throw_exception(uint32_t err_code){
   #define DSA_MAX_STACK_SIZE (40*1024)
 #endif
 
+//optional: an implementation which can prepare a key once (expand the matrix, transform the key
+//vectors) defines DSA_PREPARED_KEYS and the functions dsa_sk_prepare, dsa_pk_prepare,
+//dsa_sign_prepared and dsa_verify_prepared (see "Prepared keys" in README.md)
+#ifndef DSA_PREPARED_KEYS
+  #define DSA_PREPARED_KEYS 0
+#endif
+
 
 typedef struct generic_mldsa_test_vectors_struct {
   const char* name;
@@ -124,6 +132,10 @@ const generic_mldsa_test_vectors_t *generic_tv;
 uint8_t private_key[DSA_PRIVATE_KEY_SIZE]={0};
 uint8_t public_key[DSA_PUBLIC_KEY_SIZE]={0};
 uint8_t signature[DSA_SIG_SIZE]={0};
+#if DSA_PREPARED_KEYS
+//signature made with the prepared private key, must equal the one in signature
+uint8_t signature_prepared[DSA_SIG_SIZE]={0};
+#endif
 static size_t message_size;
 void set_gpo0(unsigned int);
 
@@ -168,10 +180,10 @@ static const uint8_t*tv_sign_message;
 #endif
 #endif 
 static uint8_t message[MSG_MAX_SIZE] = {0};
-void mldsa_gen_key(uintptr_t*args){
+static void mldsa_gen_key_args(uintptr_t*args){
   args[0] = (uintptr_t)generic_tv->mldsa_seed;
 }
-void mldsa_sign(uintptr_t*args){
+static void mldsa_sign_args(uintptr_t*args){
   args[0] = (uintptr_t)signature;
   args[1] = (uintptr_t)message;
   args[2] = generic_tv->message_size;
@@ -179,7 +191,16 @@ void mldsa_sign(uintptr_t*args){
   memset(message,0,generic_tv->message_size);
   memcpy(message,tv_sign_message,8);
 }
-void mldsa_verify(uintptr_t*args){
+#if DSA_PREPARED_KEYS
+static void mldsa_prepare_args(uintptr_t*args){
+  args[0] = 0; //unused: LBMK_benchmarkit needs one argument at least
+}
+static void mldsa_sign_prepared_args(uintptr_t*args){
+  mldsa_sign_args(args);
+  args[0] = (uintptr_t)signature_prepared;
+}
+#endif
+static void mldsa_verify_args(uintptr_t*args){
   args[0] = (uintptr_t)signature;
   args[1] = (uintptr_t)message;
   args[2] = generic_tv->message_size;
@@ -238,11 +259,51 @@ void mldsa_verify_post_exec(tlv_t*extra_data_info, uintptr_t*args,uint64_t outpu
   }
 }
 
+#if DSA_PREPARED_KEYS
+uint64_t mldsa_sk_prepare_dut(uintptr_t*args){
+  dsa_sk_prepare(PSET);
+  return 0;
+}
+uint64_t mldsa_pk_prepare_dut(uintptr_t*args){
+  dsa_pk_prepare(PSET);
+  return 0;
+}
+uint64_t mldsa_sign_prepared_dut(uintptr_t*args){
+  //anything here is part of the benchmark, so it should be just setting arguments
+  uintptr_t*argsp = (uintptr_t*)args;
+  void* signature=(void*)argsp[0];
+  const void*const message=(const void*const)argsp[1];
+  size_t message_size=argsp[2];
+  dsa_sign_prepared(PSET,signature,message,message_size);
+  return 0;
+}
+void mldsa_sign_prepared_post_exec(tlv_t*extra_data_info, uintptr_t*args,uint64_t output){
+  //signing is deterministic: the prepared key must give the signature of the plain one
+  if(memcmp(signature_prepared,signature,sizeof signature)){
+    throw_exception(ERROR_SIGN | ERROR_PREPARED);
+  }
+}
+uint64_t mldsa_verify_prepared_dut(uintptr_t*args){
+  //anything here is part of the benchmark, so it should be just setting arguments
+  uintptr_t*argsp = (uintptr_t*)args;
+  void* signature=(void*)argsp[0];
+  const void*const message=(const void*const)argsp[1];
+  size_t message_size=argsp[2];
+  return dsa_verify_prepared(PSET,signature,message,message_size);
+}
+void mldsa_verify_prepared_post_exec(tlv_t*extra_data_info, uintptr_t*args,uint64_t output){
+  //we benchmark only the succesful case
+  if(output){
+    throw_exception(ERROR_VERIFY | ERROR_PREPARED);
+  }
+}
+#endif
+
 benchmark_setup_t mldsa_gen_key_benchmark_setup = {
   .dut_name = "mldsa_gen_key",
   .dut = mldsa_gen_key_dut,
   .args_setup_name = "mldsa_gen_key",
-  .args_setup = mldsa_gen_key,
+  .args_setup = mldsa_gen_key_args,
   .nargs = 1,
   .ntrials = 5,
   .max_stack_size = DSA_MAX_STACK_SIZE,
@@ -253,7 +314,7 @@ benchmark_setup_t mldsa_sign_benchmark_setup = {
   .dut_name = "mldsa_sign",
   .dut = mldsa_sign_dut,
   .args_setup_name = "mldsa_sign",
-  .args_setup = mldsa_sign,
+  .args_setup = mldsa_sign_args,
   .nargs = 3,
   .ntrials = 5,
   .max_stack_size = DSA_MAX_STACK_SIZE,
@@ -264,7 +325,7 @@ benchmark_setup_t mldsa_verify_benchmark_setup = {
   .dut_name = "mldsa_verify",
   .dut = mldsa_verify_dut,
   .args_setup_name = "mldsa_verify",
-  .args_setup = mldsa_verify,
+  .args_setup = mldsa_verify_args,
   .nargs = 3,
   .ntrials = 5,
   .max_stack_size = DSA_MAX_STACK_SIZE,
@@ -272,12 +333,64 @@ benchmark_setup_t mldsa_verify_benchmark_setup = {
   .nextra_data = 0
 };
 
+#if DSA_PREPARED_KEYS
+benchmark_setup_t mldsa_sk_prepare_benchmark_setup = {
+  .dut_name = "mldsa_sk_prepare",
+  .dut = mldsa_sk_prepare_dut,
+  .args_setup_name = "mldsa_sk_prepare",
+  .args_setup = mldsa_prepare_args,
+  .nargs = 1,
+  .ntrials = 5,
+  .max_stack_size = DSA_MAX_STACK_SIZE,
+  .post_exec = 0,
+  .nextra_data = 0
+};
+benchmark_setup_t mldsa_pk_prepare_benchmark_setup = {
+  .dut_name = "mldsa_pk_prepare",
+  .dut = mldsa_pk_prepare_dut,
+  .args_setup_name = "mldsa_pk_prepare",
+  .args_setup = mldsa_prepare_args,
+  .nargs = 1,
+  .ntrials = 5,
+  .max_stack_size = DSA_MAX_STACK_SIZE,
+  .post_exec = 0,
+  .nextra_data = 0
+};
+benchmark_setup_t mldsa_sign_prepared_benchmark_setup = {
+  .dut_name = "mldsa_sign_prepared",
+  .dut = mldsa_sign_prepared_dut,
+  .args_setup_name = "mldsa_sign_prepared",
+  .args_setup = mldsa_sign_prepared_args,
+  .nargs = 3,
+  .ntrials = 5,
+  .max_stack_size = DSA_MAX_STACK_SIZE,
+  .post_exec = mldsa_sign_prepared_post_exec,
+  .nextra_data = 0
+};
+benchmark_setup_t mldsa_verify_prepared_benchmark_setup = {
+  .dut_name = "mldsa_verify_prepared",
+  .dut = mldsa_verify_prepared_dut,
+  .args_setup_name = "mldsa_verify_prepared",
+  .args_setup = mldsa_verify_args,
+  .nargs = 3,
+  .ntrials = 5,
+  .max_stack_size = DSA_MAX_STACK_SIZE,
+  .post_exec = mldsa_verify_prepared_post_exec,
+  .nextra_data = 0
+};
+#endif
+
 #include "sha-256.h"
 uint8_t sigs_digest[32];
 
 void benchmarkit(benchmark_setup_t*sign, benchmark_setup_t*verify, const generic_mldsa_test_vectors_t *tv){
   generic_tv = tv;
   LBMK_benchmarkit(&mldsa_gen_key_benchmark_setup,0);
+#if DSA_PREPARED_KEYS
+  //from the key pair just generated
+  LBMK_benchmarkit(&mldsa_sk_prepare_benchmark_setup,0);
+  LBMK_benchmarkit(&mldsa_pk_prepare_benchmark_setup,0);
+#endif
 
   memset(sigs_digest,0,sizeof sigs_digest);
   struct Sha_256 sha_256;
@@ -287,6 +400,10 @@ void benchmarkit(benchmark_setup_t*sign, benchmark_setup_t*verify, const generic
     tv_sign_message = (const uint8_t*)&(tv->sign_messages[index*8]);
     LBMK_benchmarkit(sign,index);
     LBMK_benchmarkit(verify,index);
+#if DSA_PREPARED_KEYS
+    LBMK_benchmarkit(&mldsa_sign_prepared_benchmark_setup,index);
+    LBMK_benchmarkit(&mldsa_verify_prepared_benchmark_setup,index);
+#endif
     //LBMK_println_bytes("\n\r\nmsg: ",tv_sign_message, 8);
     //LBMK_println_bytes("\n\r\nsig: ",signature, 16);
     sha_256_write(&sha_256, signature, sizeof signature);
@@ -330,18 +447,30 @@ void lean_benchmark(unsigned int ninfo, const char*info[], bool run_forever){
         generic_mldsa_test_vectors_t generic_tv = GENERIC_TV(tv);
         sign->args_setup_name = "mldsa_sign69";
         verify->args_setup_name = "mldsa_verify69";
+#if DSA_PREPARED_KEYS
+        mldsa_sign_prepared_benchmark_setup.args_setup_name = "mldsa_sign_prepared69";
+        mldsa_verify_prepared_benchmark_setup.args_setup_name = "mldsa_verify_prepared69";
+#endif
         benchmarkit(sign,verify,&generic_tv);
       }
       if(msg10K){
         generic_mldsa_test_vectors_t generic_tv = GENERIC_TV(tv10K);
         sign->args_setup_name = "mldsa_sign10K";
         verify->args_setup_name = "mldsa_verify10K";
+#if DSA_PREPARED_KEYS
+        mldsa_sign_prepared_benchmark_setup.args_setup_name = "mldsa_sign_prepared10K";
+        mldsa_verify_prepared_benchmark_setup.args_setup_name = "mldsa_verify_prepared10K";
+#endif
         benchmarkit(sign,verify,&generic_tv);
       }
       if(msg1M){
         generic_mldsa_test_vectors_t generic_tv = GENERIC_TV(tv1M);
         sign->args_setup_name = "mldsa_sign1M";
         verify->args_setup_name = "mldsa_verify1M";
+#if DSA_PREPARED_KEYS
+        mldsa_sign_prepared_benchmark_setup.args_setup_name = "mldsa_sign_prepared1M";
+        mldsa_verify_prepared_benchmark_setup.args_setup_name = "mldsa_verify_prepared1M";
+#endif
         benchmarkit(sign,verify,&generic_tv);
       }
 

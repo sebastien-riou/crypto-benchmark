@@ -63,6 +63,9 @@ def gen_latex_footprint_table(libs,*, lib_list=None, pset_list=None) -> str:
 
     return out
 
+# operations of the ML-DSA tables; the prepared-key ones are reported only by libraries that have them
+MLDSA_TABLE_OPS = ['key-exp','sign','verify','sk-prepare','sign-prepared','pk-prepare','verify-prepared']
+
 def gen_latex_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
     out = r"""
     \begin{table}[H]
@@ -88,8 +91,10 @@ def gen_latex_perf_table(libs,*, lib_list=None, pset_list=None, op_list=None) ->
         for pset in sorted(libs[lib].keys()):
             if pset_list and pset not in pset_list:
                 continue
-            for op in ['key-exp','sign','verify']:
+            for op in MLDSA_TABLE_OPS:
                 if op_list and op not in op_list:
+                    continue
+                if op not in libs[lib][pset]:
                     continue
                 min_cycles    = f'{format_number_millions(libs[lib][pset][op]['min_cycles']):>5}'
                 ave_cycles    = f'{format_number_millions(libs[lib][pset][op]['ave_cycles']):>5}'
@@ -196,8 +201,10 @@ def gen_csv_perf_table_mldsa(libs,*, lib_list=None, pset_list=None, op_list=None
             #if pset_list and pset not in pset_list:
             #    continue
             logging.debug(f'libs[lib][pset]={libs[lib][pset]}')
-            for op in ['key-exp','sign','verify']:
+            for op in MLDSA_TABLE_OPS:
                 if op_list and op not in op_list:
+                    continue
+                if op not in libs[lib][pset]:
                     continue
                 min_cycles    = f'{format_number_millions(libs[lib][pset][op]['min_cycles']):>5}'
                 ave_cycles    = f'{format_number_millions(libs[lib][pset][op]['ave_cycles']):>5}'
@@ -454,6 +461,15 @@ def main(args_target,args_algo,format,*,
                                 'mldsa_verify10K':'verify 10K',
                                 'mldsa_sign1M':'sign 1M',
                                 'mldsa_verify1M':'verify 1M',
+                                # libraries with prepared keys only (DSA_PREPARED_KEYS)
+                                'mldsa_sk_prepare':'sk-prepare',
+                                'mldsa_pk_prepare':'pk-prepare',
+                                'mldsa_sign_prepared69':'sign-prepared',
+                                'mldsa_verify_prepared69':'verify-prepared',
+                                'mldsa_sign_prepared10K':'sign-prepared 10K',
+                                'mldsa_verify_prepared10K':'verify-prepared 10K',
+                                'mldsa_sign_prepared1M':'sign-prepared 1M',
+                                'mldsa_verify_prepared1M':'verify-prepared 1M',
                             }
                         case 'mlkem':
                             setup_to_report = {
