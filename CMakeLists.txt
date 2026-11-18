@@ -41,6 +41,13 @@ ENDIF()
 MESSAGE("LARGE_TV=" ${LARGE_TV})
 ADD_DEFINITIONS(-DLARGE_TV=${LARGE_TV})
 
+# ML-KEM: 1 compiles in the sanity check test vectors (libmlkem-lbmk/gen-tv.py) instead of those of BTVG-MLKEM
+if(NOT DEFINED SANITY_TV)
+set(SANITY_TV 0)
+ENDIF()
+MESSAGE("SANITY_TV=" ${SANITY_TV})
+ADD_DEFINITIONS(-DSANITY_TV=${SANITY_TV})
+
 IF ( ${CRYPTO_LIB} STREQUAL "OPEN_SOURCE" )
 	set( MLDSA_LIB "PQCRYSTALS_LOWRAM" )
 	set( SHA2_LIB  "LIBTOMCRYPT" )

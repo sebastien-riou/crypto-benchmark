@@ -8,6 +8,8 @@ import humanfriendly
 import glob
 import pickle
 import math
+import ast
+import functools
 sys.path.insert(0, '../lean-benchmark')
 import lean_benchmark
 from lean_benchmark import get_field, format_number
@@ -215,9 +217,17 @@ def gen_csv_perf_table_mldsa(libs,*, lib_list=None, pset_list=None, op_list=None
     out += '(b): Probability of occurrence is 2^-36 for sign.\n'
     return out
 
-def gen_csv_perf_table_mlkem(libs,*, lib_list=None, pset_list=None, op_list=None) -> str:
-    out = 'Performance over all test cases (in million cycles).\n'
-    out += 'Implementation,Level,Operation,Minimum,Average,Worst observed(a)\n'
+def gen_csv_perf_table_mlkem(libs,*, lib_list=None, pset_list=None, op_list=None, tv_names=None) -> str:
+    # the test vectors of the reported runs: all from BTVG-MLKEM, or all without record (see main)
+    names = sorted(set((tv_names or {}).values()), key=lambda name: int(name.split('-')[0][len('mlkem'):]))
+    records = [mlkem_tv_record(name) for name in names]
+    btvg = len(records) > 0 and all(records)
+    if btvg:
+        out = 'Performance on the test vectors of BTVG-MLKEM (in million cycles).\n'
+        out += 'Implementation,Level,Operation,Best case(a),Average(b),Worst case(c)\n'
+    else:
+        out = 'Performance over all test cases (in million cycles).\n'
+        out += 'Implementation,Level,Operation,Minimum,Average,Worst observed(a)\n'
 
     for lib in sorted(libs.keys()):
         for pset in sorted(libs[lib].keys(), key=int):
@@ -230,7 +240,26 @@ def gen_csv_perf_table_mlkem(libs,*, lib_list=None, pset_list=None, op_list=None
                 max_cycles    = f'{format_number_millions(libs[lib][pset][op]['max_cycles'],precision=3):>5}'
                 out += f'{lib:20}'+' , '+str(pset)+f' , {op} , {min_cycles} , {ave_cycles} , {max_cycles}\n'
 
-    out += '(a): The test cases include keys whose matrix A generation needs a 4th SHAKE128 block for some polynomials.\n'
+    # no comma in the notes: they are lines of the CSV file
+    # short lines: column -t (show-all-results) pads the first column to the longest one
+    if btvg:
+        out += '(a): Minimum on the best case: no extra SHAKE128 block for the matrix A and few SampleNTT iterations.\n'
+        out += '(b): Mean over the average set: keys with the long term average cost of the matrix A.\n'
+        out += '(c): Maximum on the worst cases: the most extra SHAKE128 blocks for the matrix A.\n'
+        out += 'Test vectors of BTVG-MLKEM (https://github.com/sebastien-riou/BTVG-MLKEM):\n'
+        for record in records:
+            cases = [f'ML-KEM-{record["pset"]}: {record["name"]}']
+            for c in record['cases']:
+                if c['role'] == 'best':
+                    cases.append(f'best case probability {c["probability"]}')
+                elif c['role'] == 'worst':
+                    cases.append(f'worst case {c["e"]} extra blocks (tier {c["tier"]} probability {c["probability"]})')
+            out += '; '.join(cases) + '.\n'
+    else:
+        out += '(a): The test cases include keys whose matrix A generation needs a 4th SHAKE128 block for some polynomials.\n'
+        if names:
+            out += f'Test vectors: {"; ".join(names)}.\n'
+            out += 'Sanity check sets (build option SANITY_TV=1) or runs made before BTVG-MLKEM.\n'
     out += 'decaps-reject: decapsulation of an invalid ciphertext (implicit rejection).\n'
     return out
 
@@ -264,6 +293,33 @@ def run_info(data) -> dict:
     values = data['info'][1::2] #items at odd index
     return dict(zip(keys,values))
 
+# ML-KEM test vectors: a set of BTVG-MLKEM comes with its record, libmlkem-lbmk/include/<name>.py, which gives the
+# role of each test case. The sets of the sanity check build (SANITY_TV=1, libmlkem-lbmk/gen-tv.py), which the
+# benchmark used before BTVG-MLKEM, have none.
+MLKEM_TV_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libmlkem-lbmk', 'include')
+
+@functools.cache
+def mlkem_tv_record(tv_name):
+    """The record of the BTVG-MLKEM set tv_name, as a dict of its variables; None for a set without record."""
+    match = re.fullmatch(r'mlkem\d+-n(\d+)-h[0-9A-F]+', tv_name)
+    if not match:
+        return None
+    path = os.path.join(MLKEM_TV_DIR, f'{tv_name}.py')
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        tree = ast.parse(f.read(), path)
+    # Python literals only (BTVG-MLKEM SPEC.md section 7)
+    record = {node.targets[0].id: ast.literal_eval(node.value) for node in tree.body
+              if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)}
+    if record.get('name') != tv_name or len(record.get('cases', [])) != int(match.group(1)):
+        raise RuntimeError(f'{path} is not the record of {tv_name}')
+    return record
+
+def mlkem_sanity_run(info) -> bool:
+    """True for an ML-KEM run on a set without record: a sanity check build, or a run made before BTVG-MLKEM."""
+    return info['algo'] == 'mlkem' and mlkem_tv_record(info.get('tv_name', '')) is None
+
 def run_timestamp(p, data) -> str:
     #every record carries the timestamp of its run, the file name starts with it as well
     timestamps = [r['timestamp'] for r in data['results'] if 'timestamp' in r]
@@ -280,6 +336,9 @@ def select_latest_runs(result_files, root):
     happens to return the files in: a stale run could silently win over the
     latest one. Only the latest run describes the current state of the target,
     so that is the one we keep.
+    An ML-KEM run on the sanity check test vectors is kept apart: it does not
+    supersede a run on those of BTVG-MLKEM, nor the reverse (main reports one
+    kind or the other).
     """
     latest = {}
     for p in result_files:
@@ -290,7 +349,8 @@ def select_latest_runs(result_files, root):
                info['sw_target_cpu'],
                info['algo'],
                info['impl_name'],
-               info['pset'])
+               info['pset'],
+               mlkem_sanity_run(info))
         ts = run_timestamp(p,data)
         if key not in latest or ts > latest[key][0]:
             latest[key] = (ts,p)
@@ -308,9 +368,12 @@ def main(args_target,args_algo,format,*,
          args_pset=None,
          args_op=None,
          args_hw_platform=None,
+         args_sanity_tv=False,
          file=None):
     
     libs = {}
+    # ML-KEM: name of the test vectors of each reported (implementation, parameter set)
+    tv_names = {}
 
     impl_to_lib_name = {
         'pqcrystals-mldsa-lowram':'pqcrystals-lowram',
@@ -415,6 +478,15 @@ def main(args_target,args_algo,format,*,
                 logging.debug(f'ignoring pset {pset}')
                 continue
 
+            # ML-KEM: the runs on the test vectors of BTVG-MLKEM, or with args_sanity_tv the others (see mlkem_tv_record)
+            tv_record = None
+            if algo == 'mlkem':
+                if mlkem_sanity_run(info) != args_sanity_tv:
+                    logging.debug(f'ignoring {p}: ML-KEM test vectors {info.get("tv_name")}, sanity check set: {not args_sanity_tv}')
+                    continue
+                tv_record = mlkem_tv_record(info['tv_name'])
+                tv_names[(full_name,pset)] = info['tv_name']
+
             if full_name not in libs:
                 libs[full_name] = {}
             if pset not in libs[full_name]:
@@ -439,14 +511,29 @@ def main(args_target,args_algo,format,*,
                 key = f'{info['dut name']}-{info['args setup name']}'
                 if key not in consolidated:
                     consolidated[key]={'dut':info['dut name'], 'setup':info['args setup name'], 'data':[]}
-                consolidated[key]['data'].append({'min_cycles':min_cycles,'max_cycles':max_cycles,'ave_cycles':ave_cycles,'max_stack':max_stack,'max_heap':max_heap})
+                role = None
+                if tv_record:
+                    if case_index >= len(tv_record['cases']):
+                        raise RuntimeError(f'{p}: test case {case_index} is not in {tv_record["name"]}')
+                    role = tv_record['cases'][case_index]['role']
+                consolidated[key]['data'].append({'min_cycles':min_cycles,'max_cycles':max_cycles,'ave_cycles':ave_cycles,'max_stack':max_stack,'max_heap':max_heap,'role':role})
             ms = 0
             heap_sum = 0
             for key,value in consolidated.items():
                 val = value['data']
-                min_cycles = min([v['min_cycles'] for v in val])
-                max_cycles = max([v['max_cycles'] for v in val])
-                ave_cycles = math.ceil(sum([v['ave_cycles'] for v in val])/len(val))
+                if tv_record:
+                    # BTVG-MLKEM: minimum on the best case, mean over the average set, maximum on the worst cases
+                    by_role = {role:[v for v in val if v['role'] == role] for role in ('best','average','worst')}
+                    for role,v in by_role.items():
+                        if not v:
+                            raise RuntimeError(f'{p}: {key} has no result for the {role} case(s) of {tv_record["name"]}')
+                    min_cycles = min([v['min_cycles'] for v in by_role['best']])
+                    max_cycles = max([v['max_cycles'] for v in by_role['worst']])
+                    ave_cycles = math.ceil(sum([v['ave_cycles'] for v in by_role['average']])/len(by_role['average']))
+                else:
+                    min_cycles = min([v['min_cycles'] for v in val])
+                    max_cycles = max([v['max_cycles'] for v in val])
+                    ave_cycles = math.ceil(sum([v['ave_cycles'] for v in val])/len(val))
                 max_stack = max([v['max_stack'] for v in val])
                 max_heap = max([v['max_heap'] for v in val])
                 try:
@@ -543,7 +630,7 @@ def main(args_target,args_algo,format,*,
                 case 'mldsa':
                     print(gen_csv_perf_table_mldsa(libs, op_list=args_op),file=file)
                 case 'mlkem':
-                    print(gen_csv_perf_table_mlkem(libs, op_list=args_op),file=file)
+                    print(gen_csv_perf_table_mlkem(libs, op_list=args_op, tv_names=tv_names),file=file)
                 case _:
                     print(gen_csv_perf_table(libs, op_list=args_op),file=file)
             print(gen_csv_footprint_table(libs),file=file)
@@ -578,6 +665,11 @@ if __name__ == '__main__':
         '--file', help='Specify the output file', type=str
     )
     parser.add_argument(
+        '--sanity-tv', action='store_true',
+        help='ML-KEM: report the runs on the sanity check test vectors (SANITY_TV=1 builds, and runs made before '
+             'BTVG-MLKEM) instead of those on the test vectors of BTVG-MLKEM'
+    )
+    parser.add_argument(
         'target', help='Target platform to report', type=str
     )
     parser.add_argument(
@@ -603,4 +695,5 @@ if __name__ == '__main__':
          args_pset=args.pset,
          args_op=args.op,
          args_hw_platform=args.hw_platform,
+         args_sanity_tv=args.sanity_tv,
          file=file)

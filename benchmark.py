@@ -180,6 +180,11 @@ if __name__ == '__main__':
     parser.add_argument(
         '--pset', help='List of parameter sets to benchmark, this require --algo with exactly one algorithm', default=None, nargs='+', type=str
     )
+    parser.add_argument(
+        '--sanity-tv', action='store_true',
+        help='ML-KEM: build with the sanity check test vectors (SANITY_TV=1) instead of those of BTVG-MLKEM. '
+             'The CSV file then reports these runs only.'
+    )
       
     args = parser.parse_args()
 
@@ -407,8 +412,9 @@ if __name__ == '__main__':
          pset=None,
          op=None,
          hw_platform=None,
+         sanity_tv=False,
          file=None):
-        logging.debug(f'format_result({target},{algo},{format},{root},{lib},{pset},{op},{hw_platform},{file})')
+        logging.debug(f'format_result({target},{algo},{format},{root},{lib},{pset},{op},{hw_platform},{sanity_tv},{file})')
         if not args.dry_run:
             file = open(file,'w')
             format_result_dict['main'](target,algo,format,
@@ -417,7 +423,12 @@ if __name__ == '__main__':
                                        args_pset=pset,
                                        args_op=op,
                                        args_hw_platform=hw_platform,
+                                       args_sanity_tv=sanity_tv,
                                        file=file)
+
+    # extra build options, the same for the library under test and for the STUB build that gives its footprint
+    # (buildit's 5th argument is the CMake preset, minSizeRel by default)
+    buildit_options = ['minSizeRel', '-DSANITY_TV=1'] if args.sanity_tv else []
 
     out_files = []
     for hwp_dict in hw_platforms:
@@ -470,7 +481,7 @@ if __name__ == '__main__':
                             link_ext(goal)
 
                             logging.info('build crypto-benchmark')
-                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,lib_codename)
+                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,lib_codename,*buildit_options)
                             
                             logging.info('build firmware')
                             process_cmd(hwp.build_cmd(swt),hwp_path)
@@ -523,7 +534,7 @@ if __name__ == '__main__':
 
                             # build stub target for static memory sizes
                             logging.info('build crypto-benchmark STUB for size')
-                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,'STUB')
+                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,'STUB',*buildit_options)
 
                             built_variants.append((goal,pset_code))
                     #args.dry_run=False
@@ -551,7 +562,7 @@ if __name__ == '__main__':
                     if len(hwp_sw_targets) > 1:
                         fw_hwp_name += f'-{swt}'
                     logging.info('Formating results')
-                    format_result(swt,algo,'csv',lib=[lib_codename],hw_platform=fw_hwp_name,file=file_name)
+                    format_result(swt,algo,'csv',lib=[lib_codename],hw_platform=fw_hwp_name,sanity_tv=args.sanity_tv,file=file_name)
                     out_files.append(file_name)
     logging.info(f'All benchmark done, see output files:\n\t{'\n\t'.join(out_files)}')
     
