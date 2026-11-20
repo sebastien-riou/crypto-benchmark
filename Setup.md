@@ -22,7 +22,8 @@ run non-interactively (e.g. in CI).
   `--level custom`). Run `./initial-setup --list-addons` to see the catalog.
 - `--protocol {https,ssh}` — clone over HTTPS (default) or SSH.
 - `--version {pinned,latest}` — `pinned` (default) checks out each repo's
-  pinned tag from `setup_manifest.py`; `latest` clones the default branch,
+  pinned tag from `setup_manifest.py`, or its pinned commit for a repo pinned
+  by `commit` rather than `default_tag`; `latest` clones the default branch,
   or the `branch` named in `setup_manifest.py` (`crypto-benchmark` for
   `wolfssl` and `PQRV`, whose default branch lacks the crypto-benchmark
   integration, and for `pqmicrolib-library`, whose `crypto-benchmark`
@@ -41,7 +42,7 @@ Example, skipping Renode:
 
 If a sibling repo directory already exists, `initial-setup` skips cloning it
 and instead warns (immediately, and again in a "Summary of warnings" at the
-end) if its working copy is dirty or not on the expected tag/branch.
+end) if its working copy is dirty or not on the expected tag/commit/branch.
 
 For backward compatibility, `./initial-setup 0`/`./initial-setup 1` (the old
 positional-arg form) is still accepted as shorthand for `--test-renode`,

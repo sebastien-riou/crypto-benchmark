@@ -136,7 +136,13 @@ def check_existing_state(name, dest, entry, version_mode):
     if status.stdout.strip():
         warn(f"{name}: existing working copy has uncommitted/staged changes")
 
-    if version_mode == "pinned":
+    if version_mode == "pinned" and entry.get("commit"):
+        expected = entry["commit"]
+        head = subprocess.run(["git", "-C", dest, "rev-parse", "HEAD"], capture_output=True, text=True)
+        if head.returncode != 0 or not head.stdout.strip().startswith(expected):
+            found = head.stdout.strip() or "no commit at HEAD"
+            warn(f"{name}: expected to be on commit {expected!r} but found {found!r}")
+    elif version_mode == "pinned":
         expected = entry["default_tag"]
         # Not `git describe --exact-match`: it reports a single tag, so when
         # several lightweight tags share HEAD (e.g. PQRV's crypto-benchmark-0.0.1
@@ -158,8 +164,29 @@ def check_existing_state(name, dest, entry, version_mode):
                  f"but found {branch.stdout.strip()!r}")
 
 
+def clone_commit(name, entry, dest, url, dry_run):
+    # `git clone --branch` takes a tag or a branch, not a commit: fetch the pinned commit alone instead
+    # (GitHub and GitLab serve any commit reachable from a branch or tag)
+    commit = entry["commit"]
+    cmds = [
+        ["git", "init", "--quiet", dest],
+        ["git", "-C", dest, "remote", "add", "origin", url],
+        ["git", "-C", dest, "fetch", "--depth=1", "origin", commit],
+        ["git", "-C", dest, "checkout", "--quiet", "--detach", "FETCH_HEAD"],
+    ]
+    if entry.get("recurse_submodules"):
+        cmds.append(["git", "-C", dest, "submodule", "update", "--init", "--recursive", "--depth=1"])
+    for cmd in cmds:
+        logging.info("cloning %s: %s", name, " ".join(cmd))
+        if not dry_run:
+            subprocess.run(cmd, check=True)
+
+
 def clone_repo(name, entry, dest, protocol, version_mode, host_url_templates, dry_run):
     url = build_url(entry, protocol, host_url_templates)
+    if version_mode == "pinned" and entry.get("commit"):
+        clone_commit(name, entry, dest, url, dry_run)
+        return
     cmd = ["git", "clone", "--depth=1"]
     if version_mode == "pinned":
         cmd += ["--branch", entry["default_tag"], "--single-branch"]
