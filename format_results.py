@@ -421,7 +421,8 @@ def main(args_target,args_algo,format,*,
         'STM32PQC':'stm32pqc',
         'PQRV':'pqrv',
         'MLDSA_NATIVE':'mldsa-native',
-        'MLKEM_NATIVE':'mlkem-native'
+        'MLKEM_NATIVE':'mlkem-native',
+        'PQM4':'pqm4'
     }
     # External libraries are not in the tables above: their library name is the build target name
     # in lower case, and their implementation name is '<library name>-<goal>'

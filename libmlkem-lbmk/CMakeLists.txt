@@ -13,7 +13,7 @@ MESSAGE("PSET=" ${PSET})
 ADD_DEFINITIONS(-DPSET=${PSET})
 
 if(NOT DEFINED MLKEM_LIB)
-MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} has no ML-KEM implementation. Supported: MLKEM_NATIVE, PQSHIELD, PQRV, STUB, STM32PQC, WOLFSSL, or an external library with an mlkem.cmake" )
+MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} has no ML-KEM implementation. Supported: MLKEM_NATIVE, PQM4, PQSHIELD, PQRV, STUB, STM32PQC, WOLFSSL, or an external library with an mlkem.cmake" )
 ENDIF()
 MESSAGE("MLKEM_LIB=" ${MLKEM_LIB})
 ADD_DEFINITIONS(-DMLKEM_LIB=${MLKEM_LIB})
@@ -118,6 +118,11 @@ IF ( ${MLKEM_LIB} STREQUAL "MLKEM_NATIVE" )
 		$<$<NOT:$<CONFIG:Debug>>:${MLKEM_NATIVE_OPT}>
 	)
 	target_link_libraries(${LIB} PRIVATE mlkem-native)
+ENDIF()
+
+IF ( ${MLKEM_LIB} STREQUAL "PQM4" )
+	include(${CMAKE_SOURCE_DIR}/cmake/pqm4.cmake)
+	target_link_libraries(${LIB} PRIVATE pqm4)
 ENDIF()
 
 target_include_directories(${LIB}
@@ -251,6 +256,21 @@ add_custom_target(combined_target
         )
 ELSE()
 MESSAGE("MLKEM_LIB is NOT MLKEM_NATIVE (it is '" ${MLKEM_LIB} "')")
+ENDIF()
+
+IF(${MLKEM_LIB} STREQUAL "PQM4")
+MESSAGE("MLKEM_LIB is PQM4")
+add_custom_target(combined_target
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mlkem-lbmk-core>
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:pqm4>
+
+        #build combined lib
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
+        )
+ELSE()
+MESSAGE("MLKEM_LIB is NOT PQM4 (it is '" ${MLKEM_LIB} "')")
 ENDIF()
 
 IF(${MLKEM_LIB} STREQUAL "EXTERNAL")

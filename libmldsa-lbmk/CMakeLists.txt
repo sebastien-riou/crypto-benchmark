@@ -108,6 +108,11 @@ IF ( ${MLDSA_LIB} STREQUAL "MLDSA_NATIVE" )
 	target_link_libraries(${LIB} PRIVATE mldsa-native)
 ENDIF()
 
+IF ( ${MLDSA_LIB} STREQUAL "PQM4" )
+	include(${CMAKE_SOURCE_DIR}/cmake/pqm4.cmake)
+	target_link_libraries(${LIB} PRIVATE pqm4)
+ENDIF()
+
 # OPTION(IMPL_PQCLE "use PQCLE implementation" OFF) # Disabled by default, activate using "cmake -DIMPL_PQCLE=ON .."
 # MESSAGE("IMPL_PQCLE=" ${IMPL_PQCLE})
 # IF(IMPL_PQCLE)
@@ -267,6 +272,21 @@ add_custom_target(combined_target
         )
 ELSE()
 MESSAGE("MLDSA_LIB is NOT MLDSA_NATIVE (it is '" ${MLDSA_LIB} "')")
+ENDIF()
+
+IF(${MLDSA_LIB} STREQUAL "PQM4")
+MESSAGE("MLDSA_LIB is PQM4")
+add_custom_target(combined_target
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mldsa-lbmk-core>
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:pqm4>
+
+        #build combined lib
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
+        )
+ELSE()
+MESSAGE("MLDSA_LIB is NOT PQM4 (it is '" ${MLDSA_LIB} "')")
 ENDIF()
 
 IF(${MLDSA_LIB} STREQUAL "EXTERNAL")

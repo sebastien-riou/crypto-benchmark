@@ -71,6 +71,7 @@ void throw_exception(uint32_t err_code){
 #define IMPL_PQRV 6
 #define IMPL_EXTERNAL 7
 #define IMPL_MLDSA_NATIVE 8
+#define IMPL_PQM4 9
 #define MLDSA_LIB_INDEX CAT(IMPL_,MLDSA_LIB)
 
 #if MLDSA_LIB_INDEX == IMPL_STUB
@@ -87,6 +88,8 @@ void throw_exception(uint32_t err_code){
   #include "impl_pqrv.h"
 #elif MLDSA_LIB_INDEX == IMPL_MLDSA_NATIVE
   #include "impl_mldsa_native.h"
+#elif MLDSA_LIB_INDEX == IMPL_PQM4
+  #include "impl_pqm4.h"
 #elif MLDSA_LIB_INDEX == IMPL_EXTERNAL
   //in the folder of the external library (see "External libraries" in README.md)
   #include "impl_mldsa.h"

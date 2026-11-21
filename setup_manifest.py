@@ -66,6 +66,18 @@ ADDONS = {
             "build": None,  # compiled by crypto-benchmark itself, see libmlkem-lbmk/CMakeLists.txt
         },
         {
+            "name": "pqm4",
+            "codename": "PQM4",
+            "host": "github",
+            "path": "mupq/pqm4",  # upstream, used unmodified
+            # its last tag (SignatureRound1, 2024) predates the current ML-DSA code
+            "commit": "0dd10ee5c4572bcf3abb80f46b997edc3055d48c",
+            "branch": "master",
+            "recurse_submodules": False,
+            "submodules": ["mupq"],  # fips202 and the common headers; libopencm3 is not used
+            "build": None,  # compiled by crypto-benchmark itself, see cmake/pqm4.cmake
+        },
+        {
             "name": "pqmicrolib-library",
             "codename": "PQSHIELD",
             "host": "gitlab.pqsh.net",
