@@ -42,7 +42,8 @@ Example, skipping Renode:
 
 If a sibling repo directory already exists, `initial-setup` skips cloning it
 and instead warns (immediately, and again in a "Summary of warnings" at the
-end) if its working copy is dirty or not on the expected tag/commit/branch.
+end) if its working copy is dirty or not on the expected tag/commit/branch, or if a submodule the manifest
+names (`submodules`, e.g. `mupq` for `pqm4`) is not checked out. Only the named submodules are cloned.
 
 For backward compatibility, `./initial-setup 0`/`./initial-setup 1` (the old
 positional-arg form) is still accepted as shorthand for `--test-renode`,

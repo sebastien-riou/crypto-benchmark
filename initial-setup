@@ -135,6 +135,10 @@ def check_existing_state(name, dest, entry, version_mode):
     status = subprocess.run(["git", "-C", dest, "status", "--porcelain"], capture_output=True, text=True)
     if status.stdout.strip():
         warn(f"{name}: existing working copy has uncommitted/staged changes")
+    for path in entry.get("submodules") or []:
+        sub = subprocess.run(["git", "-C", dest, "submodule", "status", "--", path], capture_output=True, text=True)
+        if sub.returncode != 0 or sub.stdout.startswith("-"):
+            warn(f"{name}: submodule {path!r} is not checked out (git -C {dest} submodule update --init {path})")
 
     if version_mode == "pinned" and entry.get("commit"):
         expected = entry["commit"]
@@ -182,10 +186,22 @@ def clone_commit(name, entry, dest, url, dry_run):
             subprocess.run(cmd, check=True)
 
 
+def init_submodules(name, entry, dest, dry_run):
+    # only the submodules the manifest names (e.g. pqm4 needs mupq but not libopencm3)
+    paths = entry.get("submodules")
+    if not paths:
+        return
+    cmd = ["git", "-C", dest, "submodule", "update", "--init", "--depth=1", "--", *paths]
+    logging.info("cloning %s submodules: %s", name, " ".join(cmd))
+    if not dry_run:
+        subprocess.run(cmd, check=True)
+
+
 def clone_repo(name, entry, dest, protocol, version_mode, host_url_templates, dry_run):
     url = build_url(entry, protocol, host_url_templates)
     if version_mode == "pinned" and entry.get("commit"):
         clone_commit(name, entry, dest, url, dry_run)
+        init_submodules(name, entry, dest, dry_run)
         return
     cmd = ["git", "clone", "--depth=1"]
     if version_mode == "pinned":
@@ -196,9 +212,9 @@ def clone_repo(name, entry, dest, protocol, version_mode, host_url_templates, dr
         cmd.append("--recurse-submodules")
     cmd += [url, dest]
     logging.info("cloning %s: %s", name, " ".join(cmd))
-    if dry_run:
-        return
-    subprocess.run(cmd, check=True)
+    if not dry_run:
+        subprocess.run(cmd, check=True)
+    init_submodules(name, entry, dest, dry_run)
 
 
 def run_build_steps(name, entry, dest, dry_run):
