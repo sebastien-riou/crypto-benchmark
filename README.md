@@ -20,6 +20,8 @@ It has been used on several targets:
 It contains proper benchmarking only for ML-DSA. ML-KEM, AES and SHA2 are a work in progress.
 
 Following ML-DSA librairies have been integrated (alphabetical order):
+- `MLDSA_NATIVE`: [mldsa-native](https://github.com/pq-code-package/mldsa-native) (sibling `../mldsa-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmldsa-lbmk/CMakeLists.txt`). Goals `small` (`MLD_CONFIG_REDUCE_RAM`, built with `-Os`) / `fast` (default memory mode, `-O3`).
+  Its RV32IM assembly NTT is used on `rv32imc` and `rv32imcb`; everything else, Keccak included, is C. mldsa-native assumes that 32x32->64-bit multiplications take constant time, which the Cortex-M3 does not provide.
 - `OPEN_SOURCE`: [Dilithium-lowram](https://github.com/sebastien-riou/dilithium-lowram.git) 
 - `PQRV`: [PQRV](https://github.com/Ji-Peng/PQRV) (sibling `../PQRV` repository with its `libpqrv` folder), RISC-V targets `rv32imc` and `rv32imcb` only (goal `fast`), library built by `./buildit <target>` in `libpqrv`
 - `PQSHIELD`: [PQShield's PQMicroLib-Core](https://pqshield.com/products/pqm-cor/) (sibling `../pqmicrolib-library` repository).
@@ -129,6 +131,7 @@ This successively build and benchmark all parameter sets for ML-DSA.
 You can optionally specify:
 
 - a crypto-library
+  - `MLDSA_NATIVE`
   - `OPEN_SOURCE`
   - `PQSHIELD`
   - `STM32PQC`

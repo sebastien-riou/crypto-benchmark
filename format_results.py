@@ -419,7 +419,8 @@ def main(args_target,args_algo,format,*,
         'PQSHIELD':'pqshield',
         'WOLFSSL':'wolfssl',
         'STM32PQC':'stm32pqc',
-        'PQRV':'pqrv'
+        'PQRV':'pqrv',
+        'MLDSA_NATIVE':'mldsa-native'
     }
     # External libraries are not in the tables above: their library name is the build target name
     # in lower case, and their implementation name is '<library name>-<goal>'

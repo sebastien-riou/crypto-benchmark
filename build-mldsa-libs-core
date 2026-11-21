@@ -10,6 +10,7 @@ PRESET=${3:-minSizeRel}
 
 # allow some builds to fail
 set +e 
+./build-mldsa-core $TOOLCHAIN $GOAL $PRESET MLDSA_NATIVE ${@:4}
 ./build-mldsa-core $TOOLCHAIN $GOAL $PRESET OPEN_SOURCE ${@:4}
 ./build-mldsa-core $TOOLCHAIN $GOAL $PRESET PQSHIELD ${@:4}
 ./build-mldsa-core $TOOLCHAIN $GOAL $PRESET STM32PQC ${@:4}

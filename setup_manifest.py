@@ -45,6 +45,17 @@ ADDONS = {
             "build": ["./libpqrv/buildit rv32imcb rv32imc"],  # the only targets PQRV supports
         },
         {
+            "name": "mldsa-native",
+            "codename": "MLDSA_NATIVE",
+            "host": "github",
+            "path": "pq-code-package/mldsa-native",  # upstream, used unmodified
+            # pinned by commit instead of default_tag: v2.0.0, the last release, predates the RV32IM NTT
+            "commit": "ea97cc798b85dad1662bbe9aea4e7e3ec9c4bbbb",
+            "branch": "main",
+            "recurse_submodules": False,
+            "build": None,  # compiled by crypto-benchmark itself, see libmldsa-lbmk/CMakeLists.txt
+        },
+        {
             "name": "pqmicrolib-library",
             "codename": "PQSHIELD",
             "host": "gitlab.pqsh.net",

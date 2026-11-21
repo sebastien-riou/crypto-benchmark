@@ -53,6 +53,56 @@ IF ( ${MLDSA_LIB} STREQUAL "EXTERNAL" )
     )
 ENDIF()
 
+IF ( ${MLDSA_LIB} STREQUAL "MLDSA_NATIVE" )
+	# upstream mldsa-native (see setup_manifest.py), unmodified: compiled here from its single-file sources, with
+	# the flags of the firmware
+	if(NOT DEFINED MLDSA_NATIVE_DIR)
+	set(MLDSA_NATIVE_DIR ${CMAKE_SOURCE_DIR}/../mldsa-native)
+	ENDIF()
+	IF ( NOT EXISTS ${MLDSA_NATIVE_DIR}/mldsa/mldsa_native.c )
+		MESSAGE( FATAL_ERROR "mldsa-native is missing (${MLDSA_NATIVE_DIR}/mldsa/mldsa_native.c). Run './initial-setup --addons mldsa-native'" )
+	ENDIF()
+	# small keeps the vectors packed and expands them on demand (MLD_CONFIG_REDUCE_RAM), built for size;
+	# fast is the default memory mode, built for speed
+	IF ( ${GOAL} STREQUAL "small" )
+		set( MLDSA_NATIVE_GOAL_DEFS MLD_CONFIG_REDUCE_RAM )
+		set( MLDSA_NATIVE_OPT -Os )
+	ELSEIF ( ${GOAL} STREQUAL "fast" )
+		set( MLDSA_NATIVE_GOAL_DEFS "" )
+		set( MLDSA_NATIVE_OPT -O3 )
+	ELSE()
+		MESSAGE( FATAL_ERROR "mldsa-native supports GOAL small or fast, not '${GOAL}'" )
+	ENDIF()
+	# cmake/generic_binary.cmake enables ASM only after this directory is processed
+	enable_language(ASM)
+	add_library(mldsa-native STATIC
+		${MLDSA_NATIVE_DIR}/mldsa/mldsa_native.c
+		# empty except on RV32 with M, where it holds the RV32IM NTT
+		${MLDSA_NATIVE_DIR}/mldsa/mldsa_native_asm.S
+	)
+	target_compile_definitions(mldsa-native
+	  PUBLIC
+		MLD_CONFIG_PARAMETER_SET=${PSET}
+		MLD_CONFIG_NAMESPACE_PREFIX=mldsa_native
+		# key generation from a seed and deterministic signing only: no randombytes()
+		MLD_CONFIG_NO_RANDOMIZED_API
+		${MLDSA_NATIVE_GOAL_DEFS}
+	  PRIVATE
+		# single compilation unit
+		MLD_CONFIG_INTERNAL_API_QUALIFIER=static
+		# the RV32IM backend; C on the CPUs no backend matches
+		MLD_CONFIG_USE_NATIVE_BACKEND_ARITH
+	)
+	target_include_directories(mldsa-native PUBLIC ${MLDSA_NATIVE_DIR}/mldsa)
+	target_compile_options(mldsa-native PRIVATE
+		${cpu_PARAMS}
+		${compiler_OPTS}
+		$<$<CONFIG:Debug>:-Og -g3 -ggdb>
+		$<$<NOT:$<CONFIG:Debug>>:${MLDSA_NATIVE_OPT}>
+	)
+	target_link_libraries(${LIB} PRIVATE mldsa-native)
+ENDIF()
+
 # OPTION(IMPL_PQCLE "use PQCLE implementation" OFF) # Disabled by default, activate using "cmake -DIMPL_PQCLE=ON .."
 # MESSAGE("IMPL_PQCLE=" ${IMPL_PQCLE})
 # IF(IMPL_PQCLE)
@@ -197,6 +247,21 @@ add_custom_target(combined_target
         )
 ELSE()
 MESSAGE("MLDSA_LIB is NOT PQRV (it is '" ${MLDSA_LIB} "')")
+ENDIF()
+
+IF(${MLDSA_LIB} STREQUAL "MLDSA_NATIVE")
+MESSAGE("MLDSA_LIB is MLDSA_NATIVE")
+add_custom_target(combined_target
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mldsa-lbmk-core>
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mldsa-native>
+
+        #build combined lib
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
+        )
+ELSE()
+MESSAGE("MLDSA_LIB is NOT MLDSA_NATIVE (it is '" ${MLDSA_LIB} "')")
 ENDIF()
 
 IF(${MLDSA_LIB} STREQUAL "EXTERNAL")
