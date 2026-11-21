@@ -3,21 +3,16 @@
 //mlkem-native, compiled for the parameter set PSET and the goal GOAL by libmlkem-lbmk/CMakeLists.txt
 #include <mlkem_native.h>
 
-#define MLKEM_NATIVE_small 1
-#define MLKEM_NATIVE_fast 2
+#define MLKEM_NATIVE_fast 1
 
 #define MLKEM_NATIVE_INDEX CAT(MLKEM_NATIVE_,GOAL)
 
-#if MLKEM_NATIVE_INDEX == MLKEM_NATIVE_small
+#if MLKEM_NATIVE_INDEX == MLKEM_NATIVE_fast
   #ifndef MLK_CONFIG_SERIAL_FIPS202_ONLY
-    #error "mlkem-native-small expects MLK_CONFIG_SERIAL_FIPS202_ONLY"
-  #endif
-#elif MLKEM_NATIVE_INDEX == MLKEM_NATIVE_fast
-  #ifdef MLK_CONFIG_SERIAL_FIPS202_ONLY
-    #error "mlkem-native-fast expects the default configuration"
+    #error "mlkem-native-fast expects MLK_CONFIG_SERIAL_FIPS202_ONLY"
   #endif
 #else
-  #error "mlkem-native supports GOAL small or fast only"
+  #error "mlkem-native supports GOAL fast only"
 #endif
 
 #define IMPL_NAME "mlkem-native-" xstr(GOAL)

@@ -47,7 +47,7 @@ The operations always include the input checks of FIPS 203; when a library does 
 
 After the measurements, before announcing their end, the firmware checks that encapsulation rejects a key with a coefficient equal to q, and decapsulation a key whose stored `H(ek)` is wrong; if one of them does not, the run stops with error code `0x50000007` or `0x50000006` and no results are recorded.
 The following libraries are integrated (`OPEN_SOURCE` has no ML-KEM implementation):
-- `MLKEM_NATIVE`: [mlkem-native](https://github.com/pq-code-package/mlkem-native) (sibling `../mlkem-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmlkem-lbmk/CMakeLists.txt`). Goals `small` (`MLK_CONFIG_SERIAL_FIPS202_ONLY`: one Keccak state at a time) / `fast` (default configuration), both built with `-Os`, which was faster than `-O3` or `-O2` on the pico2 and the STM32U5A5. The library does both checks (in `enc_derand` and `dec`).
+- `MLKEM_NATIVE`: [mlkem-native](https://github.com/pq-code-package/mlkem-native) (sibling `../mlkem-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmlkem-lbmk/CMakeLists.txt`). Single goal `fast`: one Keccak state at a time (`MLK_CONFIG_SERIAL_FIPS202_ONLY`) and `-Os`, the fastest configuration on the pico2 and the STM32U5A5 (the default 4-way Keccak was 2 to 7 % slower, `-O3` and `-O2` slower too). The library does both checks (in `enc_derand` and `dec`).
   It has no backend for these targets: everything, Keccak included, is C. mlkem-native assumes that 32x32->64-bit multiplications take constant time, which the Cortex-M3 does not provide.
 - `PQRV`: goal `fast`, `rv32imc` and `rv32imcb` targets only. The wrapper does both checks (`pqrv_mlkem<k>_check_pk`, `pqrv_mlkem<k>_check_sk`).
 - `PQSHIELD`: goals `balanced` / `fast` (single ML-KEM implementation, built from the `<target>-balanced` / `<target>-fast` preset, see `presets/crypto-benchmark.json` in pqmicrolib-library). The wrapper does both checks (`pqs_mlkem_public_key_validate`, `pqs_mlkem_secret_key_validate`).
@@ -195,7 +195,7 @@ Same as above for ML-KEM, limited to ML-KEM-512 for now.
 You can optionally specify:
 
 - a crypto-library
-  - `MLKEM_NATIVE` (goal `small` or `fast`)
+  - `MLKEM_NATIVE` (goal `fast`)
   - `PQSHIELD` (default, goal `balanced` or `fast`)
   - `WOLFSSL` (goal `small` or `fast`)
 - an optimization goal
