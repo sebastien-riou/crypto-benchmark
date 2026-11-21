@@ -56,6 +56,16 @@ ADDONS = {
             "build": None,  # compiled by crypto-benchmark itself, see libmldsa-lbmk/CMakeLists.txt
         },
         {
+            "name": "mlkem-native",
+            "codename": "MLKEM_NATIVE",
+            "host": "github",
+            "path": "pq-code-package/mlkem-native",  # upstream, used unmodified
+            "commit": "def370229aa57d759e5779a27261086d5855aead",  # main, a snapshot like mldsa-native's
+            "branch": "main",
+            "recurse_submodules": False,
+            "build": None,  # compiled by crypto-benchmark itself, see libmlkem-lbmk/CMakeLists.txt
+        },
+        {
             "name": "pqmicrolib-library",
             "codename": "PQSHIELD",
             "host": "gitlab.pqsh.net",

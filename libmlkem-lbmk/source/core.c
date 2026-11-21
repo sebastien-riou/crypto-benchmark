@@ -81,6 +81,7 @@ void throw_exception(uint32_t err_code){
 #define IMPL_WOLFSSL 4
 #define IMPL_PQRV 5
 #define IMPL_EXTERNAL 6
+#define IMPL_MLKEM_NATIVE 7
 #define MLKEM_LIB_INDEX CAT(IMPL_,MLKEM_LIB)
 
 //for wrappers doing the FIPS 203 section 7.3 hash check: dk = dk_PKE || ek || H(ek) || z
@@ -132,6 +133,8 @@ __attribute__((unused)) static int kem_ek_modulus_ok(const void*const public_key
   #include "impl_wolfssl.h"
 #elif MLKEM_LIB_INDEX == IMPL_PQRV
   #include "impl_pqrv.h"
+#elif MLKEM_LIB_INDEX == IMPL_MLKEM_NATIVE
+  #include "impl_mlkem_native.h"
 #elif MLKEM_LIB_INDEX == IMPL_EXTERNAL
   //in the folder of the external library (see "External libraries" in README.md)
   #include "impl_mlkem.h"

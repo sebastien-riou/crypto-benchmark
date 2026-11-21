@@ -47,6 +47,8 @@ The operations always include the input checks of FIPS 203; when a library does 
 
 After the measurements, before announcing their end, the firmware checks that encapsulation rejects a key with a coefficient equal to q, and decapsulation a key whose stored `H(ek)` is wrong; if one of them does not, the run stops with error code `0x50000007` or `0x50000006` and no results are recorded.
 The following libraries are integrated (`OPEN_SOURCE` has no ML-KEM implementation):
+- `MLKEM_NATIVE`: [mlkem-native](https://github.com/pq-code-package/mlkem-native) (sibling `../mlkem-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmlkem-lbmk/CMakeLists.txt`). Goals `small` (`MLK_CONFIG_SERIAL_FIPS202_ONLY`: one Keccak state at a time, built with `-Os`) / `fast` (default configuration, `-O3`). The library does both checks (in `enc_derand` and `dec`).
+  It has no backend for these targets: everything, Keccak included, is C. mlkem-native assumes that 32x32->64-bit multiplications take constant time, which the Cortex-M3 does not provide.
 - `PQRV`: goal `fast`, `rv32imc` and `rv32imcb` targets only. The wrapper does both checks (`pqrv_mlkem<k>_check_pk`, `pqrv_mlkem<k>_check_sk`).
 - `PQSHIELD`: goals `balanced` / `fast` (single ML-KEM implementation, built from the `<target>-balanced` / `<target>-fast` preset, see `presets/crypto-benchmark.json` in pqmicrolib-library). The wrapper does both checks (`pqs_mlkem_public_key_validate`, `pqs_mlkem_secret_key_validate`).
 - `STM32PQC`: goal `balanced`. The library does the modulus check, the wrapper the hash check (`cmox_hash_compute`, SHA3-256). ST does not document the size of the working buffer, the default (`STM32PQC_MLKEM_MEMBUF_SIZE`, 32 KiB) is an upper bound which inflates the static RAM footprint. The peak usage is reported as extra data `membuf peak` (visible with `--details=1`), rebuild with `-DSTM32PQC_MLKEM_MEMBUF_SIZE=<peak>` to get an accurate footprint.
@@ -193,6 +195,7 @@ Same as above for ML-KEM, limited to ML-KEM-512 for now.
 You can optionally specify:
 
 - a crypto-library
+  - `MLKEM_NATIVE` (goal `small` or `fast`)
   - `PQSHIELD` (default, goal `balanced` or `fast`)
   - `WOLFSSL` (goal `small` or `fast`)
 - an optimization goal

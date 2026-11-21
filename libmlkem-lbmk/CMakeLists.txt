@@ -13,7 +13,7 @@ MESSAGE("PSET=" ${PSET})
 ADD_DEFINITIONS(-DPSET=${PSET})
 
 if(NOT DEFINED MLKEM_LIB)
-MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} has no ML-KEM implementation. Supported: PQSHIELD, PQRV, STUB, STM32PQC, WOLFSSL, or an external library with an mlkem.cmake" )
+MESSAGE( FATAL_ERROR "CRYPTO_LIB=${CRYPTO_LIB} has no ML-KEM implementation. Supported: MLKEM_NATIVE, PQSHIELD, PQRV, STUB, STM32PQC, WOLFSSL, or an external library with an mlkem.cmake" )
 ENDIF()
 MESSAGE("MLKEM_LIB=" ${MLKEM_LIB})
 ADD_DEFINITIONS(-DMLKEM_LIB=${MLKEM_LIB})
@@ -66,6 +66,56 @@ IF ( ${MLKEM_LIB} STREQUAL "EXTERNAL" )
         ${EXTERNAL_LIB_DIR}
         ${EXTERNAL_INCLUDE_DIRS}
     )
+ENDIF()
+
+IF ( ${MLKEM_LIB} STREQUAL "MLKEM_NATIVE" )
+	# upstream mlkem-native (see setup_manifest.py), unmodified: compiled here from its single-file sources, with
+	# the flags of the firmware
+	if(NOT DEFINED MLKEM_NATIVE_DIR)
+	set(MLKEM_NATIVE_DIR ${CMAKE_SOURCE_DIR}/../mlkem-native)
+	ENDIF()
+	IF ( NOT EXISTS ${MLKEM_NATIVE_DIR}/mlkem/mlkem_native.c )
+		MESSAGE( FATAL_ERROR "mlkem-native is missing (${MLKEM_NATIVE_DIR}/mlkem/mlkem_native.c). Run './initial-setup --addons mlkem-native'" )
+	ENDIF()
+	# small runs one Keccak state at a time (MLK_CONFIG_SERIAL_FIPS202_ONLY: no 4-way buffers), built for size;
+	# fast is the default configuration, built for speed
+	IF ( ${GOAL} STREQUAL "small" )
+		set( MLKEM_NATIVE_GOAL_DEFS MLK_CONFIG_SERIAL_FIPS202_ONLY )
+		set( MLKEM_NATIVE_OPT -Os )
+	ELSEIF ( ${GOAL} STREQUAL "fast" )
+		set( MLKEM_NATIVE_GOAL_DEFS "" )
+		set( MLKEM_NATIVE_OPT -O3 )
+	ELSE()
+		MESSAGE( FATAL_ERROR "mlkem-native supports GOAL small or fast, not '${GOAL}'" )
+	ENDIF()
+	# cmake/generic_binary.cmake enables ASM only after this directory is processed
+	enable_language(ASM)
+	add_library(mlkem-native STATIC
+		${MLKEM_NATIVE_DIR}/mlkem/mlkem_native.c
+		# empty on our CPUs: mlkem-native has no backend for them
+		${MLKEM_NATIVE_DIR}/mlkem/mlkem_native_asm.S
+	)
+	target_compile_definitions(mlkem-native
+	  PUBLIC
+		MLK_CONFIG_PARAMETER_SET=${PSET}
+		MLK_CONFIG_NAMESPACE_PREFIX=mlkem_native
+		# key generation and encapsulation from given seeds only: no randombytes()
+		MLK_CONFIG_NO_RANDOMIZED_API
+		${MLKEM_NATIVE_GOAL_DEFS}
+	  PRIVATE
+		# single compilation unit
+		MLK_CONFIG_INTERNAL_API_QUALIFIER=static
+		# a native backend where one matches the CPU (none of ours), C otherwise
+		MLK_CONFIG_USE_NATIVE_BACKEND_ARITH
+	)
+	target_include_directories(mlkem-native PUBLIC ${MLKEM_NATIVE_DIR}/mlkem)
+	target_compile_options(mlkem-native PRIVATE
+		${cpu_PARAMS}
+		${compiler_OPTS}
+		$<$<CONFIG:Debug>:-Og -g3 -ggdb>
+		$<$<NOT:$<CONFIG:Debug>>:${MLKEM_NATIVE_OPT}>
+	)
+	target_link_libraries(${LIB} PRIVATE mlkem-native)
 ENDIF()
 
 target_include_directories(${LIB}
@@ -184,6 +234,21 @@ add_custom_target(combined_target
         )
 ELSE()
 MESSAGE("MLKEM_LIB is NOT PQRV (it is '" ${MLKEM_LIB} "')")
+ENDIF()
+
+IF(${MLKEM_LIB} STREQUAL "MLKEM_NATIVE")
+MESSAGE("MLKEM_LIB is MLKEM_NATIVE")
+add_custom_target(combined_target
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mlkem-lbmk-core>
+        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
+        COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mlkem-native>
+
+        #build combined lib
+        COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
+        )
+ELSE()
+MESSAGE("MLKEM_LIB is NOT MLKEM_NATIVE (it is '" ${MLKEM_LIB} "')")
 ENDIF()
 
 IF(${MLKEM_LIB} STREQUAL "EXTERNAL")
