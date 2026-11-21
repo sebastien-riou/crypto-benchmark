@@ -17,7 +17,7 @@ class MldsaNative:
 
     @staticmethod
     def algorithms():
-        # small: MLD_CONFIG_REDUCE_RAM, built for size; fast: the default memory mode, built for speed
+        # small: MLD_CONFIG_REDUCE_RAM; fast: the default memory mode (both -Os, see libmldsa-lbmk/CMakeLists.txt)
         return {
             'mldsa':['small','fast'],
         }

@@ -62,16 +62,21 @@ IF ( ${MLDSA_LIB} STREQUAL "MLDSA_NATIVE" )
 	IF ( NOT EXISTS ${MLDSA_NATIVE_DIR}/mldsa/mldsa_native.c )
 		MESSAGE( FATAL_ERROR "mldsa-native is missing (${MLDSA_NATIVE_DIR}/mldsa/mldsa_native.c). Run './initial-setup --addons mldsa-native'" )
 	ENDIF()
-	# small keeps the vectors packed and expands them on demand (MLD_CONFIG_REDUCE_RAM), built for size;
-	# fast is the default memory mode, built for speed
+	# small keeps the vectors packed and expands them on demand (MLD_CONFIG_REDUCE_RAM); fast is the default memory
+	# mode. Both are built with -Os: on the pico2 (both cores) and the STM32U5A5, fast ML-DSA-87 ran 3 to 11 % faster
+	# with -Os than with -O3, and -O2 was the slowest (2026-11-21)
 	IF ( ${GOAL} STREQUAL "small" )
 		set( MLDSA_NATIVE_GOAL_DEFS MLD_CONFIG_REDUCE_RAM )
-		set( MLDSA_NATIVE_OPT -Os )
+		set( MLDSA_NATIVE_GOAL_OPT -Os )
 	ELSEIF ( ${GOAL} STREQUAL "fast" )
 		set( MLDSA_NATIVE_GOAL_DEFS "" )
-		set( MLDSA_NATIVE_OPT -O3 )
+		set( MLDSA_NATIVE_GOAL_OPT -Os )
 	ELSE()
 		MESSAGE( FATAL_ERROR "mldsa-native supports GOAL small or fast, not '${GOAL}'" )
+	ENDIF()
+	# -DMLDSA_NATIVE_OPT=<flags> replaces the goal's optimization flags, for experiments
+	if(NOT DEFINED MLDSA_NATIVE_OPT)
+	set( MLDSA_NATIVE_OPT ${MLDSA_NATIVE_GOAL_OPT} )
 	ENDIF()
 	# cmake/generic_binary.cmake enables ASM only after this directory is processed
 	enable_language(ASM)

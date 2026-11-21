@@ -77,16 +77,21 @@ IF ( ${MLKEM_LIB} STREQUAL "MLKEM_NATIVE" )
 	IF ( NOT EXISTS ${MLKEM_NATIVE_DIR}/mlkem/mlkem_native.c )
 		MESSAGE( FATAL_ERROR "mlkem-native is missing (${MLKEM_NATIVE_DIR}/mlkem/mlkem_native.c). Run './initial-setup --addons mlkem-native'" )
 	ENDIF()
-	# small runs one Keccak state at a time (MLK_CONFIG_SERIAL_FIPS202_ONLY: no 4-way buffers), built for size;
-	# fast is the default configuration, built for speed
+	# small runs one Keccak state at a time (MLK_CONFIG_SERIAL_FIPS202_ONLY: no 4-way buffers); fast is the default
+	# configuration. Both are built with -Os: on the pico2 (both cores) and the STM32U5A5, fast ML-KEM-1024 ran 3 to
+	# 11 % faster with -Os than with -O3, and -O2 was the slowest (2026-11-21)
 	IF ( ${GOAL} STREQUAL "small" )
 		set( MLKEM_NATIVE_GOAL_DEFS MLK_CONFIG_SERIAL_FIPS202_ONLY )
-		set( MLKEM_NATIVE_OPT -Os )
+		set( MLKEM_NATIVE_GOAL_OPT -Os )
 	ELSEIF ( ${GOAL} STREQUAL "fast" )
 		set( MLKEM_NATIVE_GOAL_DEFS "" )
-		set( MLKEM_NATIVE_OPT -O3 )
+		set( MLKEM_NATIVE_GOAL_OPT -Os )
 	ELSE()
 		MESSAGE( FATAL_ERROR "mlkem-native supports GOAL small or fast, not '${GOAL}'" )
+	ENDIF()
+	# -DMLKEM_NATIVE_OPT=<flags> replaces the goal's optimization flags, for experiments
+	if(NOT DEFINED MLKEM_NATIVE_OPT)
+	set( MLKEM_NATIVE_OPT ${MLKEM_NATIVE_GOAL_OPT} )
 	ENDIF()
 	# cmake/generic_binary.cmake enables ASM only after this directory is processed
 	enable_language(ASM)

@@ -17,7 +17,7 @@ class MlkemNative:
 
     @staticmethod
     def algorithms():
-        # small: MLK_CONFIG_SERIAL_FIPS202_ONLY, built for size; fast: the default configuration, built for speed
+        # small: MLK_CONFIG_SERIAL_FIPS202_ONLY; fast: the default configuration (both -Os, see libmlkem-lbmk/CMakeLists.txt)
         return {
             'mlkem':['small','fast'],
         }
