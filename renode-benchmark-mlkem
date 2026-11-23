@@ -3,7 +3,7 @@
 set -ex
 
 CRYPTOLIB=${1:-PQSHIELD}
-GOAL=${2:-balanced}
+GOAL=${2:-$(python3 goals.py default $CRYPTOLIB mlkem)}
 PRESET=${3:-minSizeRel}
 
 # only the smallest parameter set for now
@@ -23,7 +23,7 @@ do
 done
 
 # build generic target for static memory sizes
-python3 link_ext.py --preset=$PRESET --goal=$GOAL
+python3 link_ext.py --preset=$PRESET
 declare -a TARGETS=()
 for TOOLCHAIN in "${TOOLCHAINS[@]}"
 do
@@ -36,7 +36,7 @@ do
         for LIB in STUB $CRYPTOLIB
         do
             # not all libraries are available for all targets
-            if ./buildit $TOOLCHAIN mlkem $PSET $LIB $PRESET ${@:4}; then
+            if ./buildit $TOOLCHAIN mlkem $PSET $LIB $PRESET GOAL=$GOAL ${@:4}; then
                 ELFS+=("${OUTDIR}/crypto-benchmark-$LIB-$GOAL-mlkem-$PSET.elf")
             else
                 BUILT=0

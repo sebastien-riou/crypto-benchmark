@@ -6,18 +6,18 @@ TARGET=$1
 DEVICE=$2
 TOOLCHAIN=$3
 CRYPTOLIB=${4:-OPEN_SOURCE}
-GOAL=${5:-small}
+GOAL=${5:-$(python3 goals.py default $CRYPTOLIB mldsa)}
 PRESET=${6:-minSizeRel}
 
 TARGET_PATH=../crypto-benchmark-$TARGET
 
-python3 link_ext.py --preset=$PRESET --goal=$GOAL
+python3 link_ext.py --preset=$PRESET
 
-./buildit $TOOLCHAIN mldsa 44 $CRYPTOLIB $PRESET 
+./buildit $TOOLCHAIN mldsa 44 $CRYPTOLIB $PRESET GOAL=$GOAL
 ./benchmark-core $TARGET_PATH $DEVICE mldsa 44 $CRYPTOLIB $GOAL ${@:7}
-./buildit $TOOLCHAIN mldsa 65 $CRYPTOLIB $PRESET 
+./buildit $TOOLCHAIN mldsa 65 $CRYPTOLIB $PRESET GOAL=$GOAL
 ./benchmark-core $TARGET_PATH $DEVICE mldsa 65 $CRYPTOLIB $GOAL ${@:7}
-./buildit $TOOLCHAIN mldsa 87 $CRYPTOLIB $PRESET 
+./buildit $TOOLCHAIN mldsa 87 $CRYPTOLIB $PRESET GOAL=$GOAL
 ./benchmark-core $TARGET_PATH $DEVICE mldsa 87 $CRYPTOLIB $GOAL ${@:7}
 
 # build generic target for static memory sizes

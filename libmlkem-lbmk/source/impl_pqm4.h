@@ -1,6 +1,6 @@
 #pragma once
 
-//pqm4 ML-KEM, compiled for PSET and GOAL by cmake/pqm4.cmake: goal fast is m4fspeed, small is m4fstack
+//pqm4 ML-KEM, compiled for PSET and GOAL by cmake/pqm4.cmake: goal fast is m4fspeed, smallram is m4fstack
 #define IMPL_NAME "pqm4-" xstr(GOAL)
 
 //api.h of the implementation; randombytes.h and fips202.h of mupq

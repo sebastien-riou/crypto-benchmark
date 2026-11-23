@@ -1,13 +1,13 @@
 #pragma once
 
 
-#define STM32PQC_small 1
+#define STM32PQC_smallram 1
 #define STM32PQC_balanced 2
 
 #define STM32PQC_INDEX CAT(STM32PQC_,GOAL)
 
-#if STM32PQC_INDEX == STM32PQC_small
-  #define IMPL_NAME "stm32pqc-small"
+#if STM32PQC_INDEX == STM32PQC_smallram
+  #define IMPL_NAME "stm32pqc-smallram"
   #define LOWRAM
 #endif
 

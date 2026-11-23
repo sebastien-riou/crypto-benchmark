@@ -5,7 +5,8 @@ import shlex
 class Stm32u5a5:
 
     @staticmethod
-    def sw_targets():
+    def core_sets():
+        # the core sets a benchmark can use, the caller first (see "Core sets" in README.md)
         return ['cortex-m33']
 
     def __init__(self):

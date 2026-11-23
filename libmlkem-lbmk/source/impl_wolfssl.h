@@ -8,15 +8,16 @@
   #error "WOLFSSL built without ML-KEM (use buildit-mlkem-<goal> in the wolfssl repo)"
 #endif
 
-#define WOLFSSL_small 1
+//goal smallram is built by wolfssl's buildit-mlkem-small (see crypto-libraries/wolfssl.py)
+#define WOLFSSL_smallram 1
 #define WOLFSSL_fast 2
 
 #define WOLFSSL_INDEX CAT(WOLFSSL_,GOAL)
 
-#if WOLFSSL_INDEX == WOLFSSL_small
-  #define IMPL_NAME "wolfssl-small"
+#if WOLFSSL_INDEX == WOLFSSL_smallram
+  #define IMPL_NAME "wolfssl-smallram"
   #if !defined(WOLFSSL_MLKEM_SMALL) || !defined(WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM) || !defined(WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM)
-    #error "wolfssl-small expects a build with WOLFSSL_MLKEM_SMALL, WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM and WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM (buildit-mlkem-small)"
+    #error "wolfssl-smallram expects a build with WOLFSSL_MLKEM_SMALL, WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM and WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM (buildit-mlkem-small)"
   #endif
 #elif WOLFSSL_INDEX == WOLFSSL_fast
   #define IMPL_NAME "wolfssl-fast"
@@ -24,7 +25,7 @@
     #error "wolfssl-fast expects a build without the ML-KEM small code/memory options (buildit-mlkem-fast)"
   #endif
 #else
-  #error "WOLFSSL ML-KEM supports GOAL small or fast"
+  #error "WOLFSSL ML-KEM supports GOAL smallram or fast"
 #endif
 
 //on Cortex-M, buildit-mlkem-<goal> uses wolfSSL's Thumb-2 assembly: this rejects a build from before that, or for

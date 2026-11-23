@@ -5,7 +5,7 @@ set -ex
 ALGO=${1:-mldsa}
 PSET=${2:-44}
 CRYPTOLIB=${3:-OPEN_SOURCE}
-GOAL=${4:-small}
+GOAL=${4:-$(python3 goals.py default $CRYPTOLIB $ALGO)}
 
 ./build-all-targets $ALGO $PSET $CRYPTOLIB $GOAL minSizeRel -DRAW_COM=1
 set +e #allow failure as not all libs compile for all targets

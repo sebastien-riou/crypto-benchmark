@@ -9,8 +9,11 @@ import multiprocessing as mp
 import traceback
 import sys
 import time
+import inspect
 sys.path.insert(0, '../lean-benchmark')
 import lean_benchmark
+import goals as goals_module
+import cores as cores_module
 
 
 
@@ -109,7 +112,13 @@ class Aes(object):
 
 algorithms_catalog = {'mldsa':Mldsa(),'mlkem':Mlkem(),'sha2':Sha2(),'aes':Aes()}
 
-goals_catalog = {'small','balanced','fast'}
+goals_catalog = list(goals_module.STANDARD_GOALS)
+
+
+def call_accepted(function, *args, **kwargs):
+    """Call a manifest's function with the keyword arguments it declares: an older manifest takes fewer."""
+    params = inspect.signature(function).parameters
+    return function(*args, **{k: v for k, v in kwargs.items() if k in params})
 
 
 def invoke_tool(cwd,*cmd,capture=False):
@@ -165,11 +174,23 @@ if __name__ == '__main__':
         '--hw-platform', help='Specify one or more hardware platforms (must be reachable using "device")', default=None, nargs='+', type=str
     )  
     parser.add_argument(
-        '--sw-target', help='Specify one or more software build targets', default=None, nargs='+', type=str
-    )  
+        '--cores', default=None, nargs='+', type=str,
+        help='List of core sets to benchmark on: the cores the library may use, the caller first, '
+             'e.g. cortex-m33, rv32imcb, 2xcortex-m33 (see "Core sets" in README.md). '
+             'Default: every one-core set of the hardware platforms'
+    )
     parser.add_argument(
-        '--goal', default=None, nargs='+', type=str,
-        help=f'List of goals to benchmark: {", ".join(sorted(goals_catalog))}, or a goal of an external library'
+        '--sw-target', default=None, nargs='+', type=str, help=argparse.SUPPRESS
+    )
+    parser.add_argument(
+        '--goal', default=None, nargs='+', type=str, choices=goals_catalog,
+        help='List of goals to benchmark (see "Optimization goals" in README.md). '
+             'Each library is benchmarked with those of these goals it has. Default: every goal of each library'
+    )
+    parser.add_argument(
+        '--opt', default=None, nargs='+', type=str, metavar='KEY=VALUE',
+        help='Options of the library on top of the goal, to tune what goes into a goal (see "Tuning a goal" in '
+             'README.md). Needs exactly one library and one goal; the results are reported as "custom"'
     )
     parser.add_argument(
         '--lib', help='List of libraries to benchmark', default=None, nargs='+', type=str
@@ -187,6 +208,8 @@ if __name__ == '__main__':
     )
       
     args = parser.parse_args()
+    if args.sw_target:
+        parser.error(f'--sw-target is replaced by --cores: use --cores {" ".join(args.sw_target)}')
 
     logformat = '%(asctime)s.%(msecs)03d %(levelname)s:\t%(message)s'
     logdatefmt = '%Y-%m-%d %H:%M:%S'
@@ -278,33 +301,62 @@ if __name__ == '__main__':
         logging.error('Need at least one software library')
         exit(-2)
 
-    #- detect software targets
-    sw_targets = set()
-    for hwp in hw_platforms:
-        for t in hwp['helper'].sw_targets():
-            sw_targets.add(t)
-    if args.sw_target:
-        sw_targets = set(args.sw_target)
-    if len(sw_targets) == 0:
-        logging.error('Need at least one software target')
-        exit(-3)    
-    usable_sw_targets = set()
-    for lib in sw_libs:
-        # check there is at least one sw target which is supported
+    #- detect core sets: the cores the library may use, the caller first (cores.py)
+    try:
+        declared_core_sets = []
+        for hwp in hw_platforms:
+            for c in hwp['helper'].core_sets():
+                cores_module.parse(c)
+                if c not in declared_core_sets:
+                    declared_core_sets.append(c)
+        if args.cores:
+            core_sets = list(dict.fromkeys(args.cores))
+            for c in core_sets:
+                cores_module.parse(c)
+                if c not in declared_core_sets:
+                    logging.error(f'Core set "{c}" is not one of the selected hardware platforms, which have: {", ".join(declared_core_sets)}')
+                    exit(-3)
+        else:
+            # by default the sets of one core
+            core_sets = [c for c in declared_core_sets if cores_module.count(c) == 1]
+    except cores_module.CoreSetError as e:
+        logging.error(e)
+        exit(-3)
+    if len(core_sets) == 0:
+        logging.error('Need at least one core set')
+        exit(-3)
+
+    def lib_supports_cores(helper, core_set, algo):
+        # optional: a library that can use several cores says for which sets; the others run on one core, the
+        # one of a software target they are built for
+        supports_cores = getattr(helper, 'supports_cores', None)
+        if supports_cores:
+            return supports_cores(core_set, algo)
+        return cores_module.count(core_set) == 1 and cores_module.caller(core_set) in helper.sw_targets()
+
+    usable_core_sets = []
+    for lib in list(sw_libs):
+        # check there is at least one core set which is supported
         found = False
-        for t in sw_targets:
-            if t in lib['helper'].sw_targets():
+        for c in core_sets:
+            if any(lib_supports_cores(lib['helper'], c, a) for a in lib['helper'].algorithms()):
                 found = True
-                usable_sw_targets.add(t)
+                if c not in usable_core_sets:
+                    usable_core_sets.append(c)
         if not found:
-            logging.warning(f'SW library {lib['name']} discarded because it does not support any of the selected software targets ({sw_targets})')
+            one_core = [c for c in core_sets if cores_module.count(c) > 1 and cores_module.caller(c) in lib['helper'].sw_targets()]
+            if one_core:
+                # not a limitation to warn about: its results on these sets are those on their first core
+                logging.info(f'SW library {lib['name']} discarded: it uses one core, its results on {", ".join(one_core)} are those on {", ".join(dict.fromkeys(cores_module.caller(c) for c in one_core))}')
+            else:
+                logging.warning(f'SW library {lib['name']} discarded because it does not support any of the selected core sets ({", ".join(core_sets)})')
             sw_libs.remove(lib)
     if len(sw_libs) == 0:
         logging.error('Need at least one software library')
         exit(-3)
-    # Keep only the software targets which are useful, i.e., there is at least one lib on one platform that needs it    
-    sw_targets = usable_sw_targets
-    logging.info(f'SW targets: {sw_targets}')
+    # Keep only the core sets which are useful, i.e., there is at least one lib on one platform that needs it
+    core_sets = [c for c in core_sets if c in usable_core_sets]
+    logging.info(f'Core sets: {core_sets}')
 
     algos = set()
     for lib in sw_libs:
@@ -330,41 +382,51 @@ if __name__ == '__main__':
                 logging.error(f'"{p}" in not a valid parameter set for algorithm "{a}"')
                 exit(-6)
     
-    goals = args.goal
-    if goals:
-        # goal names: the usual ones or any declared by a selected library (an external library can have
-        # its own goals, word characters only since they end up in the file names that report_footprint.py parses)
-        known_goals = set(goals_catalog)
-        for lib in sw_libs:
-            for lib_goals in lib['helper'].algorithms().values():
-                known_goals.update(lib_goals or [])
-        for g in goals:
-            if g not in known_goals or not re.fullmatch(r'\w+', g):
-                logging.error(f'Unknown goal "{g}", the selected software libraries know: {", ".join(sorted(known_goals))}')
-                exit(-9)
-        # check specified goal exist for the selected libraries and algorithms
-        for g in goals:
-            for a in algos:
-                usable_sw_libs = []
-                for lib in sw_libs:
-                    lib_algos = lib['helper'].algorithms()
-                    if lib_algos.get(a) and g not in lib_algos[a]:
-                        logging.debug(f'"{lib['name']}" discarded because it does not support goal "{g}" for algorithm "{a}"')
-                    else:
-                        usable_sw_libs.append(lib)
-                sw_libs = usable_sw_libs
+    # goals: each library is benchmarked with those of the requested goals it has for the algorithm (all of
+    # its goals when none is requested)
+    goals = list(dict.fromkeys(args.goal)) if args.goal else None
+    try:
+        def lib_goals(lib, algo):
+            all_goals = goals_module.goals_of(lib['helper'], algo)
+            if goals is None:
+                return all_goals
+            return [g for g in goals if g in all_goals]
 
-    # final pass on software libraries: remove the ones that don't support any of the algorithms
-    useful_sw_libs = []
-    for lib in sw_libs:
-        lib_algos = lib['helper'].algorithms()
-        for a in algos:
-            if a in lib_algos:
+        # every goal of the selected libraries must be a standard one, whatever is requested
+        for lib in sw_libs:
+            for a in lib['helper'].algorithms():
+                goals_module.goals_of(lib['helper'], a)
+
+        # final pass on software libraries: remove the ones with nothing to benchmark
+        useful_sw_libs = []
+        for lib in sw_libs:
+            if any(lib_goals(lib, a) for a in algos):
                 useful_sw_libs.append(lib)
-                break
-    if len(sw_libs) > len(useful_sw_libs):
+            else:
+                logging.info(f'"{lib['name']}" discarded: none of the selected goals for the selected algorithms')
         sw_libs = useful_sw_libs
-    logging.info(f'Valid software libraries: {get_names(sw_libs)}')    
+        for g in goals or []:
+            if not any(g in lib_goals(lib, a) for lib in sw_libs for a in algos):
+                logging.error(f'No selected software library has the goal "{g}" for {", ".join(sorted(algos))}')
+                exit(-9)
+        logging.info(f'Valid software libraries: {get_names(sw_libs)}')
+        if len(sw_libs) == 0:
+            logging.error('Need at least one software library')
+            exit(-2)
+
+        # options: a tool to tune what goes into a goal, for one library and one goal at a time
+        opts = goals_module.parse_opts(args.opt)
+        if opts:
+            if len(sw_libs) != 1 or goals is None or len(goals) != 1:
+                logging.error(f'--opt needs exactly one library (--lib) and one goal (--goal): got {len(sw_libs)} libraries and {len(goals or [])} goals')
+                exit(-10)
+            for a in algos:
+                if lib_goals(sw_libs[0], a):
+                    goals_module.check_opts(sw_libs[0]['helper'], a, opts)
+    except goals_module.GoalError as e:
+        logging.error(e)
+        exit(-9)
+    opts_str = goals_module.opts_string(opts)
 
     def tool(cwd, *cmd, capture=False):
         if cwd:
@@ -400,10 +462,10 @@ if __name__ == '__main__':
         return out
 
     link_ext_dict = runpy.run_path('link_ext.py')
-    def link_ext(goal):
-        logging.debug(f'link_ext({goal})')
+    def link_ext():
+        logging.debug('link_ext()')
         if not args.dry_run:
-            link_ext_dict['main'](goal=goal)
+            link_ext_dict['main']()
     
     format_result_dict = runpy.run_path('format_results.py')
     def format_result(target,algo,format,*,
@@ -427,21 +489,34 @@ if __name__ == '__main__':
                                        file=file)
 
     # extra build options, the same for the library under test and for the STUB build that gives its footprint
-    # (buildit's 5th argument is the CMake preset, minSizeRel by default)
-    buildit_options = ['minSizeRel', '-DSANITY_TV=1'] if args.sanity_tv else []
+    buildit_options = ['-DSANITY_TV=1'] if args.sanity_tv else []
 
     out_files = []
     for hwp_dict in hw_platforms:
         hwp = hwp_dict['helper']
         hwp_name = hwp_dict['name']
         hwp_path = hwp.path
-        hwp_sw_targets = hwp.sw_targets()
-        for swt in sw_targets:
-            if swt not in hwp_sw_targets:
+        hwp_core_sets = hwp.core_sets()
+        # the software targets the board's firmware is built for: the callers of its core sets
+        hwp_sw_targets = list(dict.fromkeys(cores_module.caller(c) for c in hwp_core_sets))
+        for core_set in core_sets:
+            if core_set not in hwp_core_sets:
+                logging.info(f'{hwp_name} has no core set {core_set}, skipped')
                 continue
+            # the software target (compiler target) of the caller: where the library is called and timed
+            swt = cores_module.caller(core_set)
             for lib in sw_libs:
                 lib_codename = lib['helper'].codename
                 for algo in algos:
+                    all_goals = lib_goals(lib, algo)
+                    if not all_goals:
+                        continue
+                    if not lib_supports_cores(lib['helper'], core_set, algo):
+                        if cores_module.count(core_set) > 1 and swt in lib['helper'].sw_targets():
+                            logging.info(f'{lib['name']} uses one core for {algo}: on {core_set} its results are those on {swt}, skipped')
+                        else:
+                            logging.info(f'{lib['name']} does not support {algo} on {core_set}, skipped')
+                        continue
                     # optional: a library can restrict an algorithm to some software targets
                     supports_algo = getattr(lib['helper'], 'supports_algo', None)
                     if supports_algo and not supports_algo(swt, algo):
@@ -451,15 +526,6 @@ if __name__ == '__main__':
                         all_psets = algorithms_catalog[algo].psets()
                     else:
                         all_psets = psets
-                    if goals is None:
-                        if algo in lib['helper'].algorithms():
-                            all_goals = lib['helper'].algorithms()[algo]
-                            if all_goals is None:
-                                all_goals = ['balanced']
-                        else:
-                            continue
-                    else:
-                        all_goals = goals
 
                     #args.dry_run=True
                     # build and run benchmark    
@@ -472,16 +538,26 @@ if __name__ == '__main__':
                             continue
                         for pset in all_psets:
                             
-                            logging.info(f'{hwp_name}, {swt}, {lib['name']}, {algo}, {goal}, {pset}')
+                            logging.info(f'{hwp_name}, {core_set}, {lib['name']}, {algo}, {goal}{" with " + opts_str if opts_str else ""}, {pset}')
                             pset_code = algorithms_catalog[algo].pset_code(pset)
-                            
-                            logging.info('build library')
-                            process_cmd(lib['helper'].build_cmd(swt,goal,pset_code,algo),lib['helper'].path)
 
-                            link_ext(goal)
+                            # what is built, for the library under test and for the STUB build: buildit's 5th
+                            # argument is the CMake preset
+                            build_params = ['minSizeRel', f'GOAL={goal}']
+                            if opts_str:
+                                build_params.append(f'GOAL_OPTS={opts_str}')
+                            if core_set != swt:
+                                build_params.append(f'CORES={core_set}')
+
+                            logging.info('build library')
+                            build_cmd = call_accepted(lib['helper'].build_cmd, swt, goal, pset_code, algo,
+                                                      opts=dict(opts), cores=core_set, hw_platform=hwp_name)
+                            process_cmd(build_cmd,lib['helper'].path)
+
+                            link_ext()
 
                             logging.info('build crypto-benchmark')
-                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,lib_codename,*buildit_options)
+                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,lib_codename,*build_params,*buildit_options)
                             
                             logging.info('build firmware')
                             process_cmd(hwp.build_cmd(swt),hwp_path)
@@ -534,13 +610,17 @@ if __name__ == '__main__':
 
                             # build stub target for static memory sizes
                             logging.info('build crypto-benchmark STUB for size')
-                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,'STUB',*buildit_options)
+                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,'STUB',*build_params,*buildit_options)
 
-                            built_variants.append((goal,pset_code))
+                            # the ELF files are named after the goal, or custom_<hash> with options
+                            built_variants.append((goals_module.goal_id(goal, opts),pset_code))
                     #args.dry_run=False
+                    if args.dry_run:
+                        continue
                     # compute sizes
                     logging.info('Compute size')
-                    outdir = f'build/{swt}'
+                    # the ELF files of a core set are in its own folder (cmake/generic_binary.cmake)
+                    outdir = f'build/{core_set}'
                     # only report on what this run actually built: leftover elf files from
                     # previous runs (other algos, or runs which died before the STUB build)
                     # would otherwise end up in sizes.txt without their STUB counterpart
@@ -554,7 +634,7 @@ if __name__ == '__main__':
                     out,res = tool(None, 'size',*elf_files,capture=True)
                     with open(f'{outdir}/sizes.txt','w') as f:
                         print(out,file=f)
-                    file_name = f'{lean_benchmark.get_timestamp()}-{hwp_name}-{swt}-{lib['name']}-{algo}.csv'
+                    file_name = f'{lean_benchmark.get_timestamp()}-{hwp_name}-{core_set}-{lib['name']}-{algo}.csv'
                     # hw_platform string as reported by the firmware in its info fields:
                     # platforms supporting several sw targets append the one they were built
                     # for. Must not modify hwp_name itself, it is reused by the next sw target.
@@ -562,7 +642,7 @@ if __name__ == '__main__':
                     if len(hwp_sw_targets) > 1:
                         fw_hwp_name += f'-{swt}'
                     logging.info('Formating results')
-                    format_result(swt,algo,'csv',lib=[lib_codename],hw_platform=fw_hwp_name,sanity_tv=args.sanity_tv,file=file_name)
+                    format_result(core_set,algo,'csv',lib=[lib_codename],hw_platform=fw_hwp_name,sanity_tv=args.sanity_tv,file=file_name)
                     out_files.append(file_name)
     logging.info(f'All benchmark done, see output files:\n\t{'\n\t'.join(out_files)}')
     

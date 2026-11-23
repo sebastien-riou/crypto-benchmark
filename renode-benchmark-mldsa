@@ -3,7 +3,7 @@
 set -ex
 
 CRYPTOLIB=${1:-OPEN_SOURCE}
-GOAL=${2:-small}
+GOAL=${2:-$(python3 goals.py default $CRYPTOLIB mldsa)}
 PRESET=${3:-minSizeRel}
 
 ./renode-benchmark mldsa 44 $CRYPTOLIB $GOAL

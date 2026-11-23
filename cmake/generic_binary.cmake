@@ -177,6 +177,9 @@ add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     #copy to generic name for debug
     COMMAND rm -f ${CMAKE_BINARY_DIR}/../../crypto-benchmark.elf
     COMMAND ln -s $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_BINARY_DIR}/../../crypto-benchmark.elf
-    COMMAND cp $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_BINARY_DIR}/../../crypto-benchmark-${CRYPTO_LIB}-${GOAL}-${ALGO}-${PSET}.elf
+    #for the footprint (report_footprint.py): crypto-benchmark-<library>-<goal or custom_<hash>>-<algo>-<pset>.elf,
+    #in ELF_DIR: build/<core set>/ with buildit, by default two levels above the build folder
+    COMMAND mkdir -p ${ELF_DIR}
+    COMMAND cp $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${ELF_DIR}/crypto-benchmark-${CRYPTO_LIB}-${GOAL_ID}-${ALGO}-${PSET}.elf
 )
 

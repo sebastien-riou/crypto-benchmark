@@ -22,11 +22,108 @@ ENDIF()
 MESSAGE("ALGO=" ${ALGO})
 ADD_DEFINITIONS(-DALGO=${ALGO})
 
+# Optimization goal: one of the standard goals (README.md "Optimization goals", goals.py)
 if(NOT DEFINED GOAL)
-set(GOAL small)
+set(GOAL smallram)
+ENDIF()
+set(STANDARD_GOALS smallram smallcode balanced fast)
+IF ( NOT GOAL IN_LIST STANDARD_GOALS )
+	MESSAGE( FATAL_ERROR "GOAL=${GOAL} is not a goal. The goals are: smallram, smallcode, balanced, fast. A variant of a library is an option (GOAL_OPTS), not a goal" )
 ENDIF()
 MESSAGE("GOAL=" ${GOAL})
 ADD_DEFINITIONS(-DGOAL=${GOAL})
+
+# Options of the library on top of the goal, "k=v,k=v" (README.md "Tuning a goal"). A build with options is not
+# the goal anymore: it is identified as custom_<hash> (the same value as goal_id() of goals.py) and its
+# implementation checks (impl_*.h) of the goal's configuration are skipped (GOAL_CUSTOM).
+if(NOT DEFINED GOAL_OPTS)
+set(GOAL_OPTS "")
+ENDIF()
+IF ( "${GOAL_OPTS}" STREQUAL "" )
+	set(GOAL_ID ${GOAL})
+	set(GOAL_CUSTOM 0)
+ELSE()
+	IF ( NOT "${GOAL_OPTS}" MATCHES "^[a-z][a-z0-9_]*=[A-Za-z0-9_.+=:/@-]*(,[a-z][a-z0-9_]*=[A-Za-z0-9_.+=:/@-]*)*$" )
+		MESSAGE( FATAL_ERROR "GOAL_OPTS=${GOAL_OPTS} is not <key>=<value>[,<key>=<value>...]" )
+	ENDIF()
+	# the options in one order whatever the order they were given in (the same as opts_string() of goals.py)
+	string(REPLACE "," ";" GOAL_OPTS_LIST "${GOAL_OPTS}")
+	list(SORT GOAL_OPTS_LIST)
+	list(JOIN GOAL_OPTS_LIST "," GOAL_OPTS)
+	string(SHA256 GOAL_OPTS_HASH "${GOAL} ${GOAL_OPTS}")
+	string(SUBSTRING ${GOAL_OPTS_HASH} 0 8 GOAL_OPTS_HASH)
+	set(GOAL_ID custom_${GOAL_OPTS_HASH})
+	set(GOAL_CUSTOM 1)
+ENDIF()
+MESSAGE("GOAL_OPTS=" "${GOAL_OPTS}")
+MESSAGE("GOAL_ID=" ${GOAL_ID})
+ADD_DEFINITIONS(-DGOAL_CUSTOM=${GOAL_CUSTOM})
+add_compile_definitions(GOAL_OPTS_STR="${GOAL_OPTS}")
+
+# goal_opt(<variable> <key> <default>): the value of the option <key> of GOAL_OPTS, <default> when it is not given
+function(goal_opt var key default)
+	set(value "${default}")
+	string(REPLACE "," ";" opts "${GOAL_OPTS}")
+	foreach(opt ${opts})
+		IF ( "${opt}" MATCHES "^${key}=(.*)$" )
+			set(value "${CMAKE_MATCH_1}")
+		ENDIF()
+	endforeach()
+	set(${var} "${value}" PARENT_SCOPE)
+endfunction()
+
+# Core set: the cores the library may use, the first one being the caller (README.md "Core sets", cores.py).
+# By default the one core of the toolchain file.
+get_filename_component(TARGET_CPU ${TARGET_DIR} NAME)
+if(NOT DEFINED CORES)
+set(CORES ${TARGET_CPU})
+ENDIF()
+set(N_CORES 0)
+string(REPLACE "+" ";" CORES_LIST "${CORES}")
+foreach(core ${CORES_LIST})
+	IF ( "${core}" MATCHES "^([1-9][0-9]*)x[A-Za-z][A-Za-z0-9_.-]*$" )
+		math(EXPR N_CORES "${N_CORES}+${CMAKE_MATCH_1}")
+	ELSEIF ( "${core}" MATCHES "^[A-Za-z][A-Za-z0-9_.-]*$" )
+		math(EXPR N_CORES "${N_CORES}+1")
+	ELSE()
+		MESSAGE( FATAL_ERROR "CORES=${CORES} is not a core set: <core>[+<core>...], each optionally <count>x<core>" )
+	ENDIF()
+endforeach()
+MESSAGE("CORES=" ${CORES} " (" ${N_CORES} ")")
+# where the ELF file named after the build goes, for the footprint: one folder per core set
+if(NOT DEFINED ELF_DIR)
+set(ELF_DIR ${CMAKE_BINARY_DIR}/../..)
+ENDIF()
+ADD_DEFINITIONS(-DN_CORES=${N_CORES})
+add_compile_definitions(CORES_STR="${CORES}")
+
+# The library must have this goal for this algorithm, and these options (its manifest, see goals.py)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+execute_process(
+	COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/goals.py check ${CRYPTO_LIB} ${ALGO} ${GOAL} "${GOAL_OPTS}"
+	RESULT_VARIABLE GOAL_CHECK_ERROR_CODE
+	ERROR_VARIABLE GOAL_CHECK_ERROR
+	ERROR_STRIP_TRAILING_WHITESPACE
+)
+IF ( NOT GOAL_CHECK_ERROR_CODE EQUAL 0 )
+	MESSAGE( FATAL_ERROR "${GOAL_CHECK_ERROR}" )
+ENDIF()
+
+# Revision of the library, reported by the firmware (see goals.py)
+execute_process(
+	COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/goals.py rev ${CRYPTO_LIB}
+	OUTPUT_VARIABLE LIB_REV
+	RESULT_VARIABLE LIB_REV_ERROR_CODE
+	OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+IF ( NOT LIB_REV_ERROR_CODE EQUAL 0 OR "${LIB_REV}" STREQUAL "" )
+	set(LIB_REV "?")
+ENDIF()
+MESSAGE("LIB_REV=" ${LIB_REV})
+add_compile_definitions(LIB_REV_STR="${LIB_REV}")
+
+# Libraries with one build per goal are linked by link_ext.py in a folder per algorithm and goal
+set(GOAL_DIR ${TARGET_DIR}/goals/${ALGO}/${GOAL})
 
 option(DEBUG_INFO "add -g (debug info only, the generated code is unchanged)" OFF)
 if(DEBUG_INFO)

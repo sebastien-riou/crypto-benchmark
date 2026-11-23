@@ -15,4 +15,5 @@ rm -rf snapshots
 # Our stuff
 rm target/*/*/*.a
 rm target/*/*/*.h
+rm -rf target/*/goals
 rm -rf build

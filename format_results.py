@@ -13,6 +13,9 @@ import functools
 sys.path.insert(0, '../lean-benchmark')
 import lean_benchmark
 from lean_benchmark import get_field, format_number
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import goals as goals_module
+import cores as cores_module
 
 
 def format_size_kib(num: int, *,precision=2) -> str:
@@ -293,6 +296,10 @@ def run_info(data) -> dict:
     values = data['info'][1::2] #items at odd index
     return dict(zip(keys,values))
 
+def run_cores(info) -> str:
+    """The core set of a run (cores.py). A run made before core sets used one core, its software target."""
+    return info.get('cores') or info['sw_target_cpu']
+
 # ML-KEM test vectors: a set of BTVG-MLKEM comes with its record, libmlkem-lbmk/include/<name>.py, which gives the
 # role of each test case. The sets of the sanity check build (SANITY_TV=1, libmlkem-lbmk/gen-tv.py), which the
 # benchmark used before BTVG-MLKEM, have none.
@@ -345,10 +352,12 @@ def select_latest_runs(result_files, root):
         with open(os.path.join(root,p),'rb') as f:
             data = pickle.load(f)
         info = run_info(data)
+        # a goal built with options (goal_opts) is another configuration than the goal itself
         key = (info['hw_platform'],
-               info['sw_target_cpu'],
+               run_cores(info),
                info['algo'],
                info['impl_name'],
+               info.get('goal_opts',''),
                info['pset'],
                mlkem_sanity_run(info))
         ts = run_timestamp(p,data)
@@ -429,15 +438,25 @@ def main(args_target,args_algo,format,*,
     def lib_name(build_target):
         return build_target_to_lib_name.get(build_target, build_target.lower())
     def impl_to_lib_and_goal_name(impl_name):
+        # result files made before the firmware reported 'crypto_lib' and 'goal': from the implementation name.
+        # Their goals keep the names they had (e.g. small, or the variants of an external library).
         if impl_name in impl_to_lib_name:
             return impl_to_lib_name[impl_name], impl_to_goal_name[impl_name]
-        # the goal is small, balanced, fast or one of the external library's own goals
         lib, _, goal = impl_name.rpartition('-')
         if lib and re.fullmatch(r'\w+', goal):
             return lib, goal
         raise RuntimeError(f'unknown implementation name "{impl_name}", the implementation name of an external library must be "<library name>-<goal>"')
+    def info_to_lib_and_goal_name(info):
+        # the goal, or custom_<hash> for a goal built with options: what the ELF files are named after as well
+        if 'crypto_lib' in info and 'goal' in info:
+            return lib_name(info['crypto_lib']), goals_module.goal_id(info['goal'], info.get('goal_opts',''))
+        return impl_to_lib_and_goal_name(info['impl_name'])
     def build_target_to_full_lib_name(lib,goal):
         return f'{lib_name(lib)}-{goal}'
+    # goals built with options, reported as 'custom': full name -> (library, goal, options)
+    customs = {}
+    # library name -> the revisions of the library in the reported runs
+    lib_revs = {}
 
     lib_names = []
     if args_lib:
@@ -456,7 +475,8 @@ def main(args_target,args_algo,format,*,
             data = pickle.load(f)
             results = data['results']
             info = run_info(data)
-            target = info['sw_target_cpu']
+            # the target is a core set: one core (its software target) or several
+            target = run_cores(info)
             if target != args_target:
                 continue
             hw_platform = info['hw_platform']
@@ -468,7 +488,7 @@ def main(args_target,args_algo,format,*,
             if args_algo != algo:
                 logging.debug(f'ignoring algo {algo}')
                 continue
-            lib,goal = impl_to_lib_and_goal_name(info['impl_name'])
+            lib,goal = info_to_lib_and_goal_name(info)
             if lib not in lib_names:
                 logging.debug(f'ignoring lib {lib}')
                 continue
@@ -480,6 +500,10 @@ def main(args_target,args_algo,format,*,
             if args_pset and pset not in args_pset:
                 logging.debug(f'ignoring pset {pset}')
                 continue
+            if goals_module.is_custom(goal):
+                customs[full_name] = (lib, info['goal'], info['goal_opts'])
+            if info.get('lib_rev'):
+                lib_revs.setdefault(lib, set()).add(info['lib_rev'])
 
             # ML-KEM: the runs on the test vectors of BTVG-MLKEM, or with args_sanity_tv the others (see mlkem_tv_record)
             tv_record = None
@@ -592,7 +616,11 @@ def main(args_target,args_algo,format,*,
         raise RuntimeError(f'More than one hw_platform found, please use --hw-platform')
     #get footprint results
     sizes = report_footprint.report_footprint(os.path.join(root,'build'))
-    sizes = sizes[args_target][args_algo]
+    # no size report for this core set and algorithm (the ELF files are those of the last build): the
+    # performance is reported without the static footprint
+    if args_algo not in sizes.get(args_target,{}):
+        logging.warning(f'no size report for {args_algo} in build/{args_target}/sizes.txt: static RAM and flash are not reported')
+    sizes = sizes.get(args_target,{}).get(args_algo,{})
     
     #re struct results by libs
     for pset in sizes.keys():
@@ -623,6 +651,27 @@ def main(args_target,args_algo,format,*,
 
     logging.debug(libs)
 
+    # A goal built with options is not a standard goal: its rows read '<library>-custom[n]', and a note gives
+    # the goal it starts from and the options. No comma in the notes: they are lines of the CSV file.
+    notes = ''
+    for n,full_name in enumerate(sorted(customs), start=1):
+        lib,goal,goal_opts = customs[full_name]
+        display_name = f'{lib}-{goals_module.CUSTOM}[{n}]'
+        libs[display_name] = libs.pop(full_name)
+        for key in [k for k in tv_names if k[0] == full_name]:
+            tv_names[(display_name,key[1])] = tv_names.pop(key)
+        notes += f'[{n}]: {lib}-{goal} with {goal_opts.replace(",", " ")} (not a standard goal).\n'
+    # several cores: what the figures mean
+    if cores_module.count(args_target) > 1:
+        notes += f'Cores: {cores_module.title(args_target)}. The first one calls the library: time is its elapsed cycles.\n'
+        notes += 'Only the libraries that use the other cores are listed: for the others see the results on one core.\n'
+    if lib_revs:
+        revs = [f'{lib} {" / ".join(sorted(lib_revs[lib]))}' for lib in sorted(lib_revs)]
+        notes += f'Library revision: {"; ".join(revs)}'
+        if any(rev.endswith('+') for lib in lib_revs for rev in lib_revs[lib]):
+            notes += ' (+: with local changes)'
+        notes += '.\n'
+
     match format:
         case 'latex':
             print(gen_latex_perf_table(libs,lib_list=args_lib, pset_list=args_pset, op_list=args_op),file=file)
@@ -631,11 +680,11 @@ def main(args_target,args_algo,format,*,
         case 'csv':
             match args_algo:
                 case 'mldsa':
-                    print(gen_csv_perf_table_mldsa(libs, op_list=args_op),file=file)
+                    print(gen_csv_perf_table_mldsa(libs, op_list=args_op) + notes,file=file)
                 case 'mlkem':
-                    print(gen_csv_perf_table_mlkem(libs, op_list=args_op, tv_names=tv_names),file=file)
+                    print(gen_csv_perf_table_mlkem(libs, op_list=args_op, tv_names=tv_names) + notes,file=file)
                 case _:
-                    print(gen_csv_perf_table(libs, op_list=args_op),file=file)
+                    print(gen_csv_perf_table(libs, op_list=args_op) + notes,file=file)
             print(gen_csv_footprint_table(libs),file=file)
 
 
@@ -673,7 +722,8 @@ if __name__ == '__main__':
              'BTVG-MLKEM) instead of those on the test vectors of BTVG-MLKEM'
     )
     parser.add_argument(
-        'target', help='Target platform to report', type=str
+        'target', help='Core set to report: the software target for one core, e.g. cortex-m33, or a set of '
+                       'several cores, e.g. 2xcortex-m33 (see "Core sets" in README.md)', type=str
     )
     parser.add_argument(
         'algo', help='Algorithm to report', type=str

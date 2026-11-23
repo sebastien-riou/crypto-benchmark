@@ -20,20 +20,20 @@ It has been used on several targets:
 It contains proper benchmarking only for ML-DSA. ML-KEM, AES and SHA2 are a work in progress.
 
 Following ML-DSA librairies have been integrated (alphabetical order):
-- `MLDSA_NATIVE`: [mldsa-native](https://github.com/pq-code-package/mldsa-native) (sibling `../mldsa-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmldsa-lbmk/CMakeLists.txt`). Goals `small` (`MLD_CONFIG_REDUCE_RAM`) / `fast` (default memory mode), both built with `-Os`, which was faster than `-O3` or `-O2` on the pico2 and the STM32U5A5.
+- `MLDSA_NATIVE`: [mldsa-native](https://github.com/pq-code-package/mldsa-native) (sibling `../mldsa-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmldsa-lbmk/CMakeLists.txt`). Goals `smallram` (`MLD_CONFIG_REDUCE_RAM`) / `fast` (default memory mode), both built with `-Os`, which was faster than `-O3` or `-O2` on the pico2 and the STM32U5A5.
   Its RV32IM assembly NTT is used on `rv32imc` and `rv32imcb`; everything else, Keccak included, is C. mldsa-native assumes that 32x32->64-bit multiplications take constant time, which the Cortex-M3 does not provide.
-- `OPEN_SOURCE`: [Dilithium-lowram](https://github.com/sebastien-riou/dilithium-lowram.git) 
-- `PQM4`: [pqm4](https://github.com/mupq/pqm4) (sibling `../pqm4` repository with its `mupq` submodule, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself (see `cmake/pqm4.cmake`). Goals `small` (`m4fstack`) / `fast` (`m4f`), built with `-O3` like pqm4's own speed builds.
+- `OPEN_SOURCE`: [Dilithium-lowram](https://github.com/sebastien-riou/dilithium-lowram.git). Goal `smallram`.
+- `PQM4`: [pqm4](https://github.com/mupq/pqm4) (sibling `../pqm4` repository with its `mupq` submodule, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself (see `cmake/pqm4.cmake`). Goals `smallram` (`m4fstack`) / `fast` (`m4f`), built with `-O3` like pqm4's own speed builds.
   Cortex-M4, M7, M33, M52 and M55 only: the assembly needs the DSP instructions and keeps data in the FPU registers, so it is built with `-mfloat-abi=softfp` and the glue enables the FPU. pqm4 has only the randomized API: the glue hands over the test vector's seed, and 32 zero bytes as `rnd` for deterministic signing.
 - `PQRV`: [PQRV](https://github.com/Ji-Peng/PQRV) (sibling `../PQRV` repository with its `libpqrv` folder), RISC-V targets `rv32imc` and `rv32imcb` only (goal `fast`), library built by `./buildit <target>` in `libpqrv`
-- `PQSHIELD`: [PQShield's PQMicroLib-Core](https://pqshield.com/products/pqm-cor/) (sibling `../pqmicrolib-library` repository).
-- `STM32PQC`: ST Microelectronics's [X-CUBE-CRYPTOLIB](https://www.st.com/en/embedded-software/x-cube-cryptolib.html), V5.0.0 or later, which includes ML-KEM and ML-DSA (see [Setup.md](Setup.md))
-- `WOLFSSL`: [WolfSSL](https://github.com/sebastien-riou/wolfssl) (use 'crypto-benchmark' branch). Goals `small` / `balanced` / `fast`, built by `buildit-mldsa-<goal>`.
+- `PQSHIELD`: [PQShield's PQMicroLib-Core](https://pqshield.com/products/pqm-cor/) (sibling `../pqmicrolib-library` repository). Goals `smallram` / `balanced` / `fast`: its ML-DSA tiers small, balanced and fast.
+- `STM32PQC`: ST Microelectronics's [X-CUBE-CRYPTOLIB](https://www.st.com/en/embedded-software/x-cube-cryptolib.html), V5.0.0 or later, which includes ML-KEM and ML-DSA (see [Setup.md](Setup.md)). Goals `smallram` (its low RAM signing and verification) / `balanced`.
+- `WOLFSSL`: [WolfSSL](https://github.com/sebastien-riou/wolfssl) (use 'crypto-benchmark' branch). Goals `smallram` / `balanced` / `fast`, built by its `buildit-mldsa-small`, `-balanced` and `-fast`.
   On the Cortex-M targets, every goal uses wolfSSL's Thumb-2 assembly (`--enable-armasm`). For ML-DSA only Keccak is assembly, the ML-DSA arithmetic stays C.
 
 AES is a work in progress: only AES-128 CMAC verify of a 64-byte message is benchmarked (`libaes-lbmk`, `ALGO=aes`, `PSET=128`), with:
-- `STM32PQC`: goals `small` / `fast` (cmox AES small / fast implementation)
-- `WOLFSSL`: goals `small` / `fast` (`WOLFSSL_AES_SMALL_TABLES` / default tables), built by `buildit-aes-small` / `buildit-aes-fast`, C on every target (wolfSSL's Thumb-2 AES assembly ignores `WOLFSSL_AES_SMALL_TABLES`)
+- `STM32PQC`: goals `smallcode` / `fast` (cmox AES small / fast implementation)
+- `WOLFSSL`: goals `smallcode` / `fast` (`WOLFSSL_AES_SMALL_TABLES` / default tables), built by `buildit-aes-small` / `buildit-aes-fast`, C on every target (wolfSSL's Thumb-2 AES assembly ignores `WOLFSSL_AES_SMALL_TABLES`)
 
 ML-KEM is a work in progress (`libmlkem-lbmk`, `ALGO=mlkem`, `PSET=512`, `768` or `1024`). It benchmarks, on the test vectors of BTVG-MLKEM (32, 42 and 17 test cases for ML-KEM-512, ML-KEM-768 and ML-KEM-1024):
 - `key-exp`: key generation from the 64-byte seed `d || z`
@@ -51,11 +51,11 @@ After the measurements, before announcing their end, the firmware checks that en
 The following libraries are integrated (`OPEN_SOURCE` has no ML-KEM implementation):
 - `MLKEM_NATIVE`: [mlkem-native](https://github.com/pq-code-package/mlkem-native) (sibling `../mlkem-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmlkem-lbmk/CMakeLists.txt`). Single goal `fast`: one Keccak state at a time (`MLK_CONFIG_SERIAL_FIPS202_ONLY`) and `-Os`, the fastest configuration on the pico2 and the STM32U5A5 (the default 4-way Keccak was 2 to 7 % slower, `-O3` and `-O2` slower too). The library does both checks (in `enc_derand` and `dec`).
   It has no backend for these targets: everything, Keccak included, is C. mlkem-native assumes that 32x32->64-bit multiplications take constant time, which the Cortex-M3 does not provide.
-- `PQM4`: [pqm4](https://github.com/mupq/pqm4) (see the ML-DSA list): goals `small` (`m4fstack`) / `fast` (`m4fspeed`), Cortex-M4, M7, M33, M52 and M55 only. pqm4 has only the randomized API, the glue hands over the test vector's seeds. The wrapper does both checks (`kem_ek_modulus_ok`, and the hash check with pqm4's SHA3-256).
+- `PQM4`: [pqm4](https://github.com/mupq/pqm4) (see the ML-DSA list): goals `smallram` (`m4fstack`) / `fast` (`m4fspeed`), Cortex-M4, M7, M33, M52 and M55 only. pqm4 has only the randomized API, the glue hands over the test vector's seeds. The wrapper does both checks (`kem_ek_modulus_ok`, and the hash check with pqm4's SHA3-256).
 - `PQRV`: goal `fast`, `rv32imc` and `rv32imcb` targets only. The wrapper does both checks (`pqrv_mlkem<k>_check_pk`, `pqrv_mlkem<k>_check_sk`).
 - `PQSHIELD`: goals `balanced` / `fast` (single ML-KEM implementation, built from the `<target>-balanced` / `<target>-fast` preset, see `presets/crypto-benchmark.json` in pqmicrolib-library). The wrapper does both checks (`pqs_mlkem_public_key_validate`, `pqs_mlkem_secret_key_validate`).
 - `STM32PQC`: goal `balanced`. The library does the modulus check, the wrapper the hash check (`cmox_hash_compute`, SHA3-256). ST does not document the size of the working buffer, the default (`STM32PQC_MLKEM_MEMBUF_SIZE`, 32 KiB) is an upper bound which inflates the static RAM footprint. The peak usage is reported as extra data `membuf peak` (visible with `--details=1`), rebuild with `-DSTM32PQC_MLKEM_MEMBUF_SIZE=<peak>` to get an accurate footprint.
-- `WOLFSSL`: goals `small` / `fast` (`WOLFSSL_MLKEM_SMALL` + `WOLFSSL_MLKEM_*_SMALL_MEM` / default), built by `buildit-mlkem-small` / `buildit-mlkem-fast`. The library does both checks (in `wc_MlKemKey_DecodePublicKey` and `wc_MlKemKey_DecodePrivateKey`).
+- `WOLFSSL`: goals `smallram` / `fast` (`WOLFSSL_MLKEM_SMALL` + `WOLFSSL_MLKEM_*_SMALL_MEM` / default), built by `buildit-mlkem-small` / `buildit-mlkem-fast`. The library does both checks (in `wc_MlKemKey_DecodePublicKey` and `wc_MlKemKey_DecodePrivateKey`).
   On the Cortex-M targets, both goals use wolfSSL's Thumb-2 assembly (`--enable-armasm`).
 
 The test vectors are the published sets of BTVG-MLKEM 0.0.2, `mlkem512-n32-h2F3BDE49`, `mlkem768-n42-h523BACDC` and `mlkem1024-n17-hFD044788`, copied in [libmlkem-lbmk/include](libmlkem-lbmk/include) with their records (`<name>.py`).
@@ -90,18 +90,83 @@ You can view the results in terminal using:
 ./show-all-results
 ````
 
+`--lib`, `--algo`, `--pset`, `--goal` and `--cores` select what is benchmarked; without them, everything the hardware platform and the libraries support.
+
+## Optimization goals
+A library is benchmarked for one or several goals. A goal names what an application needs most; it has the same meaning for every library and algorithm:
+
+| Goal | Use case | What the library is configured for |
+|---|---|---|
+| `smallram` | RAM is the scarce resource | Least RAM (static, stack and heap), then least flash; speed last |
+| `smallcode` | Flash is the scarce resource | Least flash (code, constants, initial values of data), then least RAM; speed last |
+| `balanced` | No dominant constraint | What one would ship by default on a typical MCU: no extreme in any of the three |
+| `fast` | Time or energy per operation matters most | Fewest cycles; RAM and flash unconstrained |
+
+For every goal the library runs in constant time with respect to secrets where it offers that, with its standard API.
+
+Which options of a library, compiler flags included, serve a goal best on a target is the choice of whoever integrates the library: it is written in its manifest ([crypto-libraries](crypto-libraries)), its build and its glue (`impl_*.h`).
+A library provides only the goals it has a distinct configuration for. `python3 goals.py list` shows the goals of every library.
+
+`benchmark.py --goal fast smallram` benchmarks each library with those of these goals it has; without `--goal`, with all its goals.
+The scripts that take one goal (`buildit`, `build-all-targets`, `renode-benchmark*`) use the library's `balanced` goal when none is given, or its first goal when it has no `balanced`.
+
+Results made before these goals keep the names they had: `small` meant `smallram` or `smallcode` depending on the library and the algorithm.
+
+### Tuning a goal
+This is for whoever integrates a library, to find out what should go into a goal.
+A manifest can declare options (`options(algo)`): the knobs of the library that a goal sets, and the variants it does not use.
+`--opt` overrides them for one library and one goal:
+````
+pipenv run python benchmark.py --hw-platform rp2350 --lib mldsa-native --algo mldsa --goal fast --opt opt=-O3
+````
+
+Such a build is not the goal anymore. Its results are reported as `<library>-custom[n]`, with a note giving the goal it starts from and the options, and they are kept apart from the results of the goal itself, footprint included.
+Once the best options are known, they belong in the goal's definition in the manifest: `custom` is for experiments, not for results to publish.
+
+An option is `<key>=<value>`, the value without space, comma or quote. `python3 goals.py list` shows the options of every library.
+With `buildit`, the options are one argument: `GOAL_OPTS=opt=-O3,reduce_ram=1`.
+
+## Core sets
+A benchmark runs on a core set: the cores of the board that the library may use. `--cores` selects it:
+
+| Core set | Meaning |
+|---|---|
+| `cortex-m33` | One core, a Cortex-M33 |
+| `2xcortex-m33` | Two Cortex-M33 |
+| `cortex-m7+cortex-m4` | A Cortex-M7 and a Cortex-M4 |
+
+The first core is the caller: the library is called there and time is measured there; the others help.
+A core is named by its software target, i.e., the name of its toolchain file in [on](on), unless the board gives it a name of its own.
+Each hardware platform declares its core sets (`core_sets()` in [hardware-platforms](hardware-platforms)); without `--cores`, the sets of one core are benchmarked.
+A core set is independent of the goal: `fast` on one core and `fast` on two are two different results.
+
+With several cores:
+- Time is the elapsed cycles of the caller: latency, not the work of all the cores. When the cores have different clocks, it depends on their ratio.
+- A library must declare that it can use the set (`supports_cores(cores, algo)` in its manifest). A library that uses one core has the same results on a larger set as on its first core alone: it is not benchmarked again.
+- The results are reported apart from those on one core, in `build/<core set>/` and in a CSV file named after the core set.
+
+So far the only set of several cores is `2xcortex-m33` (and `2xrv32imcb`) on the RP2350, and no supported library uses it; the library's glue starts the second core itself.
+A general way for a library to run on helper cores, the RAM of the helper cores in the reported footprint, and cores that need an image of their own are planned with the move of the hardware platforms to lean-bsp.
+
 ## External libraries
 An ML-DSA or ML-KEM library which shall not be part of this repository (e.g. not public) can be benchmarked from a folder `external-libs_git_ignore/<name>/` (`<name>` in lower case, git ignores that folder), containing:
 - `<name>.py`: the manifest used by `benchmark.py`, same interface as the files in `crypto-libraries`. Its `codename` is the `CRYPTO_LIB` value, i.e., `<name>` in upper case.
 - for ML-DSA:
   - `mldsa.cmake`: sets `EXTERNAL_MLDSA_ARCHIVES` to the list of archives to link (`TARGET_CPU` gives the target, e.g. `rv32imcb`) and optionally `EXTERNAL_INCLUDE_DIRS`. Like `libpqrv.a`, the archives must contain only `.obj` members.
-  - `impl_mldsa.h`: the glue between [libmldsa-lbmk/source/core.c](libmldsa-lbmk/source/core.c) and the library, same interface as [libmldsa-lbmk/source/impl_pqrv.h](libmldsa-lbmk/source/impl_pqrv.h). `IMPL_NAME` must be `<name>-<goal>`.
+  - `impl_mldsa.h`: the glue between [libmldsa-lbmk/source/core.c](libmldsa-lbmk/source/core.c) and the library, same interface as [libmldsa-lbmk/source/impl_pqrv.h](libmldsa-lbmk/source/impl_pqrv.h). `IMPL_NAME` is `<name>-<goal>`.
   - Prepared keys (optional, any ML-DSA implementation): a library that can prepare a key once (expand the matrix, transform the key vectors) and sign or verify with it many times defines `DSA_PREPARED_KEYS` to 1 and provides `dsa_sk_prepare(pset)` and `dsa_pk_prepare(pset)` (prepare the key pair of the last `dsa_gen_key_from_seed`), `dsa_sign_prepared` and `dsa_verify_prepared` (same arguments as `dsa_sign` and `dsa_verify`). The harness then also benchmarks both preparations after each key generation (operations `sk-prepare` and `pk-prepare`), and signs and verifies every message with the prepared keys as well (`sign-prepared`, `verify-prepared`). Signing is deterministic, so a prepared-key signature must equal the plain one (error `0x20000003` otherwise). Prepared keys kept in static variables of `impl_mldsa.h` count in the static RAM reported for the library.
-- for ML-KEM: the same with `mlkem.cmake` (setting `EXTERNAL_MLKEM_ARCHIVES`; `PSET` and `GOAL` are available) and `impl_mlkem.h` (same interface as [libmlkem-lbmk/source/impl_pqrv.h](libmlkem-lbmk/source/impl_pqrv.h)). Its `kem_encaps` must include the FIPS 203 section 7.2 modulus check and its `kem_decaps` the section 7.3 hash check, in the library or in `impl_mlkem.h` ([libmlkem-lbmk/source/core.c](libmlkem-lbmk/source/core.c) provides `kem_ek_modulus_ok` and `ERROR_EK_CHECK`, `KEM_DK_EK_OFFSET`, `kem_dk_hash_matches` and `ERROR_DK_CHECK` for the latter).
+- for ML-KEM: the same with `mlkem.cmake` (setting `EXTERNAL_MLKEM_ARCHIVES`) and `impl_mlkem.h` (same interface as [libmlkem-lbmk/source/impl_pqrv.h](libmlkem-lbmk/source/impl_pqrv.h)). Its `kem_encaps` must include the FIPS 203 section 7.2 modulus check and its `kem_decaps` the section 7.3 hash check, in the library or in `impl_mlkem.h` ([libmlkem-lbmk/source/core.c](libmlkem-lbmk/source/core.c) provides `kem_ek_modulus_ok` and `ERROR_EK_CHECK`, `KEM_DK_EK_OFFSET`, `kem_dk_hash_matches` and `ERROR_DK_CHECK` for the latter).
 
-The goals of an external library are those its manifest lists in `algorithms()`: `small`, `balanced`, `fast`, or names of its own, e.g. one per variant of the library. A goal name is made of word characters only (letters, digits, `_`), since it ends up in file names.
+The goals of an external library are those its manifest lists in `algorithms()`, among the [optimization goals](#optimization-goals): the manifest says which variant of the library serves each of them.
+The other variants and the build options of the library are options (`options(algo)`, see [Tuning a goal](#tuning-a-goal)), not goals of their own.
 
-The library is then selected like the others, e.g. `./buildit on/rv32imcb mldsa 44 <NAME>` (after `python3 link_ext.py --goal=<goal>`) or `pipenv run python benchmark.py --hw-platform rp2350 --lib <name> --algo mldsa`.
+What a build is for reaches every part of the integration:
+- The manifest's `build_cmd(sw_target, goal, pset, algo)` may take more arguments, by name: `opts` (the options, a dictionary), `cores` (the core set) and `hw_platform`.
+- In the `.cmake` files: `PSET`, `GOAL`, `GOAL_OPTS` (`k=v,k=v`; `goal_opt(<variable> <key> <default>)` reads one option), `GOAL_ID` (the goal, or `custom_<hash>` when there are options: a name for the folder of a build), `CORES` and `TARGET_CPU`.
+- In the glue: `GOAL`, `GOAL_CUSTOM` (1 when there are options) and `N_CORES` (the number of cores of the set).
+- Optional in the manifest: `supports_cores(cores, algo)` for a library that can use several cores, and `revision()` when the library is not the git repository at the manifest's `path` (the firmware reports the library's revision with the results).
+
+The library is then selected like the others, e.g. `./buildit on/rv32imcb mldsa 44 <NAME> minSizeRel GOAL=<goal>` or `pipenv run python benchmark.py --hw-platform rp2350 --lib <name> --algo mldsa`.
 Use `-DEXTERNAL_LIBS_DIR=<path>` to look for external libraries in another folder.
 
 ## Benchmarking using Renode
@@ -111,7 +176,7 @@ To achieve this, build must be done with `-DRAW_COM=1`.
 
 ### Single algorithm and parameter set
 ````
-./build-all-targets mldsa 44 OPEN_SOURCE small minSizeRel -DRAW_COM=1
+./build-all-targets mldsa 44 OPEN_SOURCE smallram minSizeRel -DRAW_COM=1
 ./test-renode
 ./show-all-uart-results --details=0
 ````
@@ -141,10 +206,7 @@ You can optionally specify:
   - `PQSHIELD`
   - `STM32PQC`
   - `WOLFSSL`
-- an optimization goal:
-  - `small`
-  - `balanced`
-  - `fast`
+- an [optimization goal](#optimization-goals), by default the library's `balanced` goal, or its first goal when it has none
 
 The output is a set of files `renode-mldsa-benchmark-*-*-*.csv`. You can display them in terminal using:
 ````
@@ -153,32 +215,32 @@ The output is a set of files `renode-mldsa-benchmark-*-*-*.csv`. You can display
 
 You should get something like:
 ````
-renode-mldsa-benchmark-cortex-m33-OPEN_SOURCE-small.csv
+renode-mldsa-benchmark-cortex-m33-OPEN_SOURCE-smallram.csv
 Performance for a 69-byte message and zero-length context (in million cycles).                                                                       
 Implementation                                                                  Level                                Operation  Minimum  Average(a)  Worst observed(b)
-pqcrystals-lowram-small                                                          44                                   key-exp     1.92     1.97        2.01
-pqcrystals-lowram-small                                                          44                                   sign        3.47    11.23       230.40
-pqcrystals-lowram-small                                                          44                                   verify      2.76     2.77        2.78
-pqcrystals-lowram-small                                                          65                                   key-exp     3.74     3.74        3.74
-pqcrystals-lowram-small                                                          65                                   sign        5.68    20.98       444.43
-pqcrystals-lowram-small                                                          65                                   verify      4.91     4.92        4.93
-pqcrystals-lowram-small                                                          87                                   key-exp     6.13     6.26        6.38
-pqcrystals-lowram-small                                                          87                                   sign        9.23    27.56       550.51
-pqcrystals-lowram-small                                                          87                                   verify      8.50     8.52        8.54
+pqcrystals-lowram-smallram                                                       44                                   key-exp     1.92     1.97        2.01
+pqcrystals-lowram-smallram                                                       44                                   sign        3.47    11.23       230.40
+pqcrystals-lowram-smallram                                                       44                                   verify      2.76     2.77        2.78
+pqcrystals-lowram-smallram                                                       65                                   key-exp     3.74     3.74        3.74
+pqcrystals-lowram-smallram                                                       65                                   sign        5.68    20.98       444.43
+pqcrystals-lowram-smallram                                                       65                                   verify      4.91     4.92        4.93
+pqcrystals-lowram-smallram                                                       87                                   key-exp     6.13     6.26        6.38
+pqcrystals-lowram-smallram                                                       87                                   sign        9.23    27.56       550.51
+pqcrystals-lowram-smallram                                                       87                                   verify      8.50     8.52        8.54
 (a): Match long term average for sign.                                                                                                               
 (b): Probability of occurrence is 2^-37 for sign.                                                                                                    
 Memory footprint for key generation                                              signing and verification (in KiB).                                  
 Implementation                                                                  Level                                Stack      Heap     Static RAM      Flash
-pqcrystals-lowram-small                                                          44                                    5.19       0.00     3.77       12.52 
-pqcrystals-lowram-small                                                          65                                    6.69       0.00     5.84       11.96 
-pqcrystals-lowram-small                                                          87                                    8.19       0.00     7.30       12.21 
+pqcrystals-lowram-smallram                                                       44                                    5.19       0.00     3.77       12.52 
+pqcrystals-lowram-smallram                                                       65                                    6.69       0.00     5.84       11.96 
+pqcrystals-lowram-smallram                                                       87                                    8.19       0.00     7.30       12.21 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------------renode-mldsa-benchmark-cortex-m3-OPEN_SOURCE-small.csv
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------renode-mldsa-benchmark-cortex-m3-OPEN_SOURCE-smallram.csv
 Performance for a 69-byte message and zero-length context (in million cycles).                                                                       
 Implementation                                                                  Level                                Operation  Minimum  Average(a)  Worst observed(b)
-pqcrystals-lowram-small                                                          44                                   key-exp     1.92     1.97        2.01
-pqcrystals-lowram-small                                                          44                                   sign        3.51    11.33       232.38
-pqcrystals-lowram-small                                                          44                                   verify      2.76     2.77        2.78
+pqcrystals-lowram-smallram                                                       44                                   key-exp     1.92     1.97        2.01
+pqcrystals-lowram-smallram                                                       44                                   sign        3.51    11.33       232.38
+pqcrystals-lowram-smallram                                                       44                                   verify      2.76     2.77        2.78
 ...
 ````
 
@@ -200,10 +262,10 @@ You can optionally specify:
 - a crypto-library
   - `MLKEM_NATIVE` (goal `fast`)
   - `PQSHIELD` (default, goal `balanced` or `fast`)
-  - `WOLFSSL` (goal `small` or `fast`)
+  - `WOLFSSL` (goal `smallram` or `fast`)
 - an optimization goal
 
-The external library must be built for each target beforehand (for WolfSSL: `./buildit-mlkem-<goal> <target>` in the wolfssl repository), targets for which it is not available are skipped.
+The external library must be built for each target beforehand (for WolfSSL: `./buildit-mlkem-small <target>` or `./buildit-mlkem-fast <target>` in the wolfssl repository, then `python3 link_ext.py`), targets for which it is not available are skipped.
 `STM32PQC` is not supported: it runs only on STM32 hardware.
 
 The output is a set of files `renode-mlkem-benchmark-*-*-*.csv`.
@@ -309,8 +371,8 @@ The report is built by `report_non_ct.py` from `objdump -d` of the linked ELF, s
 Only Arm targets are checked; for the others, the report says so.
 
 To trace an address of the report back to the source, build with debug info: `-DDEBUG_INFO=ON` adds `-g`, which does not change the generated code.
-For example `./buildit on/cortex-m3 mlkem 512 WOLFSSL minSizeRel -DDEBUG_INFO=ON`, then `arm-none-eabi-addr2line -f -i -e <elf> <address>`.
-External libraries need debug info too; for WolfSSL: `DEBUG_INFO=yes ./buildit-mlkem-<goal> <target>` in the wolfssl repository.
+For example `./buildit on/cortex-m3 mlkem 512 WOLFSSL minSizeRel GOAL=fast -DDEBUG_INFO=ON`, then `arm-none-eabi-addr2line -f -i -e <elf> <address>`.
+External libraries need debug info too; for WolfSSL: `DEBUG_INFO=yes ./buildit-mlkem-fast <target>` in the wolfssl repository.
 
 ## Debugging using Renode
 It is setup for VSCode for the following targets:
@@ -322,7 +384,7 @@ It is setup for VSCode for the following targets:
 Example debug build:
 ````
 python3 link_ext.py --preset=debug
-./testit on/cortex-m3 mldsa 44 OPEN_SOURCE debug
+./testit on/cortex-m3 mldsa 44 OPEN_SOURCE debug GOAL=smallram
 ````
 
 ----
@@ -336,7 +398,7 @@ python3 link_ext.py --preset=debug
 In one terminal:
 ````
 python3 link_ext.py --preset=debug
-./testit on/linux mldsa 44 OPEN_SOURCE debug
+./testit on/linux mldsa 44 OPEN_SOURCE debug GOAL=smallram
 ````
 
 This should display a line starting with '`ptsname`:', that information is needed for next step.

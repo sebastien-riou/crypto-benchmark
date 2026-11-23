@@ -1,25 +1,24 @@
 class PqMicroLibCore:
     # The pqmicrolib-library presets used here are defined in its presets/crypto-benchmark.json
-    # (branch 'crypto-benchmark'): one per software target and ML-DSA goal, named
-    # <sw_target>-<goal>, for every target of sw_targets() and for 'linux' (host).
-    # small: PQS_MLDSA_SIGN_HIGH_RAM / PQS_MLDSA_VERIFY_HIGH_RAM OFF, balanced: ON,
+    # (branch 'crypto-benchmark'): one per software target and tier, named <sw_target>-<tier>, for every
+    # target of sw_targets() and for 'linux' (host).
+    # goal -> tier. ML-DSA: small: PQS_MLDSA_SIGN_HIGH_RAM / PQS_MLDSA_VERIFY_HIGH_RAM OFF, balanced: ON,
     # fast: balanced built for speed (same as balanced on some targets).
-    TIERS = ('small', 'balanced', 'fast')
+    TIERS = {'smallram':'small', 'balanced':'balanced', 'fast':'fast'}
+
+    # folder of the library's files in target/<cpu>/goals/<algo>/<goal>/, see link_ext.py
+    link_name = 'pqcle'
 
     @classmethod
-    def preset(cls, sw_target, goal=None):
-        """pqmicrolib-library preset name of 'sw_target' for 'goal'.
-
-        A goal that is not an ML-DSA tier (None, or a goal of another algorithm) selects the
-        'balanced' preset. ML-KEM uses the 'balanced' and 'fast' ones."""
-        if goal not in cls.TIERS:
-            goal = 'balanced'
-        return f'{sw_target}-{goal}'
+    def preset(cls, sw_target, goal):
+        """pqmicrolib-library preset name of 'sw_target' for 'goal'."""
+        return f'{sw_target}-{cls.TIERS[goal]}'
 
     @classmethod
-    def mldsa_tiers(cls, sw_target):
-        """ML-DSA tiers (goals) the library can be built with for 'sw_target'."""
-        return cls.TIERS if sw_target in cls.sw_targets() + ['linux'] else ()
+    def link_dirs(cls, sw_target, goal, algo):
+        """(folder of the archives, folder of the headers) of a goal's build, relative to pqmicrolib-library."""
+        preset = cls.preset(sw_target, goal)
+        return f'out/{preset}/lib', f'out/build/{preset}/inc/pqcle'
 
     @staticmethod
     def sw_targets():
@@ -38,11 +37,11 @@ class PqMicroLibCore:
     @staticmethod
     def algorithms():
         return {
-            # restricted per target by supports(): only the targets that have presets
-            'mldsa':['small','balanced','fast'],
+            'mldsa':['smallram','balanced','fast'],
             # single ML-KEM implementation, built from the <target>-balanced or <target>-fast preset
             'mlkem':['balanced','fast'],
-            'sha2':None
+            # single implementation, from the <target>-balanced preset
+            'sha2':['balanced']
         }
 
     @staticmethod
@@ -51,13 +50,9 @@ class PqMicroLibCore:
         return algo != 'sha2' or sw_target.startswith('cortex-m')
 
     @classmethod
-    def supports(cls, sw_target, goal, algo=None):
-        # ML-DSA: the goal must be a tier the target has a preset for.
-        if algo in (None, 'mldsa'):
-            return goal in cls.mldsa_tiers(sw_target)
-        # other algorithms: single implementation, only the goals listed in algorithms()
-        goals = cls.algorithms().get(algo)
-        return goals is None or goal in goals
+    def supports(cls, sw_target, goal, algo):
+        # only the targets that have presets
+        return sw_target in cls.sw_targets() + ['linux'] and goal in cls.algorithms().get(algo, [])
 
     def __init__(self):
         self.sw_target = None

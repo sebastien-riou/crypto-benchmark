@@ -13,10 +13,18 @@ class Pqm4:
 
     @staticmethod
     def algorithms():
-        # fast: m4fspeed (ML-KEM) / m4f (ML-DSA); small: m4fstack
+        # fast: m4fspeed (ML-KEM) / m4f (ML-DSA); smallram: m4fstack
         return {
-            'mlkem':['small','fast'],
-            'mldsa':['small','fast'],
+            'mlkem':['smallram','fast'],
+            'mldsa':['smallram','fast'],
+        }
+
+    @staticmethod
+    def options(algo):
+        # read by cmake/pqm4.cmake
+        return {
+            'opt': "compiler optimization flag (default -O3, pqm4's own speed setting)",
+            'impl': "pqm4 implementation folder, e.g. m4fspeed, m4fstack, m4f, clean (default: the goal's)",
         }
 
     def __init__(self):

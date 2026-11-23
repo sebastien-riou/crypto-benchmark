@@ -34,7 +34,7 @@ get_filename_component(TARGET_CPU ${TARGET_DIR} NAME)
 
 IF ( ${MLDSA_LIB} STREQUAL "PQRV" )
 	IF ( NOT EXISTS ${TARGET_DIR}/pqrv/libpqrv.a )
-		MESSAGE( FATAL_ERROR "PQRV is not built for ${TARGET_CPU} (${TARGET_DIR}/pqrv/libpqrv.a is missing). Run '(cd ../PQRV/libpqrv && ./buildit ${TARGET_CPU})' then 'python3 link_ext.py --goal=${GOAL}'" )
+		MESSAGE( FATAL_ERROR "PQRV is not built for ${TARGET_CPU} (${TARGET_DIR}/pqrv/libpqrv.a is missing). Run '(cd ../PQRV/libpqrv && ./buildit ${TARGET_CPU})' then 'python3 link_ext.py'" )
 	ENDIF()
 ENDIF()
 
@@ -62,21 +62,25 @@ IF ( ${MLDSA_LIB} STREQUAL "MLDSA_NATIVE" )
 	IF ( NOT EXISTS ${MLDSA_NATIVE_DIR}/mldsa/mldsa_native.c )
 		MESSAGE( FATAL_ERROR "mldsa-native is missing (${MLDSA_NATIVE_DIR}/mldsa/mldsa_native.c). Run './initial-setup --addons mldsa-native'" )
 	ENDIF()
-	# small keeps the vectors packed and expands them on demand (MLD_CONFIG_REDUCE_RAM); fast is the default memory
-	# mode. Both are built with -Os: on the pico2 (both cores) and the STM32U5A5, fast ML-DSA-87 ran 3 to 11 % faster
-	# with -Os than with -O3, and -O2 was the slowest (2026-11-21)
-	IF ( ${GOAL} STREQUAL "small" )
-		set( MLDSA_NATIVE_GOAL_DEFS MLD_CONFIG_REDUCE_RAM )
-		set( MLDSA_NATIVE_GOAL_OPT -Os )
+	# smallram keeps the vectors packed and expands them on demand (MLD_CONFIG_REDUCE_RAM); fast is the default
+	# memory mode. Both are built with -Os: on the pico2 (both cores) and the STM32U5A5, fast ML-DSA-87 ran 3 to
+	# 11 % faster with -Os than with -O3, and -O2 was the slowest (2026-11-21)
+	IF ( ${GOAL} STREQUAL "smallram" )
+		set( MLDSA_NATIVE_GOAL_REDUCE_RAM 1 )
 	ELSEIF ( ${GOAL} STREQUAL "fast" )
-		set( MLDSA_NATIVE_GOAL_DEFS "" )
-		set( MLDSA_NATIVE_GOAL_OPT -Os )
+		set( MLDSA_NATIVE_GOAL_REDUCE_RAM 0 )
 	ELSE()
-		MESSAGE( FATAL_ERROR "mldsa-native supports GOAL small or fast, not '${GOAL}'" )
+		MESSAGE( FATAL_ERROR "mldsa-native supports GOAL smallram or fast, not '${GOAL}'" )
 	ENDIF()
-	# -DMLDSA_NATIVE_OPT=<flags> replaces the goal's optimization flags, for experiments
-	if(NOT DEFINED MLDSA_NATIVE_OPT)
-	set( MLDSA_NATIVE_OPT ${MLDSA_NATIVE_GOAL_OPT} )
+	# the options of crypto-libraries/mldsa-native.py
+	goal_opt( MLDSA_NATIVE_REDUCE_RAM reduce_ram ${MLDSA_NATIVE_GOAL_REDUCE_RAM} )
+	goal_opt( MLDSA_NATIVE_OPT opt -Os )
+	IF ( "${MLDSA_NATIVE_REDUCE_RAM}" STREQUAL "1" )
+		set( MLDSA_NATIVE_GOAL_DEFS MLD_CONFIG_REDUCE_RAM )
+	ELSEIF ( "${MLDSA_NATIVE_REDUCE_RAM}" STREQUAL "0" )
+		set( MLDSA_NATIVE_GOAL_DEFS "" )
+	ELSE()
+		MESSAGE( FATAL_ERROR "mldsa-native: option reduce_ram is 0 or 1, not '${MLDSA_NATIVE_REDUCE_RAM}'" )
 	ENDIF()
 	# cmake/generic_binary.cmake enables ASM only after this directory is processed
 	enable_language(ASM)
@@ -129,6 +133,7 @@ target_include_directories(${LIB}
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../common
+    ${GOAL_DIR}
     ${TARGET_DIR}
     ${EXTRA_INCLUDES}
 )
@@ -182,12 +187,12 @@ MESSAGE("MLDSA_LIB is PQCLE")
 add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mldsa-lbmk-core>
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libumldsa.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libhash.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha2.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha3.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libprng.a 
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libcommon.a 
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libumldsa.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libhash.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libsha2.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libsha3.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libprng.a 
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libcommon.a 
         #build combined lib
         COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
@@ -233,7 +238,7 @@ MESSAGE("MLDSA_LIB is WOLFSSL")
 add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mldsa-lbmk-core>
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/wolfssl/libwolfssl.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/wolfssl/libwolfssl.a
         
         #build combined lib
         COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT} *.o

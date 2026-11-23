@@ -166,6 +166,7 @@ void lean_benchmark(unsigned int ninfo, const char*info[], bool run_forever){
     "algo", "sha2",
     "pset", xstr(PSET),
     "impl_name", IMPL_NAME,
+    LBMK_BUILD_INFO,
     "sw_version", xstr(GIT_VERSION),
     "tv_name", "default",
   };

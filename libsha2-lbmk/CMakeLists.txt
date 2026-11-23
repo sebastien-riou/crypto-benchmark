@@ -23,6 +23,7 @@ target_include_directories(${LIB}
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../common
+    ${GOAL_DIR}
     ${TARGET_DIR}
 )
 
@@ -75,12 +76,12 @@ MESSAGE("SHA2_LIB is PQCLE")
 add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x $<TARGET_FILE:sha2-lbmk-core>
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libhash.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha2.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha2_secure.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha3.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libprng.a 
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libcommon.a 
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libhash.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libsha2.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libsha2_secure.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libsha3.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libprng.a 
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libcommon.a 
         #build combined lib
         COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}

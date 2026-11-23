@@ -19,7 +19,7 @@ class DilithiumLowRam:
     @staticmethod
     def algorithms():
         return {
-            'mldsa':['small'],
+            'mldsa':['smallram'],
         }
     
     def __init__(self):

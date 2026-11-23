@@ -21,9 +21,11 @@ class Stm32pqc:
     @staticmethod
     def algorithms():
         return {
-            'mldsa':['small','balanced'],
+            # smallram: the library's low RAM signing and verification
+            'mldsa':['smallram','balanced'],
             'mlkem':['balanced'],
-            'aes':['small','fast'],
+            # smallcode: the library's small AES (small tables)
+            'aes':['smallcode','fast'],
         }
     
     def __init__(self):

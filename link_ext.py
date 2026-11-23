@@ -1,19 +1,27 @@
 #!bin/python3
 
 import os
-import re
+import shutil
 import sys
 from glob import glob
 import logging
 import argparse
 
-sys.path.insert(0, 'crypto-libraries')
-import pqmicrolib
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import goals
 
 
 def main(*,preset='minSizeRel', goal=None):
+    """Create the symbolic links to the libraries built in the other repositories.
+
+    Libraries with one build per target are linked in target/<cpu>/<library>/.
+    Libraries with one build per goal (the manifests with link_dirs(), see crypto-libraries/) are linked for
+    every goal at once, in target/<cpu>/goals/<algo>/<goal>/<library>/: CMake takes the folder of its GOAL, so
+    a build does not depend on a previous run of this script for the right goal.
+
+    goal: optional, recorded in goal.txt as the goal of a ./buildit run without GOAL=<goal>."""
     targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m52','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
-    libs = ['pqcle','pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','wolfssl','pqrv'] #,'fpfp']
+    libs = ['pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','pqrv'] #,'fpfp']
 
     PQCLE_SRC='../../../pqmicrolib-library/'
     PQCLE='target/ext/pqcle'
@@ -36,17 +44,14 @@ def main(*,preset='minSizeRel', goal=None):
     FPFP_SRC='../../../fixed-point-fndsa-portable'
     FPFP='target/ext/fpfp'
 
-    debug=''
-    if preset == 'debug':
-        debug='-debug'
-    if goal is None:
-        goal='small'
-    goal_file = 'goal.txt'
-    with open(goal_file,'w') as f:
-        print(goal,file=f)
-    goal_name=goal
-    goal='-'+goal
-        
+    # libraries with one build per goal: link name (see the manifests) -> root of the library in target/ext
+    per_goal_roots = {'pqcle': PQCLE, 'wolfssl': WOLFSSL}
+
+    if goal is not None:
+        goals.check_goal(goal)
+        with open('goal.txt','w') as f:
+            print(goal,file=f)
+
     for p in [PQCLE,LOWRAM,TOMCRYPT,LBMK,WOLFSSL,PQRV]:#,FPFP]:
         try:
             os.remove(p)
@@ -62,24 +67,27 @@ def main(*,preset='minSizeRel', goal=None):
     os.symlink(PQRV_SRC,PQRV,target_is_directory=True)
     #os.symlink(FPFP_SRC,FPFP,target_is_directory=True)
 
-    def link(libname,targetname,source,pattern):
-        dst_dir = os.path.join('target',targetname,libname)
+    def link(dst_dir,source,pattern):
+        """Link the files of 'source' matching 'pattern', and its subdirectories, in 'dst_dir'."""
         logging.debug(f'dst={dst_dir}')
         for f in glob(f'{dst_dir}/{pattern}'):
             os.remove(f)
         if not os.path.exists(source):
-            logging.warning(f'No file found for {targetname}/{libname} in {source}')
+            # not an error: no build of this library for this target (and goal), CMake says so if it needs one
+            logging.debug(f'No file found for {dst_dir} in {source}')
             return
         files = glob(f'{source}/{pattern}')
         if 0==len(files):
-            logging.warning(f'No file found for {targetname}/{libname} in {source}/{pattern}')
+            logging.debug(f'No file found for {dst_dir} in {source}/{pattern}')
+        # a path relative to dst_dir: the links keep working when the repositories are moved together
+        up = os.path.relpath('.', dst_dir)
         for f in files:
-            src = os.path.join('..','..','..',f)
+            src = os.path.join(up,f)
             dst = os.path.join(dst_dir,os.path.basename(f))
             logging.debug(f'src={src}, dst={dst}')
             os.makedirs(dst_dir,exist_ok=True)
             os.symlink(src,dst)
-        
+
         # link any subdirectory as well
         subdirs = [ f.path for f in os.scandir(source) if f.is_dir() ]
         for subdir in subdirs:
@@ -91,19 +99,12 @@ def main(*,preset='minSizeRel', goal=None):
                 os.remove(subdir_dst)
             except:
                 pass
-            subdir_src = os.path.join('..','..','..',subdir)
-            os.symlink(subdir_src,subdir_dst,target_is_directory=True)
+            os.makedirs(dst_dir,exist_ok=True)
+            os.symlink(os.path.join(up,subdir),subdir_dst,target_is_directory=True)
 
     for libname in libs:
         for targetname in targets:
             match(libname):
-                case 'pqcle':
-                    # one pqmicrolib-library preset per target and ML-DSA tier, selected by
-                    # the goal (presets/crypto-benchmark.json in pqmicrolib-library)
-                    targetdir = pqmicrolib.helper.preset(targetname, goal_name)
-                    source = f'{PQCLE}/out/build/{targetdir}'
-                    source_lib = f'{PQCLE}/out/{targetdir}/lib'
-                    source_h = source+'/inc/pqcle'
                 case 'pqcrystals-mldsa-lowram':
                     source_lib = f'{LOWRAM}/build/{targetname}/lib{libname}'
                     source_h = f'{LOWRAM}/include'
@@ -113,9 +114,6 @@ def main(*,preset='minSizeRel', goal=None):
                 case 'lean-benchmark':
                     source_lib = LBMK + f'/build/{targetname}/lib{libname}'
                     source_h = LBMK + '/include'
-                case 'wolfssl':
-                    source_lib = WOLFSSL + f'/build/{targetname}{goal}/lib'
-                    source_h = WOLFSSL + f'/build/{targetname}{goal}/include/wolfssl'
                 case 'pqrv':
                     source_lib = f'{PQRV}/build/{targetname}/lib'
                     source_h = f'{PQRV}/include'
@@ -125,8 +123,32 @@ def main(*,preset='minSizeRel', goal=None):
                 case _:
                     raise RuntimeError(f'missing case for "{libname}"')
 
-            link(libname,targetname,source_lib,'*.a')
-            link(libname,targetname,source_h,'*.h')
+            dst_dir = os.path.join('target',targetname,libname)
+            link(dst_dir,source_lib,'*.a')
+            link(dst_dir,source_h,'*.h')
+
+    # the libraries with one build per goal, every goal of every algorithm
+    per_goal = [h for h in map(goals.load, sorted(glob(os.path.join('crypto-libraries','*.py')))) if hasattr(h,'link_dirs')]
+    for targetname in targets:
+        # start from scratch: no link to a build that no longer exists, nor to a goal that no longer does
+        shutil.rmtree(os.path.join('target',targetname,'goals'),ignore_errors=True)
+        for helper in per_goal:
+            root = per_goal_roots[helper.link_name]
+            # the folders these libraries were linked in before the per-goal ones: whatever they still hold
+            # belongs to the goal of the last run of an older link_ext.py
+            old_dir = os.path.join('target',targetname,helper.link_name)
+            if os.path.isdir(old_dir) and not os.path.islink(old_dir):
+                for f in os.scandir(old_dir):
+                    if f.is_symlink():
+                        os.remove(f.path)
+                if not os.listdir(old_dir):
+                    os.rmdir(old_dir)
+            for algo in helper.algorithms():
+                for lib_goal in goals.goals_of(helper,algo):
+                    source_lib,source_h = helper.link_dirs(targetname,lib_goal,algo)
+                    dst_dir = os.path.join('target',targetname,'goals',algo,lib_goal,helper.link_name)
+                    link(dst_dir,f'{root}/{source_lib}','*.a')
+                    link(dst_dir,f'{root}/{source_h}','*.h')
 
 if __name__ == '__main__':
     scriptname = os.path.basename(__file__)
@@ -134,16 +156,10 @@ if __name__ == '__main__':
     levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
     parser.add_argument('--log-level', default='INFO', choices=levels)
     parser.add_argument('--preset', default='minSizeRel', type=str)
-    def goal_name(s):
-        # small, balanced, fast, or a goal of an external library: word characters only, since goals end up
-        # in the file names that report_footprint.py parses. A goal other than small/balanced/fast selects the
-        # balanced pqmicrolib-library preset (see crypto-libraries/pqmicrolib.py); the other libraries have no
-        # build for it, which is reported as a warning.
-        if not re.fullmatch(r'\w+', s):
-            raise argparse.ArgumentTypeError(f'invalid goal "{s}": word characters only')
-        return s
-    parser.add_argument('--goal', default='small', type=goal_name)
-    
+    parser.add_argument('--goal', default=None, choices=list(goals.STANDARD_GOALS),
+                        help='goal of a ./buildit run without GOAL=<goal> (recorded in goal.txt); '
+                             'the libraries are linked for every goal in all cases')
+
     args = parser.parse_args()
 
     logformat = '%(asctime)s.%(msecs)03d %(levelname)s:\t%(message)s'

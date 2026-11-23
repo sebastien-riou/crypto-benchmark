@@ -7,7 +7,6 @@ DEVICE=${2:-/dev/ttyACM0}
 ALGO=${3:-mldsa}
 PSET=${4:-44}
 CRYPTOLIB=${5:-OPEN_SOURCE}
-GOAL=${6:-small}
 
 pushd $TARGET
 ./buildit ${@:7}

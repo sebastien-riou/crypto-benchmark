@@ -22,6 +22,14 @@ class MlkemNative:
             'mlkem':['fast'],
         }
 
+    @staticmethod
+    def options(algo):
+        # read by libmlkem-lbmk/CMakeLists.txt
+        return {
+            'opt': 'compiler optimization flag, e.g. -O3 (default -Os)',
+            'serial_fips202': '1: MLK_CONFIG_SERIAL_FIPS202_ONLY, 0: the 4-way Keccak (default 1)',
+        }
+
     def __init__(self):
         self.sw_target = None
         self.codename = 'MLKEM_NATIVE'

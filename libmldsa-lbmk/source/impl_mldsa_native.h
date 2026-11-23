@@ -3,23 +3,26 @@
 //mldsa-native, compiled for the parameter set PSET and the goal GOAL by libmldsa-lbmk/CMakeLists.txt
 #include <mldsa_native.h>
 
-#define MLDSA_NATIVE_small 1
+#define MLDSA_NATIVE_smallram 1
 #define MLDSA_NATIVE_fast 2
 
 #define MLDSA_NATIVE_INDEX CAT(MLDSA_NATIVE_,GOAL)
 
-#if MLDSA_NATIVE_INDEX == MLDSA_NATIVE_small
-  #ifndef MLD_CONFIG_REDUCE_RAM
-    #error "mldsa-native-small expects MLD_CONFIG_REDUCE_RAM"
+//the configuration of each goal; a build with options (GOAL_CUSTOM) may differ from its goal's
+#if MLDSA_NATIVE_INDEX == MLDSA_NATIVE_smallram
+  #if !defined(MLD_CONFIG_REDUCE_RAM) && !GOAL_CUSTOM
+    #error "mldsa-native-smallram expects MLD_CONFIG_REDUCE_RAM"
   #endif
 #elif MLDSA_NATIVE_INDEX == MLDSA_NATIVE_fast
-  #ifdef MLD_CONFIG_REDUCE_RAM
+  #if defined(MLD_CONFIG_REDUCE_RAM) && !GOAL_CUSTOM
     #error "mldsa-native-fast expects the default memory mode"
   #endif
+#else
+  #error "mldsa-native supports GOAL smallram or fast only"
+#endif
+#ifndef MLD_CONFIG_REDUCE_RAM
   //the default memory mode keeps the expanded matrix on the stack: signing needs about 107 KB (ML-DSA-87)
   #define DSA_MAX_STACK_SIZE (160*1024)
-#else
-  #error "mldsa-native supports GOAL small or fast only"
 #endif
 
 #define IMPL_NAME "mldsa-native-" xstr(GOAL)

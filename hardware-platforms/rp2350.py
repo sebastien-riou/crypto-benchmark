@@ -4,8 +4,11 @@ import shlex
 class Rp2350:
 
     @staticmethod
-    def sw_targets():
-        return ['cortex-m33','rv32imcb']
+    def core_sets():
+        # The core sets a benchmark can use, the caller first (see "Core sets" in README.md). The RP2350 runs
+        # either its two Cortex-M33 or its two Hazard3 cores, never a mix.
+        # The firmware is the same for one or two cores: a library that uses the second one starts it itself.
+        return ['cortex-m33','rv32imcb','2xcortex-m33','2xrv32imcb']
 
     def __init__(self):
         self.sw_target = None

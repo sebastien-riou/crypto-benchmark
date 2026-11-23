@@ -1,6 +1,14 @@
 #!/bin/bash
 
-set -ex
+# Usage: ./buildit [TOOLCHAIN [ALGO [PSET [CRYPTO_LIB [PRESET [build parameters and cmake options...]]]]]]
+# Build parameters are K=V arguments:
+#   GOAL=<goal>        smallram, smallcode, balanced or fast (see "Optimization goals" in README.md).
+#                      Without it, the goal recorded by 'python3 link_ext.py --goal=<goal>' (goal.txt).
+#   GOAL_OPTS=<k=v,..> options of the library on top of the goal (see "Tuning a goal" in README.md)
+#   CORES=<core set>   the cores the library may use (see "Core sets" in README.md), by default the one of TOOLCHAIN
+# The other arguments are passed to cmake, e.g. -DRAW_COM=1.
+
+set -e
 
 TOOLCHAIN=${1:-on/linux}
 ALGO=${2:-mldsa}
@@ -11,18 +19,40 @@ PRESET=${5:-minSizeRel}
 TARGET=$(basename ${TOOLCHAIN})
 OUTDIR="build/$TARGET/$ALGO/$PSET"
 
-set +x
-GOAL_FILE=goal.txt
-if [ ! -f $GOAL_FILE ]; then
-    echo
-    echo "ERROR $GOAL_FILE not found, run link_ext.py first"
-    exit 1
+GOAL=
+CORES=$TARGET
+CMAKE_ARGS=()
+for ARG in "${@:6}"; do
+    if [[ $ARG =~ ^([A-Z][A-Z0-9_]*)=(.*)$ ]]; then
+        CMAKE_ARGS+=("-D${BASH_REMATCH[1]}=${BASH_REMATCH[2]}")
+        case ${BASH_REMATCH[1]} in
+            GOAL) GOAL=${BASH_REMATCH[2]} ;;
+            CORES) CORES=${BASH_REMATCH[2]} ;;
+        esac
+    else
+        CMAKE_ARGS+=("$ARG")
+    fi
+done
+# the ELF file named after the build, for the footprint: one folder per core set
+CMAKE_ARGS+=("-DELF_DIR=$PWD/build/$CORES")
+
+if [ -z "$GOAL" ]; then
+    GOAL_FILE=goal.txt
+    if [ ! -f $GOAL_FILE ]; then
+        echo
+        echo "ERROR no goal: pass GOAL=<goal> after the preset, e.g. ./buildit $TOOLCHAIN $ALGO $PSET $CRYPTO_LIB $PRESET GOAL=fast"
+        echo "      (or record a default one with 'python3 link_ext.py --goal=<goal>')"
+        exit 1
+    fi
+    GOAL=`cat $GOAL_FILE`
+    echo "buildit: no GOAL=<goal> argument, using '$GOAL' from $GOAL_FILE"
+    CMAKE_ARGS+=("-DGOAL=$GOAL")
 fi
+
 set -x
-GOAL=`cat goal.txt`
 
 rm -rf $OUTDIR
 mkdir -p $OUTDIR
 
-cmake -B $OUTDIR -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DALGO=$ALGO -DPSET=$PSET -DCRYPTO_LIB=$CRYPTO_LIB ${@:6} -DGOAL=$GOAL --preset $PRESET .
+cmake -B $OUTDIR -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DALGO=$ALGO -DPSET=$PSET -DCRYPTO_LIB=$CRYPTO_LIB "${CMAKE_ARGS[@]}" --preset $PRESET .
 cmake --build $OUTDIR --verbose --clean-first 

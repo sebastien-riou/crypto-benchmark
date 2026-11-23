@@ -274,13 +274,17 @@ def process_hardware_platform(entry, protocol, version_mode, host_url_templates,
         return
 
     helper = load_hw_platform_helper(entry["helper_module"])
-    for swt in helper.sw_targets():
+    # one firmware per software target: the callers of the board's core sets (see cores.py)
+    sys.path.insert(0, SCRIPT_DIR)
+    import cores
+    sw_targets = list(dict.fromkeys(cores.caller(core_set) for core_set in helper.core_sets()))
+    for swt in sw_targets:
         target_label = f"{name} ({swt})"
         try:
             logging.info("ensuring crypto-benchmark lib for %s", target_label)
             if not dry_run:
-                subprocess.run(["python3", "link_ext.py", "--goal=small"], cwd=SCRIPT_DIR, check=True)
-                subprocess.run(["./buildit", f"on/{swt}", "mldsa", "44", "OPEN_SOURCE", "minSizeRel"],
+                subprocess.run(["python3", "link_ext.py"], cwd=SCRIPT_DIR, check=True)
+                subprocess.run(["./buildit", f"on/{swt}", "mldsa", "44", "OPEN_SOURCE", "minSizeRel", "GOAL=smallram"],
                                 cwd=SCRIPT_DIR, check=True)
 
             build = helper.build_cmd(swt)

@@ -20,7 +20,7 @@ ELSE()
 	MESSAGE( FATAL_ERROR "pqm4 needs a Cortex-M with DSP instructions and an FPU (cortex-m4, m7, m33, m52, m55), not ${TARGET_CPU}" )
 ENDIF()
 
-# goals: fast is m4fspeed (ML-KEM) / m4f (ML-DSA), small is m4fstack
+# goals: fast is m4fspeed (ML-KEM) / m4f (ML-DSA), smallram is m4fstack
 IF ( ${ALGO} STREQUAL "mlkem" )
 	set( PQM4_SCHEME crypto_kem/ml-kem-${PSET} )
 	set( PQM4_FAST m4fspeed )
@@ -31,12 +31,14 @@ ELSE()
 	MESSAGE( FATAL_ERROR "pqm4 is integrated for ALGO mlkem or mldsa, not '${ALGO}'" )
 ENDIF()
 IF ( ${GOAL} STREQUAL "fast" )
-	set( PQM4_IMPL ${PQM4_FAST} )
-ELSEIF ( ${GOAL} STREQUAL "small" )
-	set( PQM4_IMPL m4fstack )
+	set( PQM4_GOAL_IMPL ${PQM4_FAST} )
+ELSEIF ( ${GOAL} STREQUAL "smallram" )
+	set( PQM4_GOAL_IMPL m4fstack )
 ELSE()
-	MESSAGE( FATAL_ERROR "pqm4 supports GOAL small or fast, not '${GOAL}'" )
+	MESSAGE( FATAL_ERROR "pqm4 supports GOAL smallram or fast, not '${GOAL}'" )
 ENDIF()
+# the options of crypto-libraries/pqm4.py
+goal_opt( PQM4_IMPL impl ${PQM4_GOAL_IMPL} )
 set( PQM4_IMPL_DIR ${PQM4_DIR}/${PQM4_SCHEME}/${PQM4_IMPL} )
 MESSAGE("pqm4 implementation: " ${PQM4_IMPL_DIR})
 
@@ -48,10 +50,8 @@ IF ( NOT PQM4_SOURCES )
 	MESSAGE( FATAL_ERROR "no pqm4 sources in ${PQM4_IMPL_DIR}" )
 ENDIF()
 
-# -O3 is pqm4's own speed setting. -DPQM4_OPT=<flags> replaces it, for experiments.
-if(NOT DEFINED PQM4_OPT)
-set( PQM4_OPT -O3 )
-ENDIF()
+# -O3 is pqm4's own speed setting
+goal_opt( PQM4_OPT opt -O3 )
 
 # cmake/generic_binary.cmake enables ASM only after this directory is processed
 enable_language(ASM)

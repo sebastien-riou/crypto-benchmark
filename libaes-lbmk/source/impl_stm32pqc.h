@@ -1,18 +1,18 @@
 #pragma once
 
-#define STM32PQC_small 1
+#define STM32PQC_smallcode 1
 #define STM32PQC_fast 2
 
 #define STM32PQC_INDEX CAT(STM32PQC_,GOAL)
 
-#if STM32PQC_INDEX == STM32PQC_small
-  #define IMPL_NAME "stm32pqc-small"
+#if STM32PQC_INDEX == STM32PQC_smallcode
+  #define IMPL_NAME "stm32pqc-smallcode"
   #define CMAC_ALGO CMOX_CMAC_AESSMALL_ALGO
 #elif STM32PQC_INDEX == STM32PQC_fast
   #define IMPL_NAME "stm32pqc-fast"
   #define CMAC_ALGO CMOX_CMAC_AESFAST_ALGO
 #else
-  #error "STM32PQC AES-CMAC supports GOAL small or fast"
+  #error "STM32PQC AES-CMAC supports GOAL smallcode or fast"
 #endif
 
 #include <stm32pqc/include/cmox_crypto.h>

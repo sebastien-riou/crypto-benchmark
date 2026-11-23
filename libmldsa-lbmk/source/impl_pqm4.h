@@ -1,6 +1,6 @@
 #pragma once
 
-//pqm4 ML-DSA, compiled for PSET and GOAL by cmake/pqm4.cmake: goal fast is m4f, small is m4fstack
+//pqm4 ML-DSA, compiled for PSET and GOAL by cmake/pqm4.cmake: goal fast is m4f, smallram is m4fstack
 #define IMPL_NAME "pqm4-" xstr(GOAL)
 
 //api.h of the implementation; randombytes.h of mupq

@@ -9,7 +9,8 @@
 #endif
 
 
-#define WOLFSSL_small 1
+//goal smallram is built by wolfssl's buildit-mldsa-small (see crypto-libraries/wolfssl.py)
+#define WOLFSSL_smallram 1
 #define WOLFSSL_balanced 2
 #define WOLFSSL_fast 3
 
@@ -25,8 +26,8 @@
   #error "wolfSSL's ARM assembly is only expected on Cortex-M (rebuild with buildit-mldsa-<goal>)"
 #endif
 
-#if WOLFSSL_INDEX == WOLFSSL_small
-  #define IMPL_NAME "wolfssl-small"
+#if WOLFSSL_INDEX == WOLFSSL_smallram
+  #define IMPL_NAME "wolfssl-smallram"
   #ifndef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
     #error
   #endif

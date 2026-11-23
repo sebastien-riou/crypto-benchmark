@@ -7,8 +7,9 @@
 
 #define MLKEM_NATIVE_INDEX CAT(MLKEM_NATIVE_,GOAL)
 
+//the configuration of the goal; a build with options (GOAL_CUSTOM) may differ from it
 #if MLKEM_NATIVE_INDEX == MLKEM_NATIVE_fast
-  #ifndef MLK_CONFIG_SERIAL_FIPS202_ONLY
+  #if !defined(MLK_CONFIG_SERIAL_FIPS202_ONLY) && !GOAL_CUSTOM
     #error "mlkem-native-fast expects MLK_CONFIG_SERIAL_FIPS202_ONLY"
   #endif
 #else

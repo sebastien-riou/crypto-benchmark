@@ -24,8 +24,8 @@ get_filename_component(TARGET_CPU ${TARGET_DIR} NAME)
 
 # build-all-targets and buildit do not build external libraries, only benchmark.py does
 IF ( ${MLKEM_LIB} STREQUAL "PQCLE" )
-	IF ( NOT EXISTS ${TARGET_DIR}/pqcle/libumlkem.a )
-		MESSAGE( FATAL_ERROR "pqcle is not built for ${TARGET_CPU} (${TARGET_DIR}/pqcle/libumlkem.a is missing). Build it in the pqmicrolib-library repo then run 'python3 link_ext.py --goal=${GOAL}'" )
+	IF ( NOT EXISTS ${GOAL_DIR}/pqcle/libumlkem.a )
+		MESSAGE( FATAL_ERROR "pqcle is not built for ${TARGET_CPU} (${GOAL_DIR}/pqcle/libumlkem.a is missing). Build it in the pqmicrolib-library repo then run 'python3 link_ext.py'" )
 	ENDIF()
 ENDIF()
 
@@ -42,14 +42,14 @@ IF ( ${MLKEM_LIB} STREQUAL "STM32PQC" )
 ENDIF()
 
 IF ( ${MLKEM_LIB} STREQUAL "WOLFSSL" )
-	IF ( NOT EXISTS ${TARGET_DIR}/wolfssl/options.h )
-		MESSAGE( FATAL_ERROR "wolfssl is not built for ${TARGET_CPU} with goal ${GOAL} (${TARGET_DIR}/wolfssl/options.h is missing). Run '(cd ../wolfssl && ./buildit-mlkem-${GOAL} ${TARGET_CPU})' then 'python3 link_ext.py --goal=${GOAL}'" )
+	IF ( NOT EXISTS ${GOAL_DIR}/wolfssl/options.h )
+		MESSAGE( FATAL_ERROR "wolfssl is not built for ${TARGET_CPU} with goal ${GOAL} (${GOAL_DIR}/wolfssl/options.h is missing). Build it in the wolfssl repository (its script is named in crypto-libraries/wolfssl.py) then 'python3 link_ext.py'" )
 	ENDIF()
 ENDIF()
 
 IF ( ${MLKEM_LIB} STREQUAL "PQRV" )
 	IF ( NOT EXISTS ${TARGET_DIR}/pqrv/libpqrv.a )
-		MESSAGE( FATAL_ERROR "PQRV is not built for ${TARGET_CPU} (${TARGET_DIR}/pqrv/libpqrv.a is missing). Run '(cd ../PQRV/libpqrv && ./buildit ${TARGET_CPU})' then 'python3 link_ext.py --goal=${GOAL}'" )
+		MESSAGE( FATAL_ERROR "PQRV is not built for ${TARGET_CPU} (${TARGET_DIR}/pqrv/libpqrv.a is missing). Run '(cd ../PQRV/libpqrv && ./buildit ${TARGET_CPU})' then 'python3 link_ext.py'" )
 	ENDIF()
 ENDIF()
 
@@ -80,15 +80,18 @@ IF ( ${MLKEM_LIB} STREQUAL "MLKEM_NATIVE" )
 	# a single goal, fast: one Keccak state at a time (MLK_CONFIG_SERIAL_FIPS202_ONLY) and -Os. On the pico2 (both
 	# cores) and the STM32U5A5 (2026-11-21), the serial Keccak was 2 to 7 % faster than the default 4-way one, with
 	# 2.9 KiB less stack, and -Os was 3 to 11 % faster than -O3 (-O2 was the slowest)
-	IF ( ${GOAL} STREQUAL "fast" )
-		set( MLKEM_NATIVE_GOAL_DEFS MLK_CONFIG_SERIAL_FIPS202_ONLY )
-		set( MLKEM_NATIVE_GOAL_OPT -Os )
-	ELSE()
+	IF ( NOT ${GOAL} STREQUAL "fast" )
 		MESSAGE( FATAL_ERROR "mlkem-native supports GOAL fast only, not '${GOAL}'" )
 	ENDIF()
-	# -DMLKEM_NATIVE_OPT=<flags> replaces the goal's optimization flags, for experiments
-	if(NOT DEFINED MLKEM_NATIVE_OPT)
-	set( MLKEM_NATIVE_OPT ${MLKEM_NATIVE_GOAL_OPT} )
+	# the options of crypto-libraries/mlkem-native.py
+	goal_opt( MLKEM_NATIVE_SERIAL_FIPS202 serial_fips202 1 )
+	goal_opt( MLKEM_NATIVE_OPT opt -Os )
+	IF ( "${MLKEM_NATIVE_SERIAL_FIPS202}" STREQUAL "1" )
+		set( MLKEM_NATIVE_GOAL_DEFS MLK_CONFIG_SERIAL_FIPS202_ONLY )
+	ELSEIF ( "${MLKEM_NATIVE_SERIAL_FIPS202}" STREQUAL "0" )
+		set( MLKEM_NATIVE_GOAL_DEFS "" )
+	ELSE()
+		MESSAGE( FATAL_ERROR "mlkem-native: option serial_fips202 is 0 or 1, not '${MLKEM_NATIVE_SERIAL_FIPS202}'" )
 	ENDIF()
 	# cmake/generic_binary.cmake enables ASM only after this directory is processed
 	enable_language(ASM)
@@ -129,6 +132,7 @@ target_include_directories(${LIB}
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../common
+    ${GOAL_DIR}
     ${TARGET_DIR}
     ${EXTRA_INCLUDES}
 )
@@ -182,12 +186,12 @@ MESSAGE("MLKEM_LIB is PQCLE")
 add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mlkem-lbmk-core>
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libumlkem.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libhash.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha2.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libsha3.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libprng.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/pqcle/libcommon.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libumlkem.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libhash.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libsha2.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libsha3.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libprng.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/pqcle/libcommon.a
         #build combined lib
         COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_NAME}
@@ -217,7 +221,7 @@ MESSAGE("MLKEM_LIB is WOLFSSL")
 add_custom_target(combined_target
         COMMAND ${CMAKE_AR} -x $<TARGET_FILE:mlkem-lbmk-core>
         COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/lean-benchmark/liblean-benchmark.a
-        COMMAND ${CMAKE_AR} -x ${TARGET_DIR}/wolfssl/libwolfssl.a
+        COMMAND ${CMAKE_AR} -x ${GOAL_DIR}/wolfssl/libwolfssl.a
 
         #build combined lib
         COMMAND ${CMAKE_AR} -qcs ${LIB_FILE} *.${CMAKE_AR_O_EXT} *.o

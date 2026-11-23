@@ -19,7 +19,15 @@ class MldsaNative:
     def algorithms():
         # small: MLD_CONFIG_REDUCE_RAM; fast: the default memory mode (both -Os, see libmldsa-lbmk/CMakeLists.txt)
         return {
-            'mldsa':['small','fast'],
+            'mldsa':['smallram','fast'],
+        }
+
+    @staticmethod
+    def options(algo):
+        # read by libmldsa-lbmk/CMakeLists.txt
+        return {
+            'opt': 'compiler optimization flag, e.g. -O3 (default -Os)',
+            'reduce_ram': '1: MLD_CONFIG_REDUCE_RAM, 0: the default memory mode (default: 1 for smallram, 0 for fast)',
         }
 
     def __init__(self):

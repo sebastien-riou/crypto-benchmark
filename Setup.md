@@ -27,7 +27,7 @@ run non-interactively (e.g. in CI).
   or the `branch` named in `setup_manifest.py` (`crypto-benchmark` for
   `wolfssl` and `PQRV`, whose default branch lacks the crypto-benchmark
   integration, and for `pqmicrolib-library`, whose `crypto-benchmark`
-  branch adds the `<target>-<goal>` presets).
+  branch adds the `<target>-<tier>` presets, which the goals map to).
 - `--test-renode {0,1,on,off,true,false}` — whether to run `./test-renode`
   and show results afterward (default on). This also controls how the demo
   is built: `-DRAW_COM=1` when on (Renode's UART capture is one-way and
