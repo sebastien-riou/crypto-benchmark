@@ -11,13 +11,28 @@ It also produce self contained benchmarking libraries which can be easily integr
 
 Results can be retrieved using Python or displayed using the provided script `show-results-pickle`.
 
+## Results
+The latest measures were made in November 2026 on the STM32U5A5 (NUCLEO-U5A5ZJ-Q board, Arm Cortex-M33 at 160 MHz), with wolfSSL, the STM32 Cryptographic library, pqm4, mldsa-native and mlkem-native, and every [optimization goal](#optimization-goals) each of them has.
+
+The two figures show ML-DSA-87 and ML-KEM-768. The libraries are grouped by goal, and sorted by what the goal optimizes.
+Times are in milliseconds, at the board's 160 MHz. RAM is the sum of stack, heap and static RAM.
+For ML-DSA, the signature is given twice: the average, and the slowest of the 100 messages signed. For ML-KEM, the bar is the average and the dot is the worst-case key.
+Each column has its own scale.
+
+![ML-DSA-87 on the STM32U5A5 (Cortex-M33, 160 MHz). For each library: signature in milliseconds (average, then the slowest message), RAM in KiB, flash in KiB. Goal smallram: pqm4 234 and 4580, 15, 33; mldsa-native 248 and 5173, 22, 12; stm32pqc 209 and 4264, 28, 17; wolfssl 221 and 4628, 101, 18. Goal balanced: wolfssl 88 and 1034, 208, 19; stm32pqc 188 and 3782, 65, 17. Goal fast: pqm4 65 and 776, 114, 29; wolfssl 72 and 762, 209, 24; mldsa-native 124 and 1557, 117, 12.](results/stm32u5a5-20261123/mldsa87.svg)
+
+![ML-KEM-768 on the STM32U5A5 (Cortex-M33, 160 MHz). For each library: decapsulation in milliseconds (average keys, then the worst-case key), RAM in KiB, flash in KiB. Goal smallram: pqm4 6.4 and 6.9, 3.2, 22; wolfssl 8.1 and 8.5, 13, 21. Goal balanced: stm32pqc 22.9 and 23.3, 5.6, 13. Goal fast: pqm4 6.3 and 6.7, 6.8, 25; wolfssl 8.0 and 8.5, 24, 24; mlkem-native 11.6 and 12.2, 19, 8.1.](results/stm32u5a5-20261123/mlkem768.svg)
+
+The other parameter sets, every operation, the split of the RAM, the versions of the libraries and how all this was measured are in [results/stm32u5a5-20261123](results/stm32u5a5-20261123/README.md).
+The figures are drawn by `plot_results.py` from the tables that `format_results.py` prints.
+
 ## Current status
 It has been used on several targets:
 - STMicroelectronics [STM32U5A5](https://github.com/sebastien-riou/crypto-benchmark-stm32u5)
 - Nuvoton [M5531](https://github.com/sebastien-riou/crypto-benchmark-m5531)
 - Raspeberry Pi [RP2350](https://github.com/sebastien-riou/crypto-benchmark-rp2350)
 
-It contains proper benchmarking only for ML-DSA. ML-KEM, AES and SHA2 are a work in progress.
+It contains proper benchmarking only for ML-DSA and ML-KEM. AES and SHA2 are a work in progress.
 
 Following ML-DSA librairies have been integrated (alphabetical order):
 - `MLDSA_NATIVE`: [mldsa-native](https://github.com/pq-code-package/mldsa-native) (sibling `../mldsa-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmldsa-lbmk/CMakeLists.txt`). Goals `smallram` (`MLD_CONFIG_REDUCE_RAM`) / `fast` (default memory mode), both built with `-Os`, which was faster than `-O3` or `-O2` on the pico2 and the STM32U5A5.

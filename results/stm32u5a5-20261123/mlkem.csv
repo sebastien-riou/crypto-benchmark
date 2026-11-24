@@ -1,0 +1,105 @@
+Performance on the test vectors of BTVG-MLKEM (in million cycles).
+Implementation,Level,Operation,Best case(a),Average(b),Worst case(c)
+mlkem-native-fast    , 512 , key-exp , 0.804 , 0.806 , 0.881
+mlkem-native-fast    , 512 , encaps , 0.930 , 0.932 , 1.008
+mlkem-native-fast    , 512 , decaps , 1.177 , 1.179 , 1.254
+mlkem-native-fast    , 512 , decaps-reject , 1.177 , 1.179 , 1.254
+mlkem-native-fast    , 768 , key-exp , 1.317 , 1.320 , 1.414
+mlkem-native-fast    , 768 , encaps , 1.517 , 1.520 , 1.614
+mlkem-native-fast    , 768 , decaps , 1.855 , 1.858 , 1.952
+mlkem-native-fast    , 768 , decaps-reject , 1.855 , 1.858 , 1.952
+mlkem-native-fast    , 1024 , key-exp , 2.044 , 2.049 , 2.160
+mlkem-native-fast    , 1024 , encaps , 2.281 , 2.286 , 2.398
+mlkem-native-fast    , 1024 , decaps , 2.716 , 2.722 , 2.833
+mlkem-native-fast    , 1024 , decaps-reject , 2.716 , 2.722 , 2.833
+pqm4-fast            , 512 , key-exp , 0.502 , 0.503 , 0.561
+pqm4-fast            , 512 , encaps , 0.498 , 0.499 , 0.557
+pqm4-fast            , 512 , decaps , 0.617 , 0.619 , 0.676
+pqm4-fast            , 512 , decaps-reject , 0.617 , 0.619 , 0.676
+pqm4-fast            , 768 , key-exp , 0.815 , 0.818 , 0.889
+pqm4-fast            , 768 , encaps , 0.833 , 0.836 , 0.907
+pqm4-fast            , 768 , decaps , 1.004 , 1.007 , 1.078
+pqm4-fast            , 768 , decaps-reject , 1.004 , 1.007 , 1.078
+pqm4-fast            , 1024 , key-exp , 1.290 , 1.294 , 1.379
+pqm4-fast            , 1024 , encaps , 1.305 , 1.310 , 1.395
+pqm4-fast            , 1024 , decaps , 1.533 , 1.538 , 1.623
+pqm4-fast            , 1024 , decaps-reject , 1.533 , 1.538 , 1.623
+pqm4-smallram        , 512 , key-exp , 0.505 , 0.507 , 0.564
+pqm4-smallram        , 512 , encaps , 0.504 , 0.505 , 0.563
+pqm4-smallram        , 512 , decaps , 0.625 , 0.627 , 0.685
+pqm4-smallram        , 512 , decaps-reject , 0.625 , 0.627 , 0.685
+pqm4-smallram        , 768 , key-exp , 0.825 , 0.828 , 0.899
+pqm4-smallram        , 768 , encaps , 0.849 , 0.852 , 0.924
+pqm4-smallram        , 768 , decaps , 1.023 , 1.026 , 1.098
+pqm4-smallram        , 768 , decaps-reject , 1.023 , 1.026 , 1.098
+pqm4-smallram        , 1024 , key-exp , 1.313 , 1.318 , 1.402
+pqm4-smallram        , 1024 , encaps , 1.337 , 1.342 , 1.426
+pqm4-smallram        , 1024 , decaps , 1.568 , 1.573 , 1.658
+pqm4-smallram        , 1024 , decaps-reject , 1.568 , 1.573 , 1.658
+stm32pqc-balanced    , 512 , key-exp , 0.730 , 0.731 , 0.790
+stm32pqc-balanced    , 512 , encaps , 2.172 , 2.174 , 2.232
+stm32pqc-balanced    , 512 , decaps , 2.545 , 2.546 , 2.605
+stm32pqc-balanced    , 512 , decaps-reject , 2.545 , 2.546 , 2.605
+stm32pqc-balanced    , 768 , key-exp , 1.198 , 1.200 , 1.273
+stm32pqc-balanced    , 768 , encaps , 3.144 , 3.146 , 3.219
+stm32pqc-balanced    , 768 , decaps , 3.659 , 3.661 , 3.734
+stm32pqc-balanced    , 768 , decaps-reject , 3.659 , 3.661 , 3.734
+stm32pqc-balanced    , 1024 , key-exp , 1.878 , 1.882 , 1.969
+stm32pqc-balanced    , 1024 , encaps , 4.304 , 4.308 , 4.394
+stm32pqc-balanced    , 1024 , decaps , 4.976 , 4.980 , 5.066
+stm32pqc-balanced    , 1024 , decaps-reject , 4.976 , 4.980 , 5.066
+wolfssl-fast         , 512 , key-exp , 0.598 , 0.599 , 0.662
+wolfssl-fast         , 512 , encaps , 0.639 , 0.640 , 0.703
+wolfssl-fast         , 512 , decaps , 0.811 , 0.813 , 0.875
+wolfssl-fast         , 512 , decaps-reject , 0.811 , 0.813 , 0.875
+wolfssl-fast         , 768 , key-exp , 0.937 , 0.940 , 1.017
+wolfssl-fast         , 768 , encaps , 1.033 , 1.035 , 1.113
+wolfssl-fast         , 768 , decaps , 1.274 , 1.276 , 1.354
+wolfssl-fast         , 768 , decaps-reject , 1.274 , 1.276 , 1.354
+wolfssl-fast         , 1024 , key-exp , 1.453 , 1.456 , 1.549
+wolfssl-fast         , 1024 , encaps , 1.586 , 1.589 , 1.682
+wolfssl-fast         , 1024 , decaps , 1.897 , 1.901 , 1.993
+wolfssl-fast         , 1024 , decaps-reject , 1.897 , 1.901 , 1.993
+wolfssl-smallram     , 512 , key-exp , 0.596 , 0.598 , 0.660
+wolfssl-smallram     , 512 , encaps , 0.638 , 0.639 , 0.702
+wolfssl-smallram     , 512 , decaps , 0.818 , 0.819 , 0.882
+wolfssl-smallram     , 512 , decaps-reject , 0.818 , 0.819 , 0.882
+wolfssl-smallram     , 768 , key-exp , 0.964 , 0.966 , 1.044
+wolfssl-smallram     , 768 , encaps , 1.036 , 1.039 , 1.116
+wolfssl-smallram     , 768 , decaps , 1.287 , 1.290 , 1.367
+wolfssl-smallram     , 768 , decaps-reject , 1.287 , 1.290 , 1.367
+wolfssl-smallram     , 1024 , key-exp , 1.489 , 1.492 , 1.584
+wolfssl-smallram     , 1024 , encaps , 1.579 , 1.582 , 1.675
+wolfssl-smallram     , 1024 , decaps , 1.906 , 1.910 , 2.002
+wolfssl-smallram     , 1024 , decaps-reject , 1.906 , 1.910 , 2.002
+(a): Minimum on the best case: no extra SHAKE128 block for the matrix A and few SampleNTT iterations.
+(b): Mean over the average set: keys with the long term average cost of the matrix A.
+(c): Maximum on the worst cases: the most extra SHAKE128 blocks for the matrix A.
+Test vectors of BTVG-MLKEM (https://github.com/sebastien-riou/BTVG-MLKEM):
+ML-KEM-512: mlkem512-n32-h2F3BDE49; best case probability 2^-28.18; worst case 4 extra blocks (tier 1 probability 2^-27.63).
+ML-KEM-768: mlkem768-n42-h523BACDC; best case probability 2^-28.12; worst case 5 extra blocks (tier 1 probability 2^-27.60).
+ML-KEM-1024: mlkem1024-n17-hFD044788; best case probability 2^-28.37; worst case 6 extra blocks (tier 1 probability 2^-28.58).
+decaps-reject: decapsulation of an invalid ciphertext (implicit rejection).
+Library revision: mlkem-native def37022; pqm4 0dd10ee5; stm32pqc ?; wolfssl a240b14d.
+
+Memory footprint for all benchmarked operations (in KiB).
+Implementation,Level,Stack,Heap,Static RAM,Flash
+mlkem-native-fast    , 1024 , 26.36 ,  0.00 ,  0.00 ,  8.45 
+mlkem-native-fast    , 512 , 13.27 ,  0.00 ,  0.00 ,  8.36 
+mlkem-native-fast    , 768 , 19.34 ,  0.00 ,  0.00 ,  8.12 
+pqm4-fast            , 1024 ,  7.90 ,  0.00 ,  0.01 , 25.06 
+pqm4-fast            , 512 ,  5.74 ,  0.00 ,  0.01 , 24.48 
+pqm4-fast            , 768 ,  6.76 ,  0.00 ,  0.01 , 24.73 
+pqm4-smallram        , 1024 ,  3.90 ,  0.00 ,  0.01 , 22.59 
+pqm4-smallram        , 512 ,  2.87 ,  0.00 ,  0.01 , 21.67 
+pqm4-smallram        , 768 ,  3.23 ,  0.00 ,  0.01 , 21.59 
+stm32pqc-balanced    , 1024 ,  6.57 ,  0.00 ,  0.03 , 13.59 
+stm32pqc-balanced    , 512 ,  4.79 ,  0.00 ,  0.03 , 13.36 
+stm32pqc-balanced    , 768 ,  5.60 ,  0.00 ,  0.03 , 13.36 
+wolfssl-fast         , 1024 ,  1.25 , 25.52 ,  6.06 , 23.83 
+wolfssl-fast         , 512 ,  1.25 ,  9.52 ,  6.06 , 23.81 
+wolfssl-fast         , 768 ,  1.25 , 16.52 ,  6.06 , 23.83 
+wolfssl-smallram     , 1024 ,  1.34 ,  8.02 ,  6.06 , 20.71 
+wolfssl-smallram     , 512 ,  1.34 ,  4.02 ,  6.06 , 20.69 
+wolfssl-smallram     , 768 ,  1.34 ,  6.02 ,  6.06 , 20.71 
+

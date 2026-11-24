@@ -1,0 +1,143 @@
+#!/bin/bash
+# Measures this round again on the board, then rebuilds its tables (mldsa.csv, mlkem.csv) and its figures.
+#   results/stm32u5a5-20261123/reproduce [--dry-run] [--tables-only] [--retries N] [--timeout SECONDS]
+# Needs the NUCLEO-U5A5ZJ-Q connected and the setup of README.md, section "Reproducing" (./initial-setup, the STM32
+# Cryptographic library, the compiler in PATH). About 70 minutes.
+#
+# The measures: one benchmark.py call per library, algorithm and goal (15 calls, 45 runs on the board), so that a
+# failure costs one call. A failed call is tried again, --retries times (default 2).
+# Only the measures of this run go in the tables, whatever older result files and builds the folder holds.
+# The tables and figures of this folder are overwritten: `git diff results/stm32u5a5-20261123` then shows how the
+# reproduction differs from the published round.
+#
+# --dry-run       list the builds and runs without doing them (nothing is written)
+# --tables-only   no measure: rebuild the tables and figures from the measures of the last run of this script
+# --retries N     how many times a failed call is tried again (default 2)
+# --timeout S     seconds allowed per call (default 1800, a call takes 2 to 7 minutes); -1: no limit, to debug
+# Environment:
+#   PYTHON: python with the packages of Pipfile (default: pipenv run python), as for get-results
+#   HWBRIDGE_BOARD, HWBRIDGE: the board is reached through lean-hwbridge (hardware-platforms/stm32u5.py); a failed
+#   call is then followed by a power cycle of the board before it is tried again
+set -e
+cd "$(dirname "$0")/../.."
+ROUND=results/stm32u5a5-20261123
+WORK=build/reproduce-stm32u5a5-20261123
+PYTHON=${PYTHON:-pipenv run python}
+DRY= TABLES_ONLY=0 RETRIES=2 TIMEOUT=1800
+while [ $# -gt 0 ]; do
+    case $1 in
+        --dry-run) DRY=--dry-run ;;
+        --tables-only) TABLES_ONLY=1 ;;
+        --retries) RETRIES=$2; shift ;;
+        --timeout) TIMEOUT=$2; shift ;;
+        *) echo "ERROR: unknown argument '$1' (see the head of $0)"; exit 2 ;;
+    esac
+    shift
+done
+
+# what the round is made of: library, algorithm, goal (every parameter set of the algorithm)
+CALLS="
+wolfssl      mldsa smallram
+wolfssl      mldsa balanced
+wolfssl      mldsa fast
+stm32pqc     mldsa smallram
+stm32pqc     mldsa balanced
+pqm4         mldsa smallram
+pqm4         mldsa fast
+mldsa-native mldsa smallram
+mldsa-native mldsa fast
+wolfssl      mlkem smallram
+wolfssl      mlkem fast
+stm32pqc     mlkem balanced
+pqm4         mlkem smallram
+pqm4         mlkem fast
+mlkem-native mlkem fast
+"
+
+measure() { # <lib> <algo> <goal>: one benchmark.py call, tried again when it fails
+    local lib=$1 algo=$2 goal=$3 log=$WORK/$2-$1-$3.log attempt=0 status t0
+    local limit=()
+    [ "$TIMEOUT" = -1 ] || limit=(timeout "$TIMEOUT")
+    while :; do
+        t0=$(date +%s)
+        status=0
+        "${limit[@]}" $PYTHON benchmark.py $DRY --hw-platform stm32u5 --cores cortex-m33 \
+            --lib $lib --algo $algo --goal $goal > $log 2>&1 || status=$?
+        printf '%s %-5s %-13s %-9s exit %3s %5ss  runs %s\n' "$(date +%T)" $algo $lib $goal $status \
+            $(( $(date +%s) - t0 )) "$(grep -c 'INFO:\s*stm32u5, ' $log)"
+        [ $status != 0 ] || return 0
+        attempt=$((attempt + 1))
+        if [ $attempt -gt "$RETRIES" ]; then
+            echo "ERROR: $lib $algo $goal failed $attempt times, see $log"
+            return 1
+        fi
+        if [ -n "$HWBRIDGE_BOARD" ]; then
+            # what brought the board back after a failed flash (ST-LINK error DEV_CONNECT_ERR)
+            ${HWBRIDGE:-hwbridge} serial close $HWBRIDGE_BOARD || true
+            ${HWBRIDGE:-hwbridge} power $HWBRIDGE_BOARD cycle --off-s 2 || true
+        fi
+        sleep 5
+    done
+}
+
+if [ -n "$DRY" ]; then
+    WORK=$(mktemp -d)
+    trap 'rm -rf "$WORK"' EXIT
+    echo "$CALLS" | while read lib algo goal; do
+        [ -z "$lib" ] || measure $lib $algo $goal
+    done
+    grep -h 'INFO:\s*stm32u5, ' $WORK/*.log | sed -E 's/^.*INFO:\s+//'
+    exit 0
+fi
+
+if [ $TABLES_ONLY = 0 ]; then
+    mkdir -p $WORK
+    rm -f $WORK/*.log
+    # the measures of this run are the result files newer than this one
+    touch $WORK/.start
+    echo "$CALLS" | while read lib algo goal; do
+        [ -z "$lib" ] || measure $lib $algo $goal
+    done
+elif [ ! -f $WORK/.start ]; then
+    echo "ERROR: --tables-only needs the measures of an earlier run of this script ($WORK/.start is missing)"
+    exit 1
+fi
+
+# The measures of this run, and the firmware each was made with (and its STUB build, for the footprint), gathered
+# in a folder of their own: format_results.py --root then reports them alone.
+ROOT=$WORK/root
+rm -rf $ROOT
+mkdir -p $ROOT/build/cortex-m33
+$PYTHON - "$WORK/.start" "$ROOT" <<'EOF'
+import glob, os, pickle, shutil, sys
+start, root = os.path.getmtime(sys.argv[1]), sys.argv[2]
+elfs, missing, configurations = set(), [], set()
+for p in glob.glob('*.pickle'):
+    if os.path.getmtime(p) < start:
+        continue
+    info = pickle.load(open(p, 'rb'))['info']
+    info = dict(zip(info[::2], info[1::2]))
+    if info.get('hw_platform') != 'stm32u5':
+        continue
+    shutil.copy2(p, root)
+    configurations.add((info['crypto_lib'], info['goal'], info['algo'], info['pset']))
+    for lib in (info['crypto_lib'], 'STUB'):
+        elf = f'build/cortex-m33/crypto-benchmark-{lib}-{info["goal"]}-{info["algo"]}-{info["pset"]}.elf'
+        (elfs.add if os.path.exists(elf) and os.path.getmtime(elf) >= start else missing.append)(elf)
+for elf in sorted(elfs):
+    shutil.copy2(elf, os.path.join(root, 'build', 'cortex-m33'))
+# a configuration measured several times (a call tried again) has several files: the tables take the latest
+print(f'{len(configurations)} configurations measured in this run (45 expected), {len(elfs)} firmware files')
+if missing:
+    sys.exit('ERROR: no firmware of this run for: ' + ', '.join(sorted(set(missing))))
+if len(configurations) != 45:
+    sys.exit('ERROR: not the 45 configurations of the round, see the logs in ' + os.path.dirname(root))
+EOF
+size $ROOT/build/cortex-m33/*.elf > $ROOT/build/cortex-m33/sizes.txt
+$PYTHON format_results.py cortex-m33 mldsa csv --root $ROOT --hw-platform stm32u5 \
+    --lib WOLFSSL STM32PQC PQM4 MLDSA_NATIVE > $ROUND/mldsa.csv
+$PYTHON format_results.py cortex-m33 mlkem csv --root $ROOT --hw-platform stm32u5 \
+    --lib WOLFSSL STM32PQC PQM4 MLKEM_NATIVE > $ROUND/mlkem.csv
+$ROUND/make-figures > $WORK/tables.md
+echo "tables and figures rebuilt in $ROUND (the tables of its README.md, as Markdown: $WORK/tables.md)"
+echo "compare with the published round: git diff --stat $ROUND"

@@ -1,0 +1,15 @@
+#!/bin/bash
+# Draws the figures of this folder from mldsa.csv and mlkem.csv, and prints the tables of README.md.
+#   results/stm32u5a5-20261123/make-figures       (from anywhere; needs Python 3 only)
+# The SVG files are committed: README.md files are displayed as they are, without a build step.
+set -e
+cd "$(dirname "$0")"
+BOARD="STM32U5A5 (Cortex-M33, 160 MHz)"
+for PSET in 44 65 87; do
+    python3 ../../plot_results.py mldsa.csv --pset $PSET --mhz 160 --title "ML-DSA-$PSET on the $BOARD" --output mldsa$PSET.svg
+done
+for PSET in 512 768 1024; do
+    python3 ../../plot_results.py mlkem.csv --pset $PSET --mhz 160 --title "ML-KEM-$PSET on the $BOARD" --output mlkem$PSET.svg
+done
+python3 ../../plot_results.py mldsa.csv --tables
+python3 ../../plot_results.py mlkem.csv --tables

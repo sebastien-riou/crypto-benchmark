@@ -28,7 +28,9 @@ ADDONS = {
             "codename": "WOLFSSL",
             "host": "github",
             "path": "sebastien-riou/wolfssl",
-            "default_tag": "crypto-benchmark-0.0.16",
+            # pinned by commit instead of default_tag: its last tag, crypto-benchmark-0.0.16, builds ML-DSA without
+            # wolfSSL's Thumb-2 assembly, which the wolfSSL glue (impl_wolfssl.h) requires on Cortex-M
+            "commit": "a240b14dda5460944d67974c68993e9f3d3c3417",
             "branch": "crypto-benchmark",  # for --version latest: the default branch (master) is upstream wolfSSL
             "recurse_submodules": False,
             "build": None,  # see repo's own README -- no proven single command

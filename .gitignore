@@ -18,6 +18,8 @@ target/ext/
 STM32_Cryptographic/
 *.pickle
 *.csv
+# the published results
+!results/**/*.csv
 git_untracked.log
 goal.txt
 __pycache__

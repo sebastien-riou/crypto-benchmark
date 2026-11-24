@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="372" viewBox="0 0 640 372" role="img">
+<title>ML-DSA-87 on the STM32U5A5 (Cortex-M33, 160 MHz)</title>
+<rect width="640" height="372" fill="#ffffff"/>
+<text x="0.0" y="15.0" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="bold">ML-DSA-87 on the STM32U5A5 (Cortex-M33, 160 MHz)</text>
+<text x="85.5" y="34.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#0b0b0b" text-anchor="start" font-weight="normal">Signature (ms)</text>
+<text x="85.5" y="49.0" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#898781" text-anchor="start" font-weight="normal">average</text>
+<text x="236.1" y="49.0" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#898781" text-anchor="start" font-weight="normal">slowest message</text>
+<text x="386.7" y="34.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#0b0b0b" text-anchor="start" font-weight="normal">RAM (KiB)</text>
+<text x="386.7" y="49.0" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#898781" text-anchor="start" font-weight="normal">stack + heap + static</text>
+<text x="522.3" y="34.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#0b0b0b" text-anchor="start" font-weight="normal">Flash (KiB)</text>
+<text x="522.3" y="49.0" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#898781" text-anchor="start" font-weight="normal">code and constants</text>
+<text x="0.0" y="77.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#0b0b0b" text-anchor="start" font-weight="bold">smallram</text>
+<text x="61.8" y="77.0" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#898781" text-anchor="start" font-weight="normal">sorted by RAM</text>
+<line x1="85.5" y1="84" x2="85.5" y2="180" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="236.1" y1="84" x2="236.1" y2="180" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="386.7" y1="84" x2="386.7" y2="180" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="522.3" y1="84" x2="522.3" y2="180" stroke="#c3c2b7" stroke-width="1"/>
+<text x="75.5" y="100.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="end" font-weight="normal">pqm4</text>
+<path d="M85.5,90.0 H182.9 A4.0,4.0 0 0 1 186.9,94.0 V98.0 A4.0,4.0 0 0 1 182.9,102.0 H85.5 Z" fill="#2a78d6"/>
+<text x="193.9" y="100.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">234</text>
+<path d="M236.1,90.0 H321.4 A4.0,4.0 0 0 1 325.4,94.0 V98.0 A4.0,4.0 0 0 1 321.4,102.0 H236.1 Z" fill="#2a78d6"/>
+<text x="332.4" y="100.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">4580</text>
+<path d="M386.7,90.0 H390.1 A3.4,3.4 0 0 1 393.6,93.4 V98.6 A3.4,3.4 0 0 1 390.1,102.0 H386.7 Z" fill="#2a78d6"/>
+<text x="400.6" y="100.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">15</text>
+<path d="M522.3,90.0 H607.7 A4.0,4.0 0 0 1 611.7,94.0 V98.0 A4.0,4.0 0 0 1 607.7,102.0 H522.3 Z" fill="#2a78d6"/>
+<text x="618.7" y="100.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">33</text>
+<text x="75.5" y="124.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="end" font-weight="normal">mldsa-native</text>
+<path d="M85.5,114.0 H189.1 A4.0,4.0 0 0 1 193.1,118.0 V122.0 A4.0,4.0 0 0 1 189.1,126.0 H85.5 Z" fill="#2a78d6"/>
+<text x="200.1" y="124.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">248</text>
+<path d="M236.1,114.0 H333.0 A4.0,4.0 0 0 1 337.0,118.0 V122.0 A4.0,4.0 0 0 1 333.0,126.0 H236.1 Z" fill="#2a78d6"/>
+<text x="344.0" y="124.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">5173</text>
+<path d="M386.7,114.0 H392.7 A4.0,4.0 0 0 1 396.7,118.0 V122.0 A4.0,4.0 0 0 1 392.7,126.0 H386.7 Z" fill="#2a78d6"/>
+<text x="403.7" y="124.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">22</text>
+<path d="M522.3,114.0 H549.9 A4.0,4.0 0 0 1 553.9,118.0 V122.0 A4.0,4.0 0 0 1 549.9,126.0 H522.3 Z" fill="#2a78d6"/>
+<text x="560.9" y="124.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">12</text>
+<text x="75.5" y="148.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="end" font-weight="normal">stm32pqc</text>
+<path d="M85.5,138.0 H172.1 A4.0,4.0 0 0 1 176.1,142.0 V146.0 A4.0,4.0 0 0 1 172.1,150.0 H85.5 Z" fill="#2a78d6"/>
+<text x="183.1" y="148.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">209</text>
+<path d="M236.1,138.0 H315.3 A4.0,4.0 0 0 1 319.3,142.0 V146.0 A4.0,4.0 0 0 1 315.3,150.0 H236.1 Z" fill="#2a78d6"/>
+<text x="326.3" y="148.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">4264</text>
+<path d="M386.7,138.0 H395.0 A4.0,4.0 0 0 1 399.0,142.0 V146.0 A4.0,4.0 0 0 1 395.0,150.0 H386.7 Z" fill="#2a78d6"/>
+<text x="406.0" y="148.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">28</text>
+<path d="M522.3,138.0 H563.8 A4.0,4.0 0 0 1 567.8,142.0 V146.0 A4.0,4.0 0 0 1 563.8,150.0 H522.3 Z" fill="#2a78d6"/>
+<text x="574.8" y="148.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">17</text>
+<text x="75.5" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="end" font-weight="normal">wolfssl</text>
+<path d="M85.5,162.0 H177.3 A4.0,4.0 0 0 1 181.3,166.0 V170.0 A4.0,4.0 0 0 1 177.3,174.0 H85.5 Z" fill="#2a78d6"/>
+<text x="188.3" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">221</text>
+<path d="M236.1,162.0 H322.4 A4.0,4.0 0 0 1 326.4,166.0 V170.0 A4.0,4.0 0 0 1 322.4,174.0 H236.1 Z" fill="#2a78d6"/>
+<text x="333.4" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">4628</text>
+<path d="M386.7,162.0 H427.6 A4.0,4.0 0 0 1 431.6,166.0 V170.0 A4.0,4.0 0 0 1 427.6,174.0 H386.7 Z" fill="#2a78d6"/>
+<text x="438.6" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">101</text>
+<path d="M522.3,162.0 H567.7 A4.0,4.0 0 0 1 571.7,166.0 V170.0 A4.0,4.0 0 0 1 567.7,174.0 H522.3 Z" fill="#2a78d6"/>
+<text x="578.7" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">18</text>
+<text x="0.0" y="205.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#0b0b0b" text-anchor="start" font-weight="bold">balanced</text>
+<text x="61.1" y="205.0" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#898781" text-anchor="start" font-weight="normal">sorted by time</text>
+<line x1="85.5" y1="212" x2="85.5" y2="260" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="236.1" y1="212" x2="236.1" y2="260" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="386.7" y1="212" x2="386.7" y2="260" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="522.3" y1="212" x2="522.3" y2="260" stroke="#c3c2b7" stroke-width="1"/>
+<text x="75.5" y="228.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="end" font-weight="normal">wolfssl</text>
+<path d="M85.5,218.0 H119.7 A4.0,4.0 0 0 1 123.7,222.0 V226.0 A4.0,4.0 0 0 1 119.7,230.0 H85.5 Z" fill="#2a78d6"/>
+<text x="130.7" y="228.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">88</text>
+<path d="M236.1,218.0 H252.3 A4.0,4.0 0 0 1 256.3,222.0 V226.0 A4.0,4.0 0 0 1 252.3,230.0 H236.1 Z" fill="#2a78d6"/>
+<text x="263.3" y="228.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">1034</text>
+<path d="M386.7,218.0 H475.0 A4.0,4.0 0 0 1 479.0,222.0 V226.0 A4.0,4.0 0 0 1 475.0,230.0 H386.7 Z" fill="#2a78d6"/>
+<text x="486.0" y="228.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">208</text>
+<path d="M522.3,218.0 H568.5 A4.0,4.0 0 0 1 572.5,222.0 V226.0 A4.0,4.0 0 0 1 568.5,230.0 H522.3 Z" fill="#2a78d6"/>
+<text x="579.5" y="228.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">19</text>
+<text x="75.5" y="252.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="end" font-weight="normal">stm32pqc</text>
+<path d="M85.5,242.0 H163.1 A4.0,4.0 0 0 1 167.1,246.0 V250.0 A4.0,4.0 0 0 1 163.1,254.0 H85.5 Z" fill="#2a78d6"/>
+<text x="174.1" y="252.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">188</text>
+<path d="M236.1,242.0 H305.9 A4.0,4.0 0 0 1 309.9,246.0 V250.0 A4.0,4.0 0 0 1 305.9,254.0 H236.1 Z" fill="#2a78d6"/>
+<text x="316.9" y="252.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">3782</text>
+<path d="M386.7,242.0 H411.4 A4.0,4.0 0 0 1 415.4,246.0 V250.0 A4.0,4.0 0 0 1 411.4,254.0 H386.7 Z" fill="#2a78d6"/>
+<text x="422.4" y="252.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">65</text>
+<path d="M522.3,242.0 H564.2 A4.0,4.0 0 0 1 568.2,246.0 V250.0 A4.0,4.0 0 0 1 564.2,254.0 H522.3 Z" fill="#2a78d6"/>
+<text x="575.2" y="252.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">17</text>
+<text x="0.0" y="285.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#0b0b0b" text-anchor="start" font-weight="bold">fast</text>
+<text x="30.8" y="285.0" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#898781" text-anchor="start" font-weight="normal">sorted by time</text>
+<line x1="85.5" y1="292" x2="85.5" y2="364" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="236.1" y1="292" x2="236.1" y2="364" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="386.7" y1="292" x2="386.7" y2="364" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="522.3" y1="292" x2="522.3" y2="364" stroke="#c3c2b7" stroke-width="1"/>
+<text x="75.5" y="308.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="end" font-weight="normal">pqm4</text>
+<path d="M85.5,298.0 H109.5 A4.0,4.0 0 0 1 113.5,302.0 V306.0 A4.0,4.0 0 0 1 109.5,310.0 H85.5 Z" fill="#2a78d6"/>
+<text x="120.5" y="308.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">65</text>
+<path d="M236.1,298.0 H247.3 A4.0,4.0 0 0 1 251.3,302.0 V306.0 A4.0,4.0 0 0 1 247.3,310.0 H236.1 Z" fill="#2a78d6"/>
+<text x="258.3" y="308.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">776</text>
+<path d="M386.7,298.0 H433.1 A4.0,4.0 0 0 1 437.1,302.0 V306.0 A4.0,4.0 0 0 1 433.1,310.0 H386.7 Z" fill="#2a78d6"/>
+<text x="444.1" y="308.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">114</text>
+<path d="M522.3,298.0 H595.4 A4.0,4.0 0 0 1 599.4,302.0 V306.0 A4.0,4.0 0 0 1 595.4,310.0 H522.3 Z" fill="#2a78d6"/>
+<text x="606.4" y="308.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">29</text>
+<text x="75.5" y="332.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="end" font-weight="normal">wolfssl</text>
+<path d="M85.5,322.0 H112.6 A4.0,4.0 0 0 1 116.6,326.0 V330.0 A4.0,4.0 0 0 1 112.6,334.0 H85.5 Z" fill="#2a78d6"/>
+<text x="123.6" y="332.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">72</text>
+<path d="M236.1,322.0 H247.0 A4.0,4.0 0 0 1 251.0,326.0 V330.0 A4.0,4.0 0 0 1 247.0,334.0 H236.1 Z" fill="#2a78d6"/>
+<text x="258.0" y="332.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">762</text>
+<path d="M386.7,322.0 H475.3 A4.0,4.0 0 0 1 479.3,326.0 V330.0 A4.0,4.0 0 0 1 475.3,334.0 H386.7 Z" fill="#2a78d6"/>
+<text x="486.3" y="332.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">209</text>
+<path d="M522.3,322.0 H584.3 A4.0,4.0 0 0 1 588.3,326.0 V330.0 A4.0,4.0 0 0 1 584.3,334.0 H522.3 Z" fill="#2a78d6"/>
+<text x="595.3" y="332.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">24</text>
+<text x="75.5" y="356.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="end" font-weight="normal">mldsa-native</text>
+<path d="M85.5,346.0 H135.1 A4.0,4.0 0 0 1 139.1,350.0 V354.0 A4.0,4.0 0 0 1 135.1,358.0 H85.5 Z" fill="#2a78d6"/>
+<text x="146.1" y="356.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">124</text>
+<path d="M236.1,346.0 H262.5 A4.0,4.0 0 0 1 266.5,350.0 V354.0 A4.0,4.0 0 0 1 262.5,358.0 H236.1 Z" fill="#2a78d6"/>
+<text x="273.5" y="356.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">1557</text>
+<path d="M386.7,346.0 H434.5 A4.0,4.0 0 0 1 438.5,350.0 V354.0 A4.0,4.0 0 0 1 434.5,358.0 H386.7 Z" fill="#2a78d6"/>
+<text x="445.5" y="356.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">117</text>
+<path d="M522.3,346.0 H550.9 A4.0,4.0 0 0 1 554.9,350.0 V354.0 A4.0,4.0 0 0 1 550.9,358.0 H522.3 Z" fill="#2a78d6"/>
+<text x="561.9" y="356.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">12</text>
+</svg>
