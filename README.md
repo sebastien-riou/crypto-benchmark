@@ -27,10 +27,27 @@ The other parameter sets, every operation, the split of the RAM, the versions of
 The figures are drawn by `plot_results.py` from the tables that `format_results.py` prints.
 
 ## Current status
-- Boards: STMicroelectronics [STM32U5A5](https://github.com/sebastien-riou/crypto-benchmark-stm32u5), Nuvoton [M5531](https://github.com/sebastien-riou/crypto-benchmark-m5531), Raspberry Pi [RP2350](https://github.com/sebastien-riou/crypto-benchmark-rp2350), and the CPUs Renode emulates.
-- Algorithms ([ALGORITHMS.md](ALGORITHMS.md)): [ML-DSA](ALGORITHMS.md#ml-dsa) and [ML-KEM](ALGORITHMS.md#ml-kem) are benchmarked; [AES](ALGORITHMS.md#aes) and [SHA-2](ALGORITHMS.md#sha-2) are a work in progress.
-- Libraries ([LIBRARIES.md](LIBRARIES.md)): [dilithium-lowram](LIBRARIES.md#dilithium-lowram), [mldsa-native](LIBRARIES.md#mldsa-native), [mlkem-native](LIBRARIES.md#mlkem-native), [pqm4](LIBRARIES.md#pqm4), [PQMicroLib-Core](LIBRARIES.md#pqmicrolib-core), [PQRV](LIBRARIES.md#pqrv), [STM32 Cryptographic library](LIBRARIES.md#stm32-cryptographic-library), [wolfSSL](LIBRARIES.md#wolfssl). Others can be added without changing this repository: [External libraries](#external-libraries).
-- Tools it is tested with: [Setup.md](Setup.md#tested-with).
+- Boards:
+  - STMicroelectronics [STM32U5A5](https://github.com/sebastien-riou/crypto-benchmark-stm32u5)
+  - Nuvoton [M5531](https://github.com/sebastien-riou/crypto-benchmark-m5531)
+  - Raspberry Pi [RP2350](https://github.com/sebastien-riou/crypto-benchmark-rp2350)
+  - the CPUs Renode emulates
+- Algorithms ([ALGORITHMS.md](ALGORITHMS.md)):
+  - [ML-DSA](ALGORITHMS.md#ml-dsa)
+  - [ML-KEM](ALGORITHMS.md#ml-kem)
+  - [AES](ALGORITHMS.md#aes), work in progress
+  - [SHA-2](ALGORITHMS.md#sha-2), work in progress
+- Libraries ([LIBRARIES.md](LIBRARIES.md)):
+  - [dilithium-lowram](LIBRARIES.md#dilithium-lowram)
+  - [mldsa-native](LIBRARIES.md#mldsa-native)
+  - [mlkem-native](LIBRARIES.md#mlkem-native)
+  - [pqm4](LIBRARIES.md#pqm4)
+  - [PQMicroLib-Core](LIBRARIES.md#pqmicrolib-core)
+  - [PQRV](LIBRARIES.md#pqrv)
+  - [STM32 Cryptographic library](LIBRARIES.md#stm32-cryptographic-library)
+  - [wolfSSL](LIBRARIES.md#wolfssl)
+  - others can be added without changing this repository: [External libraries](#external-libraries)
+- Tools it is tested with: [Setup.md](Setup.md#tested-with)
 
 ## Setup 
 See [Setup.md](Setup.md).
