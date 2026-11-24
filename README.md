@@ -27,69 +27,10 @@ The other parameter sets, every operation, the split of the RAM, the versions of
 The figures are drawn by `plot_results.py` from the tables that `format_results.py` prints.
 
 ## Current status
-It has been used on several targets:
-- STMicroelectronics [STM32U5A5](https://github.com/sebastien-riou/crypto-benchmark-stm32u5)
-- Nuvoton [M5531](https://github.com/sebastien-riou/crypto-benchmark-m5531)
-- Raspeberry Pi [RP2350](https://github.com/sebastien-riou/crypto-benchmark-rp2350)
-
-It contains proper benchmarking only for ML-DSA and ML-KEM. AES and SHA2 are a work in progress.
-
-Following ML-DSA librairies have been integrated (alphabetical order):
-- `MLDSA_NATIVE`: [mldsa-native](https://github.com/pq-code-package/mldsa-native) (sibling `../mldsa-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmldsa-lbmk/CMakeLists.txt`). Goals `smallram` (`MLD_CONFIG_REDUCE_RAM`) / `fast` (default memory mode), both built with `-Os`, which was faster than `-O3` or `-O2` on the pico2 and the STM32U5A5.
-  Its RV32IM assembly NTT is used on `rv32imc` and `rv32imcb`; everything else, Keccak included, is C. mldsa-native assumes that 32x32->64-bit multiplications take constant time, which the Cortex-M3 does not provide.
-- `OPEN_SOURCE`: [Dilithium-lowram](https://github.com/sebastien-riou/dilithium-lowram.git). Goal `smallram`.
-- `PQM4`: [pqm4](https://github.com/mupq/pqm4) (sibling `../pqm4` repository with its `mupq` submodule, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself (see `cmake/pqm4.cmake`). Goals `smallram` (`m4fstack`) / `fast` (`m4f`), built with `-O3` like pqm4's own speed builds.
-  Cortex-M4, M7, M33, M52 and M55 only: the assembly needs the DSP instructions and keeps data in the FPU registers, so it is built with `-mfloat-abi=softfp` and the glue enables the FPU. pqm4 has only the randomized API: the glue hands over the test vector's seed, and 32 zero bytes as `rnd` for deterministic signing.
-- `PQRV`: [PQRV](https://github.com/Ji-Peng/PQRV) (sibling `../PQRV` repository with its `libpqrv` folder), RISC-V targets `rv32imc` and `rv32imcb` only (goal `fast`), library built by `./buildit <target>` in `libpqrv`
-- `PQSHIELD`: [PQShield's PQMicroLib-Core](https://pqshield.com/products/pqm-cor/) (sibling `../pqmicrolib-library` repository). Goals `smallram` / `balanced` / `fast`: its ML-DSA tiers small, balanced and fast.
-- `STM32PQC`: ST Microelectronics's [X-CUBE-CRYPTOLIB](https://www.st.com/en/embedded-software/x-cube-cryptolib.html), V5.0.0 or later, which includes ML-KEM and ML-DSA (see [Setup.md](Setup.md)). Goals `smallram` (its low RAM signing and verification) / `balanced`.
-- `WOLFSSL`: [WolfSSL](https://github.com/sebastien-riou/wolfssl) (use 'crypto-benchmark' branch). Goals `smallram` / `balanced` / `fast`, built by its `buildit-mldsa-small`, `-balanced` and `-fast`.
-  On the Cortex-M targets, every goal uses wolfSSL's Thumb-2 assembly (`--enable-armasm`). For ML-DSA only Keccak is assembly, the ML-DSA arithmetic stays C.
-
-AES is a work in progress: only AES-128 CMAC verify of a 64-byte message is benchmarked (`libaes-lbmk`, `ALGO=aes`, `PSET=128`), with:
-- `STM32PQC`: goals `smallcode` / `fast` (cmox AES small / fast implementation)
-- `WOLFSSL`: goals `smallcode` / `fast` (`WOLFSSL_AES_SMALL_TABLES` / default tables), built by `buildit-aes-small` / `buildit-aes-fast`, C on every target (wolfSSL's Thumb-2 AES assembly ignores `WOLFSSL_AES_SMALL_TABLES`)
-
-ML-KEM is a work in progress (`libmlkem-lbmk`, `ALGO=mlkem`, `PSET=512`, `768` or `1024`). It benchmarks, on the test vectors of BTVG-MLKEM (32, 42 and 17 test cases for ML-KEM-512, ML-KEM-768 and ML-KEM-1024):
-- `key-exp`: key generation from the 64-byte seed `d || z`
-- `encaps`: encapsulation from the 32-byte `m`
-- `decaps`: decapsulation
-- `decaps-reject`: decapsulation of an invalid ciphertext (implicit rejection): the ciphertext with the bit `reject_bit` of the test case flipped. Its timing should match `decaps`
-
-Keys and ciphertexts are byte strings as specified by FIPS 203, any encoding/decoding done by a library is part of the benchmarked operation.
-Every output is checked against the test vectors (outside of the benchmarked code).
-The operations always include the input checks of FIPS 203; when a library does not do one, its wrapper (`impl_*.h`) does, with the library's own functions where it has them:
-- encapsulation: the encapsulation key modulus check of section 7.2 (every coefficient of `ek` below q);
-- decapsulation: the decapsulation key hash check of section 7.3 (`H(ek)` against the value stored in the key).
-
-After the measurements, before announcing their end, the firmware checks that encapsulation rejects a key with a coefficient equal to q, and decapsulation a key whose stored `H(ek)` is wrong; if one of them does not, the run stops with error code `0x50000007` or `0x50000006` and no results are recorded.
-The following libraries are integrated (`OPEN_SOURCE` has no ML-KEM implementation):
-- `MLKEM_NATIVE`: [mlkem-native](https://github.com/pq-code-package/mlkem-native) (sibling `../mlkem-native` repository, upstream, pinned by commit in `setup_manifest.py`), compiled by crypto-benchmark itself from its single-file sources (see `libmlkem-lbmk/CMakeLists.txt`). Single goal `fast`: one Keccak state at a time (`MLK_CONFIG_SERIAL_FIPS202_ONLY`) and `-Os`, the fastest configuration on the pico2 and the STM32U5A5 (the default 4-way Keccak was 2 to 7 % slower, `-O3` and `-O2` slower too). The library does both checks (in `enc_derand` and `dec`).
-  It has no backend for these targets: everything, Keccak included, is C. mlkem-native assumes that 32x32->64-bit multiplications take constant time, which the Cortex-M3 does not provide.
-- `PQM4`: [pqm4](https://github.com/mupq/pqm4) (see the ML-DSA list): goals `smallram` (`m4fstack`) / `fast` (`m4fspeed`), Cortex-M4, M7, M33, M52 and M55 only. pqm4 has only the randomized API, the glue hands over the test vector's seeds. The wrapper does both checks (`kem_ek_modulus_ok`, and the hash check with pqm4's SHA3-256).
-- `PQRV`: goal `fast`, `rv32imc` and `rv32imcb` targets only. The wrapper does both checks (`pqrv_mlkem<k>_check_pk`, `pqrv_mlkem<k>_check_sk`).
-- `PQSHIELD`: goals `balanced` / `fast` (single ML-KEM implementation, built from the `<target>-balanced` / `<target>-fast` preset, see `presets/crypto-benchmark.json` in pqmicrolib-library). The wrapper does both checks (`pqs_mlkem_public_key_validate`, `pqs_mlkem_secret_key_validate`).
-- `STM32PQC`: goal `balanced`. The library does the modulus check, the wrapper the hash check (`cmox_hash_compute`, SHA3-256). ST does not document the size of the working buffer, and the library does not count what its ML-KEM code uses, so the wrapper measures it: it fills the buffer with a pattern and, after each operation (outside the timed code), reports the highest byte changed as extra data `membuf peak` (visible with `--details=1`). On the STM32U5A5 (2026-11-23, with a 32 KiB buffer) the peak was 0 for every operation and parameter set: the ML-KEM code does not use the buffer. Its default size (`STM32PQC_MLKEM_MEMBUF_SIZE`) is therefore 4 bytes, so that the static RAM reported is the library's own. If an operation reaches the end of the buffer, the run stops with error code `0xFFFB0000`: rebuild with a larger `-DSTM32PQC_MLKEM_MEMBUF_SIZE=<bytes>`, then set it to the largest peak reported.
-- `WOLFSSL`: goals `smallram` / `fast` (`WOLFSSL_MLKEM_SMALL` + `WOLFSSL_MLKEM_*_SMALL_MEM` / default), built by `buildit-mlkem-small` / `buildit-mlkem-fast`. The library does both checks (in `wc_MlKemKey_DecodePublicKey` and `wc_MlKemKey_DecodePrivateKey`).
-  On the Cortex-M targets, both goals use wolfSSL's Thumb-2 assembly (`--enable-armasm`).
-
-The test vectors are the published sets of BTVG-MLKEM 0.0.2, `mlkem512-n32-h2F3BDE49`, `mlkem768-n42-h523BACDC` and `mlkem1024-n17-hFD044788`, copied in [libmlkem-lbmk/include](libmlkem-lbmk/include) with their records (`<name>.py`).
-The cost of a key depends on the generation of the matrix A, a rejection sampler: most of its entries take 3 SHAKE128 blocks, a few take 4.
-Each set has a best case (no extra block and few iterations of the sampler), a worst case (4, 5 and 6 extra blocks for ML-KEM-512, ML-KEM-768 and ML-KEM-1024, a probability of about 2^-28) and an average set (keys whose numbers of extra blocks and of iterations match the long term averages).
-For each operation, `format_results.py` reports the minimum on the best case, the mean over the average set and the maximum on the worst case, with the probabilities from the records.
-
-Sanity check build: with `-DSANITY_TV=1` (`benchmark.py --sanity-tv`), the firmware uses the test vectors generated by [libmlkem-lbmk/gen-tv.py](libmlkem-lbmk/gen-tv.py) instead (Python standard library only, it checks its FIPS 203 implementation against known answer tests first).
-They are 16 test cases per parameter set on other keys, the last 2 selected so that the generation of A needs a 4th SHAKE128 block for some entries; they were the benchmark's test vectors before BTVG-MLKEM.
-These runs check the implementations, they are not benchmarks: `format_results.py` reports them only with `--sanity-tv` (minimum, average and maximum over all the test cases), and never mixes them with the runs on the sets of BTVG-MLKEM.
-
-This has been tested with:
-- Ubuntu 24.04
-- cmake 3.28.3
-- gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
-- xpack-arm-none-eabi-gcc-14.2.1-1.1 (--version reports 'arm-none-eabi-gcc (xPack GNU Arm Embedded GCC x86_64) 14.2.1 20241119')
-- xpack-riscv-none-elf-gcc-15.2.0-1 (--version reports 'riscv-none-elf-gcc (xPack GNU RISC-V Embedded GCC x86_64) 15.2.0')
-- Python 3.12.3
-- Renode 1.16 portable
+- Boards: STMicroelectronics [STM32U5A5](https://github.com/sebastien-riou/crypto-benchmark-stm32u5), Nuvoton [M5531](https://github.com/sebastien-riou/crypto-benchmark-m5531), Raspberry Pi [RP2350](https://github.com/sebastien-riou/crypto-benchmark-rp2350), and the CPUs Renode emulates.
+- Algorithms ([ALGORITHMS.md](ALGORITHMS.md)): [ML-DSA](ALGORITHMS.md#ml-dsa) and [ML-KEM](ALGORITHMS.md#ml-kem) are benchmarked; [AES](ALGORITHMS.md#aes) and [SHA-2](ALGORITHMS.md#sha-2) are a work in progress.
+- Libraries ([LIBRARIES.md](LIBRARIES.md)): [dilithium-lowram](LIBRARIES.md#dilithium-lowram), [mldsa-native](LIBRARIES.md#mldsa-native), [mlkem-native](LIBRARIES.md#mlkem-native), [pqm4](LIBRARIES.md#pqm4), [PQMicroLib-Core](LIBRARIES.md#pqmicrolib-core), [PQRV](LIBRARIES.md#pqrv), [STM32 Cryptographic library](LIBRARIES.md#stm32-cryptographic-library), [wolfSSL](LIBRARIES.md#wolfssl). Others can be added without changing this repository: [External libraries](#external-libraries).
+- Tools it is tested with: [Setup.md](Setup.md#tested-with).
 
 ## Setup 
 See [Setup.md](Setup.md).

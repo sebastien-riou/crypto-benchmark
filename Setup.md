@@ -1,5 +1,14 @@
 # Setup
 
+## Tested with
+- Ubuntu 24.04
+- cmake 3.28.3
+- gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+- xpack-arm-none-eabi-gcc-14.2.1-1.1 (--version reports 'arm-none-eabi-gcc (xPack GNU Arm Embedded GCC x86_64) 14.2.1 20241119')
+- xpack-riscv-none-elf-gcc-15.2.0-1 (--version reports 'riscv-none-elf-gcc (xPack GNU RISC-V Embedded GCC x86_64) 15.2.0')
+- Python 3.12.3
+- Renode 1.16 portable
+
 ## Setup by script
 ````
 git clone https://github.com/sebastien-riou/crypto-benchmark.git
@@ -60,7 +69,7 @@ see the [STM32PQC library](#stm32pqc-library) section below for manual setup.
 ----
 
 ## Setup step by step
-This section is a step by step guide, to do the same as the [previous sections](#Setup-by-script).
+This section is a step by step guide, to do the same as the [previous sections](#setup-by-script).
 
 ### Clone repositories
 Clone 3 repositories at the same level:
