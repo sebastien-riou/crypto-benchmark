@@ -43,7 +43,7 @@ ENDIF()
 
 IF ( ${MLKEM_LIB} STREQUAL "WOLFSSL" )
 	IF ( NOT EXISTS ${GOAL_DIR}/wolfssl/options.h )
-		MESSAGE( FATAL_ERROR "wolfssl is not built for ${TARGET_CPU} with goal ${GOAL} (${GOAL_DIR}/wolfssl/options.h is missing). Build it in the wolfssl repository (its script is named in crypto-libraries/wolfssl.py) then 'python3 link_ext.py'" )
+		MESSAGE( FATAL_ERROR "wolfssl is not built for ${TARGET_CPU} with goal ${GOAL} (${GOAL_DIR}/wolfssl/options.h is missing). Build it with 'python3 goals.py build WOLFSSL ${TARGET_CPU} ${ALGO} ${PSET} ${GOAL}' then 'python3 link_ext.py'" )
 	ENDIF()
 ENDIF()
 

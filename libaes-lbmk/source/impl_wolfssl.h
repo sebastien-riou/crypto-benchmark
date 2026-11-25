@@ -5,10 +5,12 @@
 #include <wolfssl/wolfcrypt/cmac.h>
 
 #ifndef WOLFSSL_CMAC
-  #error "WOLFSSL built without CMAC (use buildit-aes-<goal> in the wolfssl repo)"
+  #error "WOLFSSL built without CMAC (rebuild it: see crypto-libraries/wolfssl.py)"
 #endif
 
-//goal smallcode is built by wolfssl's buildit-aes-small (see crypto-libraries/wolfssl.py)
+//what each goal is made of is defined in crypto-libraries/wolfssl.py, which builds the library (benchmark.py, or
+//"python3 goals.py build WOLFSSL <target> aes <pset> <goal>"); the checks below reject a library built otherwise.
+//A build with options (GOAL_CUSTOM) may differ from its goal's configuration.
 #define WOLFSSL_smallcode 1
 #define WOLFSSL_fast 2
 
@@ -16,13 +18,13 @@
 
 #if WOLFSSL_INDEX == WOLFSSL_smallcode
   #define IMPL_NAME "wolfssl-smallcode"
-  #ifndef WOLFSSL_AES_SMALL_TABLES
-    #error "wolfssl-smallcode expects a build with WOLFSSL_AES_SMALL_TABLES (buildit-aes-small)"
+  #if !GOAL_CUSTOM && !defined(WOLFSSL_AES_SMALL_TABLES)
+    #error "wolfssl-smallcode expects a build with WOLFSSL_AES_SMALL_TABLES (see crypto-libraries/wolfssl.py)"
   #endif
 #elif WOLFSSL_INDEX == WOLFSSL_fast
   #define IMPL_NAME "wolfssl-fast"
-  #ifdef WOLFSSL_AES_SMALL_TABLES
-    #error "wolfssl-fast expects a build without WOLFSSL_AES_SMALL_TABLES (buildit-aes-fast)"
+  #if !GOAL_CUSTOM && defined(WOLFSSL_AES_SMALL_TABLES)
+    #error "wolfssl-fast expects a build without WOLFSSL_AES_SMALL_TABLES (see crypto-libraries/wolfssl.py)"
   #endif
 #else
   #error "WOLFSSL AES-CMAC supports GOAL smallcode or fast"

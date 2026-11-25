@@ -17,7 +17,8 @@ def main(*,preset='minSizeRel', goal=None):
     Libraries with one build per target are linked in target/<cpu>/<library>/.
     Libraries with one build per goal (the manifests with link_dirs(), see crypto-libraries/) are linked for
     every goal at once, in target/<cpu>/goals/<algo>/<goal>/<library>/: CMake takes the folder of its GOAL, so
-    a build does not depend on a previous run of this script for the right goal.
+    a build does not depend on a previous run of this script for the right goal. Their builds with options
+    (manifests with custom_ids()) are linked the same way, in .../<algo>/custom_<hash>/<library>/.
 
     goal: optional, recorded in goal.txt as the goal of a ./buildit run without GOAL=<goal>."""
     targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m52','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
@@ -144,7 +145,9 @@ def main(*,preset='minSizeRel', goal=None):
                 if not os.listdir(old_dir):
                     os.rmdir(old_dir)
             for algo in helper.algorithms():
-                for lib_goal in goals.goals_of(helper,algo):
+                # every goal, and the builds with options (benchmark.py --opt) the library's repository holds
+                custom_ids = getattr(helper,'custom_ids',lambda root,targetname,algo: [])
+                for lib_goal in goals.goals_of(helper,algo) + custom_ids(root,targetname,algo):
                     source_lib,source_h = helper.link_dirs(targetname,lib_goal,algo)
                     dst_dir = os.path.join('target',targetname,'goals',algo,lib_goal,helper.link_name)
                     link(dst_dir,f'{root}/{source_lib}','*.a')

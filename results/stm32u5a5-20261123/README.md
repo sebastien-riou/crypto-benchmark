@@ -209,6 +209,8 @@ results/stm32u5a5-20261123/reproduce
 git diff --stat results/stm32u5a5-20261123
 ````
 
+- wolfSSL's goals were redefined after this round (see [LIBRARIES.md](../../LIBRARIES.md#wolfssl)): to reproduce its rows,
+  run the script from commit `7ec987c` of crypto-benchmark, the last one with the definitions of this page.
 - `git diff` shows how the reproduction differs from this page's files. Cycle counts repeat within 0.02 % on this
   board, so the times should come out the same to the figures' precision.
 - The script makes one `benchmark.py` call per library, algorithm and goal, as the measures of this page were made,

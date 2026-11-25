@@ -9,50 +9,58 @@
 #endif
 
 
-//goal smallram is built by wolfssl's buildit-mldsa-small (see crypto-libraries/wolfssl.py)
+//what each goal is made of is defined in crypto-libraries/wolfssl.py, which builds the library (benchmark.py, or
+//"python3 goals.py build WOLFSSL <target> mldsa <pset> <goal>"); the checks below reject a library built otherwise.
+//A build with options (GOAL_CUSTOM) may differ from its goal's configuration.
 #define WOLFSSL_smallram 1
 #define WOLFSSL_balanced 2
 #define WOLFSSL_fast 3
+#define WOLFSSL_smallcode 4
 
 #define WOLFSSL_INDEX CAT(WOLFSSL_,GOAL)
 
-//on Cortex-M, buildit-mldsa-<goal> uses wolfSSL's Thumb-2 assembly (for ML-DSA, only Keccak): this rejects a build
-//from before that, or for another CPU
+//on Cortex-M the library is configured with wolfSSL's Thumb-2 assembly (for ML-DSA, only Keccak): this rejects a
+//build from before that, or for another CPU
 #if defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M')
   #ifndef WOLFSSL_ARMASM_THUMB2
-    #error "on Cortex-M, wolfssl-<goal> expects a build with wolfSSL's Thumb-2 assembly (rebuild with buildit-mldsa-<goal>)"
+    #error "on Cortex-M, wolfssl-<goal> expects a build with wolfSSL's Thumb-2 assembly (rebuild it: see crypto-libraries/wolfssl.py)"
   #endif
 #elif defined(WOLFSSL_ARMASM)
-  #error "wolfSSL's ARM assembly is only expected on Cortex-M (rebuild with buildit-mldsa-<goal>)"
+  #error "wolfSSL's ARM assembly is only expected on Cortex-M (rebuild it: see crypto-libraries/wolfssl.py)"
+#endif
+
+//the small memory key generation, signature and verification, the verification buffers on the heap
+#if defined(WOLFSSL_DILITHIUM_SMALL) && defined(WOLFSSL_DILITHIUM_MAKE_KEY_SMALL_MEM) \
+  && defined(WOLFSSL_DILITHIUM_SIGN_SMALL_MEM) && defined(WOLFSSL_DILITHIUM_VERIFY_SMALL_MEM) \
+  && !defined(WOLFSSL_DILITHIUM_VERIFY_NO_MALLOC)
+  #define WOLFSSL_SMALL_MEM_BUILD 1
+#else
+  #define WOLFSSL_SMALL_MEM_BUILD 0
 #endif
 
 #if WOLFSSL_INDEX == WOLFSSL_smallram
   #define IMPL_NAME "wolfssl-smallram"
-  #ifndef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
-    #error
+  #if !GOAL_CUSTOM && (!WOLFSSL_SMALL_MEM_BUILD || defined(WOLFSSL_DILITHIUM_SIGN_SMALL_MEM_PRECALC_A) || defined(WOLFSSL_SHA3_SMALL))
+    #error "wolfssl-smallram expects a build with the small code and the small memory operations (see crypto-libraries/wolfssl.py)"
   #endif
-#endif
-
-#if WOLFSSL_INDEX == WOLFSSL_balanced
+#elif WOLFSSL_INDEX == WOLFSSL_smallcode
+  #define IMPL_NAME "wolfssl-smallcode"
+  #if !GOAL_CUSTOM && (!WOLFSSL_SMALL_MEM_BUILD || defined(WOLFSSL_DILITHIUM_SIGN_SMALL_MEM_PRECALC_A) || !defined(WOLFSSL_SHA3_SMALL))
+    #error "wolfssl-smallcode expects a build with the small code, the small memory operations and the compact Keccak (see crypto-libraries/wolfssl.py)"
+  #endif
+#elif WOLFSSL_INDEX == WOLFSSL_balanced
   #define IMPL_NAME "wolfssl-balanced"
-  #ifdef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
-    #error
+  #if !GOAL_CUSTOM && (!WOLFSSL_SMALL_MEM_BUILD || !defined(WOLFSSL_DILITHIUM_SIGN_SMALL_MEM_PRECALC_A))
+    #error "wolfssl-balanced expects a build with the small code and the signature that keeps the matrix A (see crypto-libraries/wolfssl.py)"
   #endif
-#endif
-
-#if WOLFSSL_INDEX == WOLFSSL_fast
+#elif WOLFSSL_INDEX == WOLFSSL_fast
   #define IMPL_NAME "wolfssl-fast"
-  #ifdef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
-    #error
+  #if !GOAL_CUSTOM && (defined(WOLFSSL_DILITHIUM_SMALL) || defined(WOLFSSL_DILITHIUM_SIGN_SMALL_MEM) || !defined(WOLFSSL_DILITHIUM_VERIFY_SMALL_MEM))
+    #error "wolfssl-fast expects a build without the small code and the small memory signature, with the small memory verification (see crypto-libraries/wolfssl.py)"
   #endif
+#else
+  #error "WOLFSSL ML-DSA supports GOAL smallram, smallcode, balanced or fast"
 #endif
-
-
-//#ifdef WOLFSSL_DILITHIUM_SIGN_SMALL_MEM
-//#define IMPL_NAME "wolfssl-lowram"
-//#else
-//#define IMPL_NAME "wolfssl-fast"
-//#endif
 
 
 #include <stddef.h>

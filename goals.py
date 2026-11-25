@@ -7,10 +7,15 @@ Used by benchmark.py, link_ext.py and format_results.py, and by the shell script
     python3 goals.py check <CRYPTO_LIB> <algo> <goal> [<k=v,k=v>]
                                                    fails unless the library has this goal and these options
     python3 goals.py list                          the goals of every library
+    python3 goals.py build <CRYPTO_LIB> <target> <algo> <pset> <goal> [<k=v,k=v>]
+                                                   builds the library in its repository, as benchmark.py does
+                                                   (then run link_ext.py); nothing to do for a library that
+                                                   crypto-benchmark compiles itself
 """
 
 import glob
 import hashlib
+import inspect
 import os
 import re
 import runpy
@@ -127,6 +132,13 @@ def check_opts(helper, algo, opts):
     if unknown:
         known = ', '.join(sorted(declared)) if declared else 'none'
         raise GoalError(f'{helper.codename}, {algo}: unknown option(s) {", ".join(unknown)} (it has: {known})')
+    # optional: a manifest that knows the values its options take checks them too (it raises ValueError)
+    check_values = getattr(helper, 'check_options', None)
+    if check_values:
+        try:
+            check_values(algo, opts)
+        except ValueError as e:
+            raise GoalError(str(e)) from None
 
 
 def manifests():
@@ -195,6 +207,34 @@ def lib_rev(codename):
     return git_revision(path)
 
 
+def build_library(codename, sw_target, algo, pset, goal, opts=None):
+    """Run the build command of a library's manifest for one goal (with options). Returns the command run,
+    None when the manifest has nothing to build."""
+    check_goal(goal)
+    helper = find_library(codename)
+    if helper is None:
+        raise GoalError(f'no library with CRYPTO_LIB "{codename}"')
+    lib_goals = goals_of(helper, algo)
+    if goal not in lib_goals:
+        raise GoalError(f'{codename} has no goal "{goal}" for {algo} (it has: {", ".join(lib_goals) or "none"})')
+    check_opts(helper, algo, opts)
+    # an older manifest takes fewer arguments
+    kwargs = {'opts': dict(opts or {}), 'cores': sw_target}
+    accepted = inspect.signature(helper.build_cmd).parameters
+    try:
+        cmd = helper.build_cmd(sw_target, goal, pset, algo, **{k: v for k, v in kwargs.items() if k in accepted})
+    except ValueError as e:
+        raise GoalError(str(e)) from None
+    if not cmd:
+        return None
+    cwd = cmd.get('dir', '.')
+    if not os.path.isabs(cwd):
+        path = helper.path if os.path.isabs(helper.path) else os.path.join(ROOT, helper.path)
+        cwd = os.path.join(path, cwd)
+    subprocess.run(cmd['cmd'], check=True, cwd=cwd)  # noqa: S603
+    return cmd['cmd']
+
+
 def main(argv):
     if len(argv) == 3 and argv[0] == 'default':
         helper = find_library(argv[1])
@@ -216,6 +256,10 @@ def main(argv):
             if goal not in lib_goals:
                 raise GoalError(f'{codename} has no goal "{goal}" for {algo} (it has: {", ".join(lib_goals) or "none"})')
             check_opts(helper, algo, opts)
+    elif len(argv) in (6, 7) and argv[0] == 'build':
+        codename, sw_target, algo, pset, goal = argv[1:6]
+        cmd = build_library(codename, sw_target, algo, pset, goal, parse_opts(argv[6] if len(argv) == 7 else ''))
+        print('built with: ' + ' '.join(cmd) if cmd else f'{codename}: nothing to build, crypto-benchmark compiles it')
     elif argv == ['list']:
         for goal, meaning in STANDARD_GOALS.items():
             print(f'{goal:10} {meaning}')

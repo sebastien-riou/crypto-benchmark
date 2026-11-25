@@ -14,7 +14,7 @@ A goal says what a configuration of a library is for (least RAM, least flash, fa
 | [PQMicroLib-Core](#pqmicrolib-core) | `pqmicrolib` | `PQSHIELD` | `smallram`, `balanced`, `fast` | `balanced`, `fast` | SHA-2: `balanced` | Cortex-M3 to M55, `rv32imc`, `rv32imcb`, `rv64imc` |
 | [PQRV](#pqrv) | `pqrv` | `PQRV` | `fast` | `fast` | | `rv32imc`, `rv32imcb` |
 | [STM32 Cryptographic library](#stm32-cryptographic-library) | `stm32pqc` | `STM32PQC` | `smallram`, `balanced` | `balanced` | AES: `smallcode`, `fast` | Cortex-M3, M4, M7, M33, M55, M85, on STM32 devices only |
-| [wolfSSL](#wolfssl) | `wolfssl` | `WOLFSSL` | `smallram`, `balanced`, `fast` | `smallram`, `fast` | AES: `smallcode`, `fast` | every Cortex-M and RISC-V target |
+| [wolfSSL](#wolfssl) | `wolfssl` | `WOLFSSL` | `smallram`, `smallcode`, `balanced`, `fast` | `smallram`, `smallcode`, `balanced`, `fast` | AES: `smallcode`, `fast` | every Cortex-M and RISC-V target |
 
 The `--lib` name is the manifest in [crypto-libraries](crypto-libraries) (for `benchmark.py`), `CRYPTO_LIB` the
 value `buildit` and CMake take. `python3 goals.py list` prints the goals and options of every library.
@@ -143,19 +143,87 @@ Renode. There is no library for the Cortex-M52.
 ## wolfSSL
 
 [wolfSSL](https://github.com/sebastien-riou/wolfssl), a fork with the build scripts crypto-benchmark uses (branch
-`crypto-benchmark`), in the sibling `../wolfssl` repository. Each goal is built by one of its scripts.
+`crypto-benchmark`), in the sibling `../wolfssl` repository.
+What each goal is made of is defined in [crypto-libraries/wolfssl.py](crypto-libraries/wolfssl.py), as the values of
+the options listed below. The library is built with them by the fork's scripts (`buildit-mldsa`, `buildit-mlkem`,
+`buildit-aes`), into `build/<target>-<algo>-<goal>` of the wolfssl repository: `benchmark.py` does it, or
+`python3 goals.py build WOLFSSL <target> <algo> <pset> <goal>`.
 
-| Algorithm | Goal | Configuration | Built by |
-|---|---|---|---|
-| ML-DSA | `smallram` | `WOLFSSL_DILITHIUM_SMALL`, `WOLFSSL_DILITHIUM_SIGN_SMALL_MEM`, `WOLFSSL_DILITHIUM_VERIFY_SMALL_MEM` | `buildit-mldsa-small` |
-| ML-DSA | `balanced` | `WOLFSSL_DILITHIUM_SMALL` | `buildit-mldsa-balanced` |
-| ML-DSA | `fast` | default | `buildit-mldsa-fast` |
-| ML-KEM | `smallram` | `WOLFSSL_MLKEM_SMALL`, `WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM`, `WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM` | `buildit-mlkem-small` |
-| ML-KEM | `fast` | default | `buildit-mlkem-fast` |
-| AES | `smallcode` | `WOLFSSL_AES_SMALL_TABLES` | `buildit-aes-small` |
-| AES | `fast` | default tables | `buildit-aes-fast` |
+| Algorithm | Goal | Configuration |
+|---|---|---|
+| ML-DSA | `smallram` | small code (`WOLFSSL_DILITHIUM_SMALL`); small memory key generation, signature and verification (`..._MAKE_KEY_SMALL_MEM`, `..._SIGN_SMALL_MEM`, `..._VERIFY_SMALL_MEM`); `-Os` |
+| ML-DSA | `smallcode` | `smallram`, with the compact C Keccak (`WOLFSSL_SHA3_SMALL`) instead of the assembly |
+| ML-DSA | `balanced` | `smallram`, with the signature that expands the matrix A once per signature instead of once per attempt (`..._SIGN_SMALL_MEM_PRECALC_A`) |
+| ML-DSA | `fast` | wolfSSL's defaults, with the small memory verification (`..._VERIFY_SMALL_MEM`) |
+| ML-KEM | `smallram` | small code (`WOLFSSL_MLKEM_SMALL`); small memory key generation and encapsulation (`WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM`, `WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM`); `-Os` |
+| ML-KEM | `balanced` | `smallram` without allocator (`WOLFSSL_NO_MALLOC`): the buffers are on the stack |
+| ML-KEM | `smallcode` | `balanced`, with C arithmetic (`WC_MLKEM_NO_ASM`) and the compact C Keccak instead of the assembly |
+| ML-KEM | `fast` | wolfSSL's defaults, at `-Os` |
+| AES | `smallcode` | `WOLFSSL_AES_SMALL_TABLES`, `WOLFSSL_AES_NO_UNROLL`, `-Os` |
+| AES | `fast` | wolfSSL's defaults (full tables) |
 
-- On the Cortex-M targets, every ML-DSA and ML-KEM goal uses wolfSSL's Thumb-2 assembly (`--enable-armasm`). For
-  ML-DSA only Keccak is assembly, the ML-DSA arithmetic stays C.
-- AES is C on every target: wolfSSL's Thumb-2 AES assembly ignores `WOLFSSL_AES_SMALL_TABLES`.
-- ML-KEM input checks: done by the library (in `wc_MlKemKey_DecodePublicKey` and `wc_MlKemKey_DecodePrivateKey`).
+What the goals give on the STM32U5A5 (Cortex-M33, measured on 2026-11-25), for ML-DSA-87 and ML-KEM-768: time in
+million cycles (the signature's is the average), sizes in KiB. Flash and static RAM are from the firmware (as in
+[Benchmark memory footprints](README.md#benchmark-memory-footprints)), the stack as measured, and the heap column
+gives the largest block the library allocates, from the source (the harness reports the growth of the heap area,
+which adds up the blocks of key generation and signature: 50 KiB for `smallram`, 197 for `fast`).
+
+| ML-DSA-87 | Key generation | Signature | Verification | Flash | Static RAM | Stack | Largest block on the heap |
+|---|---|---|---|---|---|---|---|
+| `smallram` | 6.63 | 37.36 | 6.81 | 16.4 | 8.9 | 1.8 | 26 (a signature) |
+| `smallcode` | 11.02 | 54.64 | 11.03 | 13.6 | 8.9 | 1.7 | 26 |
+| `balanced` | 6.63 | 16.31 | 6.81 | 17.0 | 8.9 | 1.9 | 82 |
+| `fast` | 6.30 | 11.51 | 6.05 | 25.1 | 8.9 | 2.8 | 118 |
+
+| ML-KEM-768 | Key generation | Encapsulation | Decapsulation | Flash | Static RAM | Stack | Largest block on the heap |
+|---|---|---|---|---|---|---|---|
+| `smallram` | 0.936 | 0.991 | 1.232 | 18.6 | 6.1 | 1.3 | 4.5 (an encapsulation) |
+| `balanced` | 0.942 | 1.003 | 1.247 | 15.2 | 5.0 | 8.8 | none |
+| `smallcode` | 1.755 | 1.912 | 2.393 | 8.8 | 5.0 | 8.7 | none |
+| `fast` | 0.910 | 0.953 | 1.184 | 21.7 | 6.1 | 1.2 | 10.5 |
+
+The goals were chosen from sizes and Renode runs, then timed on the board, which reversed two of Renode's rankings
+(Renode does not model the cache or the flash wait states): `-Os` for ML-KEM, 1 % slower in Renode and 3 to 8 % faster on the board,
+and the small memory verification of ML-DSA, 2 % slower in Renode and 5 to 6 % faster on the board.
+
+- **Assembly:** on the Cortex-M targets wolfSSL is configured with its Thumb-2 assembly (`--enable-armasm`).
+  - ML-DSA: only Keccak is assembly, the ML-DSA arithmetic stays C.
+  - ML-KEM: Keccak, the NTT, the inverse NTT, the base multiplication and the rejection sampler.
+  - The `smallcode` goals do not use it: the compact Keccak is 2.8 KiB smaller, the C arithmetic of ML-KEM 3.6 KiB.
+  - AES is C on every target: wolfSSL's Thumb-2 AES assembly ignores `WOLFSSL_AES_SMALL_TABLES`.
+- **Optimization level:** wolfSSL's configure picks `-O2` for these builds; every goal but ML-DSA `fast` is built at
+  `-Os`. On the board `-Os` makes ML-KEM 3 to 8 % faster and ML-DSA about 6 % slower; it saves 10 % of the flash of
+  the small configurations. `-O3` was no faster in Renode, and 4 to 12 KiB larger.
+- **Parameter sets:** one library holds the three of them, so the key structure, which is the static RAM, has the
+  size of the largest whatever the parameter set benchmarked.
+- **ML-DSA memory:** the heap blocks are, in polynomials of 1 KiB, for a matrix of `k` rows and `l` columns
+  (4 and 4, 6 and 5, 8 and 7 for ML-DSA-44, -65 and -87):
+  - small memory: `l + 2k + 1` for a key generation, `l + 2k + 3` for a signature, `l + 4` for a verification;
+  - `balanced`: `l + 2k + 3 + kl` for a signature;
+  - `fast`: `l + 2k + kl` for a key generation, `3l + 5k + 1 + kl` for a signature, and the small memory
+    verification; wolfSSL's default verification takes `1 + l + 2k + kl`.
+- **AES:** both goals index tables with secret bytes. wolfSSL's bitsliced AES (`WC_AES_BITSLICED`) does not, but is
+  not offered: tried on 2026-11-25, a CMAC of 16 bytes took about 700 times the cycles of the table-based code and
+  more stack than the 40 KiB the harness measures.
+- **ML-KEM input checks:** done by the library (in `wc_MlKemKey_DecodePublicKey` and
+  `wc_MlKemKey_DecodePrivateKey`).
+- **Options** (`--opt`), the first value being wolfSSL's default:
+  - every algorithm: `opt` (`default`, `-Os`, `-O2`, `-O3`), `sha3` (`asm`, `c`, `small`);
+  - ML-DSA: `code` (`large`, `nolarge`, `small`), `keygen` (`full`, `small`), `sign` (`full`, `small`, `precalc`,
+    `precalc_a`), `verify` (`full`, `small`, `small_nomalloc`, `smallest`), `poly64` (`0`, `1`);
+  - ML-KEM: `code` (`large`, `nolarge`, `small`), `keygen` (`full`, `small`), `encaps` (`full`, `small`), `asm`
+    (`1`, `0`), `nomalloc` (`0`, `1`);
+  - AES: `tables` (`full`, `small`), `unroll` (`1`, `0`).
+- **Values no goal uses**, and why (sizes and Renode runs of 2026-11-25):
+  - `sign=precalc` (the decoded key vectors are kept during a signature): 3 % faster than `sign=small` for nearly
+    twice its memory;
+  - `verify=small_nomalloc` and `smallest`: the verification buffers move from the heap, where they reuse the
+    memory of a signature, to the key structure, 11.3 and 5.3 KiB more static RAM. They suit a device that only
+    verifies;
+  - `code=nolarge`: nearly the size of `large`;
+  - `sha3=c`: the size of the assembly, and slower;
+  - `poly64`: 1 % faster for 2 KiB more.
+- **Earlier definitions:** until 2026-11-25 `smallram` for ML-DSA had the default key generation and
+  `verify=small_nomalloc`, `balanced` was `fast` with `code=small`, `fast` was wolfSSL's defaults for both algorithms,
+  and nothing was built at `-Os`. The round of
+  2026-11-23 measured those: its page lists them.

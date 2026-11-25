@@ -122,8 +122,9 @@ ENDIF()
 MESSAGE("LIB_REV=" ${LIB_REV})
 add_compile_definitions(LIB_REV_STR="${LIB_REV}")
 
-# Libraries with one build per goal are linked by link_ext.py in a folder per algorithm and goal
-set(GOAL_DIR ${TARGET_DIR}/goals/${ALGO}/${GOAL})
+# Libraries with one build per goal are linked by link_ext.py in a folder per algorithm and goal (custom_<hash>
+# for a goal built with options)
+set(GOAL_DIR ${TARGET_DIR}/goals/${ALGO}/${GOAL_ID})
 
 option(DEBUG_INFO "add -g (debug info only, the generated code is unchanged)" OFF)
 if(DEBUG_INFO)

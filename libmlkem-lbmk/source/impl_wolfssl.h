@@ -5,37 +5,59 @@
 #include <wolfssl/wolfcrypt/wc_mlkem.h>
 
 #ifndef WOLFSSL_HAVE_MLKEM
-  #error "WOLFSSL built without ML-KEM (use buildit-mlkem-<goal> in the wolfssl repo)"
+  #error "WOLFSSL built without ML-KEM (rebuild it: see crypto-libraries/wolfssl.py)"
 #endif
 
-//goal smallram is built by wolfssl's buildit-mlkem-small (see crypto-libraries/wolfssl.py)
+//what each goal is made of is defined in crypto-libraries/wolfssl.py, which builds the library (benchmark.py, or
+//"python3 goals.py build WOLFSSL <target> mlkem <pset> <goal>"); the checks below reject a library built otherwise.
+//A build with options (GOAL_CUSTOM) may differ from its goal's configuration.
 #define WOLFSSL_smallram 1
 #define WOLFSSL_fast 2
+#define WOLFSSL_smallcode 3
+#define WOLFSSL_balanced 4
 
 #define WOLFSSL_INDEX CAT(WOLFSSL_,GOAL)
 
+//the small code and the small memory key generation and encapsulation
+#if defined(WOLFSSL_MLKEM_SMALL) && defined(WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM) \
+  && defined(WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM)
+  #define WOLFSSL_SMALL_BUILD 1
+#else
+  #define WOLFSSL_SMALL_BUILD 0
+#endif
+
 #if WOLFSSL_INDEX == WOLFSSL_smallram
   #define IMPL_NAME "wolfssl-smallram"
-  #if !defined(WOLFSSL_MLKEM_SMALL) || !defined(WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM) || !defined(WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM)
-    #error "wolfssl-smallram expects a build with WOLFSSL_MLKEM_SMALL, WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM and WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM (buildit-mlkem-small)"
+  #if !GOAL_CUSTOM && (!WOLFSSL_SMALL_BUILD || defined(WOLFSSL_NO_MALLOC) || defined(WC_MLKEM_NO_ASM))
+    #error "wolfssl-smallram expects a build with the small code and memory options, and the allocator (see crypto-libraries/wolfssl.py)"
+  #endif
+#elif WOLFSSL_INDEX == WOLFSSL_balanced
+  #define IMPL_NAME "wolfssl-balanced"
+  #if !GOAL_CUSTOM && (!WOLFSSL_SMALL_BUILD || !defined(WOLFSSL_NO_MALLOC) || defined(WC_MLKEM_NO_ASM))
+    #error "wolfssl-balanced expects a build with the small code and memory options, and no allocator (see crypto-libraries/wolfssl.py)"
+  #endif
+#elif WOLFSSL_INDEX == WOLFSSL_smallcode
+  #define IMPL_NAME "wolfssl-smallcode"
+  #if !GOAL_CUSTOM && (!WOLFSSL_SMALL_BUILD || !defined(WOLFSSL_NO_MALLOC) || !defined(WC_MLKEM_NO_ASM) || !defined(WOLFSSL_SHA3_SMALL))
+    #error "wolfssl-smallcode expects a build with the small code and memory options, no allocator, C arithmetic and the compact Keccak (see crypto-libraries/wolfssl.py)"
   #endif
 #elif WOLFSSL_INDEX == WOLFSSL_fast
   #define IMPL_NAME "wolfssl-fast"
-  #if defined(WOLFSSL_MLKEM_SMALL) || defined(WOLFSSL_MLKEM_NO_LARGE_CODE) || defined(WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM) || defined(WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM)
-    #error "wolfssl-fast expects a build without the ML-KEM small code/memory options (buildit-mlkem-fast)"
+  #if !GOAL_CUSTOM && (defined(WOLFSSL_MLKEM_SMALL) || defined(WOLFSSL_MLKEM_NO_LARGE_CODE) || defined(WOLFSSL_MLKEM_MAKEKEY_SMALL_MEM) || defined(WOLFSSL_MLKEM_ENCAPSULATE_SMALL_MEM))
+    #error "wolfssl-fast expects a build without the ML-KEM small code/memory options (see crypto-libraries/wolfssl.py)"
   #endif
 #else
-  #error "WOLFSSL ML-KEM supports GOAL smallram or fast"
+  #error "WOLFSSL ML-KEM supports GOAL smallram, smallcode, balanced or fast"
 #endif
 
-//on Cortex-M, buildit-mlkem-<goal> uses wolfSSL's Thumb-2 assembly: this rejects a build from before that, or for
-//another CPU
+//on Cortex-M the library is configured with wolfSSL's Thumb-2 assembly: this rejects a build from before that, or
+//for another CPU
 #if defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M')
   #ifndef WOLFSSL_ARMASM_THUMB2
-    #error "on Cortex-M, wolfssl-<goal> expects a build with wolfSSL's Thumb-2 assembly (rebuild with buildit-mlkem-<goal>)"
+    #error "on Cortex-M, wolfssl-<goal> expects a build with wolfSSL's Thumb-2 assembly (rebuild it: see crypto-libraries/wolfssl.py)"
   #endif
 #elif defined(WOLFSSL_ARMASM)
-  #error "wolfSSL's ARM assembly is only expected on Cortex-M (rebuild with buildit-mlkem-<goal>)"
+  #error "wolfSSL's ARM assembly is only expected on Cortex-M (rebuild it: see crypto-libraries/wolfssl.py)"
 #endif
 
 #include <stddef.h>

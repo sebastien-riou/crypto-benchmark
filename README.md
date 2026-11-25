@@ -97,7 +97,9 @@ Such a build is not the goal anymore. Its results are reported as `<library>-cus
 Once the best options are known, they belong in the goal's definition in the manifest: `custom` is for experiments, not for results to publish.
 
 An option is `<key>=<value>`, the value without space, comma or quote. `python3 goals.py list` shows the options of every library.
+A manifest that knows the values its options take checks them before anything is built (`check_options(algo, opts)`, which raises `ValueError`).
 With `buildit`, the options are one argument: `GOAL_OPTS=opt=-O3,reduce_ram=1`.
+A library built in its own repository is built first, with the same options: `python3 goals.py build <CRYPTO_LIB> <target> <algo> <pset> <goal> [<options>]`, then `python3 link_ext.py` (`benchmark.py` does both).
 
 ## Core sets
 A benchmark runs on a core set: the cores of the board that the library may use. `--cores` selects it:
@@ -235,10 +237,10 @@ You can optionally specify:
 - a crypto-library
   - `MLKEM_NATIVE` (goal `fast`)
   - `PQSHIELD` (default, goal `balanced` or `fast`)
-  - `WOLFSSL` (goal `smallram` or `fast`)
+  - `WOLFSSL` (goal `smallram`, `smallcode`, `balanced` or `fast`)
 - an optimization goal
 
-The external library must be built for each target beforehand (for WolfSSL: `./buildit-mlkem-small <target>` or `./buildit-mlkem-fast <target>` in the wolfssl repository, then `python3 link_ext.py`), targets for which it is not available are skipped.
+The external library must be built for each target beforehand (for WolfSSL: `python3 goals.py build WOLFSSL <target> mlkem 768 <goal>`, then `python3 link_ext.py`), targets for which it is not available are skipped.
 `STM32PQC` is not supported: it runs only on STM32 hardware.
 
 The output is a set of files `renode-mlkem-benchmark-*-*-*.csv`.
@@ -345,7 +347,7 @@ Only Arm targets are checked; for the others, the report says so.
 
 To trace an address of the report back to the source, build with debug info: `-DDEBUG_INFO=ON` adds `-g`, which does not change the generated code.
 For example `./buildit on/cortex-m3 mlkem 512 WOLFSSL minSizeRel GOAL=fast -DDEBUG_INFO=ON`, then `arm-none-eabi-addr2line -f -i -e <elf> <address>`.
-External libraries need debug info too; for WolfSSL: `DEBUG_INFO=yes ./buildit-mlkem-fast <target>` in the wolfssl repository.
+External libraries need debug info too; for WolfSSL: `DEBUG_INFO=yes python3 goals.py build WOLFSSL <target> mlkem 768 fast`.
 
 ## Debugging using Renode
 It is setup for VSCode for the following targets:
