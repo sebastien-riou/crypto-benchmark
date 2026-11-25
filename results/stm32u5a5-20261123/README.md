@@ -2,6 +2,7 @@
 
 Measured on 23 and 24 November 2026 with crypto-benchmark: five libraries, every
 [optimization goal](../../README.md#optimization-goals) each of them has, and every parameter set of ML-DSA and ML-KEM.
+The [round of 25 November](../stm32u5a5-20261125/README.md) updates wolfSSL, whose goals were redefined.
 
 ## Libraries
 

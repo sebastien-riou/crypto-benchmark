@@ -19,11 +19,11 @@ Times are in milliseconds, at the board's 160 MHz. RAM is the sum of stack, heap
 For ML-DSA, the signature is given twice: the average, and the slowest of the 100 messages signed. For ML-KEM, the bar is the average and the dot is the worst-case key.
 Each column has its own scale.
 
-![ML-DSA-87 on the STM32U5A5 (Cortex-M33, 160 MHz). For each library: signature in milliseconds (average, then the slowest message), RAM in KiB, flash in KiB. Goal smallram: pqm4 234 and 4580, 15, 33; mldsa-native 248 and 5173, 22, 12; stm32pqc 209 and 4264, 28, 17; wolfssl 221 and 4628, 101, 18. Goal balanced: wolfssl 88 and 1034, 208, 19; stm32pqc 188 and 3782, 65, 17. Goal fast: pqm4 65 and 776, 114, 29; wolfssl 72 and 762, 209, 24; mldsa-native 124 and 1557, 117, 12.](results/stm32u5a5-20261123/mldsa87.svg)
+![ML-DSA-87 on the STM32U5A5 (Cortex-M33, 160 MHz). For each library: signature in milliseconds (average, then the slowest message), RAM in KiB, flash in KiB. Goal smallram: pqm4 234 and 4580, 15, 33; mldsa-native 248 and 5173, 22, 12; stm32pqc 209 and 4264, 28, 17; wolfssl 234 and 4904, 61, 16. Goal smallcode: wolfssl 342 and 7248, 61, 14. Goal balanced: wolfssl 102 and 1406, 117, 17; stm32pqc 188 and 3782, 65, 17. Goal fast: pqm4 65 and 776, 114, 29; wolfssl 72 and 764, 209, 25; mldsa-native 124 and 1557, 117, 12.](results/stm32u5a5-20261125/mldsa87.svg)
 
-![ML-KEM-768 on the STM32U5A5 (Cortex-M33, 160 MHz). For each library: decapsulation in milliseconds (average keys, then the worst-case key), RAM in KiB, flash in KiB. Goal smallram: pqm4 6.4 and 6.9, 3.2, 22; wolfssl 8.1 and 8.5, 13, 21. Goal balanced: stm32pqc 22.9 and 23.3, 5.6, 13. Goal fast: pqm4 6.3 and 6.7, 6.8, 25; wolfssl 8.0 and 8.5, 24, 24; mlkem-native 11.6 and 12.2, 19, 8.1.](results/stm32u5a5-20261123/mlkem768.svg)
+![ML-KEM-768 on the STM32U5A5 (Cortex-M33, 160 MHz). For each library: decapsulation in milliseconds (average keys, then the worst-case key), RAM in KiB, flash in KiB. Goal smallram: pqm4 6.4 and 6.9, 3.2, 22; wolfssl 7.7 and 8.2, 13, 19. Goal smallcode: wolfssl 15.0 and 15.9, 14, 8.8. Goal balanced: wolfssl 7.8 and 8.3, 14, 15; stm32pqc 22.9 and 23.3, 5.6, 13. Goal fast: pqm4 6.3 and 6.7, 6.8, 25; wolfssl 7.4 and 7.9, 24, 22; mlkem-native 11.6 and 12.2, 19, 8.1.](results/stm32u5a5-20261125/mlkem768.svg)
 
-The other parameter sets, every operation, the split of the RAM, the versions of the libraries and how all this was measured are in [results/stm32u5a5-20261123](results/stm32u5a5-20261123/README.md).
+The other parameter sets, every operation, the split of the RAM, the versions of the libraries and how all this was measured are in [results/stm32u5a5-20261125](results/stm32u5a5-20261125/README.md). It updates wolfSSL, whose goals were redefined, in the round of 23 November ([results/stm32u5a5-20261123](results/stm32u5a5-20261123/README.md)).
 The figures are drawn by `plot_results.py` from the tables that `format_results.py` prints.
 
 ## Current status

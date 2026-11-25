@@ -162,7 +162,8 @@ the options listed below. The library is built with them by the fork's scripts (
 | AES | `smallcode` | `WOLFSSL_AES_SMALL_TABLES`, `WOLFSSL_AES_NO_UNROLL`, `-Os` |
 | AES | `fast` | wolfSSL's defaults (full tables) |
 
-What the goals give on the STM32U5A5 (Cortex-M33, measured on 2026-11-25), for ML-DSA-87 and ML-KEM-768: time in
+What the goals give on the STM32U5A5 (Cortex-M33, [round of 2026-11-25](results/stm32u5a5-20261125/README.md)), for
+ML-DSA-87 and ML-KEM-768: time in
 million cycles (the signature's is the average), sizes in KiB. Flash and static RAM are from the firmware (as in
 [Benchmark memory footprints](README.md#benchmark-memory-footprints)), the stack as measured, and the heap column
 gives the largest block the library allocates, from the source (the harness reports the growth of the heap area,
