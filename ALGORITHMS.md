@@ -12,8 +12,10 @@ The libraries that implement them are in [LIBRARIES.md](LIBRARIES.md).
 
 For every operation:
 - it runs 5 times on each test case, between two readings of the CPU's cycle counter;
-- the harness measures its stack (the deepest use, found by filling the stack with a pattern beforehand) and how
-  much the heap grows;
+- the harness measures its stack (the deepest use, found by filling the stack with a pattern beforehand) and its
+  heap: the most bytes it had allocated at one time, counted on the sizes it asked for, so that the figure does not
+  depend on the board's allocator ([common/lbmk_heap.c](common/lbmk_heap.c)). A parameter set reports the largest
+  stack and heap of its operations;
 - its outputs are checked, outside the timed code; a wrong output stops the run with an error code, and nothing is
   recorded.
 

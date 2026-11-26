@@ -227,6 +227,7 @@ add_subdirectory(lib${ALGO}-lbmk)
 # Sources
 set(sources_SRCS
 	${CMAKE_CURRENT_SOURCE_DIR}/test/source/main.c
+	${CMAKE_CURRENT_SOURCE_DIR}/common/lbmk_heap.c
 )
 
 # Include directories
@@ -241,6 +242,13 @@ set(link_DIRS
 )
 
 set(link_LIBS ${ALGO}-lbmk)
+
+# Heap use (common/lbmk_heap.c): the allocation functions are wrapped, and the count and its table are kept in every
+# build, the STUB included, so that the footprint of a library leaves them out
+list(APPEND linker_OPTS
+	-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free
+	-Wl,--undefined=lbmk_heap_allocated,--undefined=lbmk_heap_reallocated,--undefined=lbmk_heap_freed
+)
 
 include("cmake/generic_binary.cmake")
 

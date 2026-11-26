@@ -3,8 +3,6 @@
 #include <stddef.h>
 #include <errno.h>
 
-bool LBMK_is_within_benchmarked_func();
-
 typedef struct
 {
     uint32_t RxTx;
@@ -59,13 +57,7 @@ uint64_t LBMK_get_cpu_timestamp(){
 	return ((uint64_t)mcycleh << 32) | mcycle;
 }
 
-static volatile uint64_t heap_usage;
-void LBMK_init_heap_usage(){
-  heap_usage = 0;
-}
-uint64_t LBMK_get_heap_usage(){
-  return heap_usage;
-}
+//heap use for lean-benchmark: ../../common/lbmk_heap.c (CMakeLists.txt)
 
 //newlib's malloc gets its memory from _sbrk (libnosys is not linked because of -nostdlib)
 //the heap starts at _end and must not grow into the stack reserved by _Min_Stack_Size (see link.ld)
@@ -75,10 +67,6 @@ void *_sbrk(ptrdiff_t incr){
   extern uint8_t _Min_Stack_Size;
   static uint8_t *heap_end = NULL;
   const uintptr_t max_heap = (uintptr_t)&_estack - (uintptr_t)&_Min_Stack_Size;
-
-  if(LBMK_is_within_benchmarked_func()){
-    heap_usage += incr;
-  }
 
   if(NULL == heap_end){
     heap_end = &_end;

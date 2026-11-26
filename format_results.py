@@ -536,6 +536,9 @@ def main(args_target,args_algo,format,*,
                     max_heap = 0
                     heap_reported = False
                 key = f'{info['dut name']}-{info['args setup name']}'
+                if max_heap == 2**64-1:
+                    # common/lbmk_heap.c: more live blocks than its table holds, the figure is unknown
+                    raise RuntimeError(f'{p}: {key}: heap use unknown, more live blocks than LBMK_HEAP_MAX_BLOCKS (common/lbmk_heap.c)')
                 if key not in consolidated:
                     consolidated[key]={'dut':info['dut name'], 'setup':info['args setup name'], 'data':[]}
                 role = None
@@ -544,8 +547,10 @@ def main(args_target,args_algo,format,*,
                         raise RuntimeError(f'{p}: test case {case_index} is not in {tv_record["name"]}')
                     role = tv_record['cases'][case_index]['role']
                 consolidated[key]['data'].append({'min_cycles':min_cycles,'max_cycles':max_cycles,'ave_cycles':ave_cycles,'max_stack':max_stack,'max_heap':max_heap,'role':role})
+            # stack and heap of the parameter set: the most any operation uses. The heap figure of an operation is
+            # the most it had allocated at one time (common/lbmk_heap.c), so they do not add up.
             ms = 0
-            heap_sum = 0
+            max_heap_all = 0
             for key,value in consolidated.items():
                 val = value['data']
                 if tv_record:
@@ -606,10 +611,10 @@ def main(args_target,args_algo,format,*,
                 except KeyError:
                     pass 
                 ms = max(ms,max_stack)
-                heap_sum += max_heap
-            
+                max_heap_all = max(max_heap_all,max_heap)
+
             libs[full_name][pset]['stack'] = ms
-            libs[full_name][pset]['heap'] = heap_sum
+            libs[full_name][pset]['heap'] = max_heap_all
 
     if len(hw_platforms) > 1:
         logging.error(f'hw_platforms: {hw_platforms}')

@@ -321,6 +321,8 @@ Static memory footprint is computed by the script `report_footprint.py`, as the 
 - flash: what the library adds to flash, i.e. its code, its constants and the initial values of its initialized data;
 - rw (the "Static RAM" column of the results): the RAM it adds, initialized and zero-initialized data.
 
+The heap count of the harness ([common/lbmk_heap.c](common/lbmk_heap.c)) is in every build, the `STUB` included, so it is not part of a footprint. A library that allocates memory does carry the functions of the C library it calls (`malloc`, `free`...) and the harness's wrappers of those, a few instructions each.
+
 The helper script `report-mldsa-footprint` provides an easy way to use it:
 
 ````
