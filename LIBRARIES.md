@@ -142,12 +142,17 @@ Renode. There is no library for the Cortex-M52.
 
 ## wolfSSL
 
-[wolfSSL](https://github.com/sebastien-riou/wolfssl), a fork with the build scripts crypto-benchmark uses (branch
-`crypto-benchmark`), in the sibling `../wolfssl` repository.
-What each goal is made of is defined in [crypto-libraries/wolfssl.py](crypto-libraries/wolfssl.py), as the values of
-the options listed below. The library is built with them by the fork's scripts (`buildit-mldsa`, `buildit-mlkem`,
-`buildit-aes`), into `build/<target>-<algo>-<goal>` of the wolfssl repository: `benchmark.py` does it, or
+[wolfSSL](https://github.com/wolfSSL/wolfssl), in the sibling `../wolfssl` repository, built by its own
+`configure` and `make`. [crypto-libraries/wolfssl.py](crypto-libraries/wolfssl.py) gives `configure` its options
+and the compiler flags of each goal, which are the values of the options listed below. The library goes to
+`build/<target>-<algo>-<goal>` of the wolfssl repository: `benchmark.py` builds it, or
 `python3 goals.py build WOLFSSL <target> <algo> <pset> <goal>`.
+
+Until wolfSSL's `configure` builds its Thumb-2 assembly for a Cortex-M, `./initial-setup` checks out the fork
+[sebastien-riou/wolfssl](https://github.com/sebastien-riou/wolfssl) (branch `crypto-benchmark`): wolfSSL with that
+change to `configure.ac`. The fork's build scripts are no longer used, and its other change, in `wc_mldsa.c`, is in
+a function the benchmark does not call: built from upstream wolfSSL with only the `configure.ac` change, the
+libraries have the same code (checked on 2026-11-26 for every goal on Cortex-M33 and the `fast` goals on RV32IMC).
 
 | Algorithm | Goal | Configuration |
 |---|---|---|

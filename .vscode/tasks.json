@@ -128,24 +128,13 @@
     },
     {
       "label": "Probe-rs Load",
-      "type": "shell",
-      "command": "${command:nuvoton-debug.getProbeRsPath}",
-      "args": [
-        "download",
-        "--chip",
-        "${command:cmsis-csolution.getDeviceName}",
-        "--chip-description-path",
-        "${command:nuvoton-debug.getChipDescriptionPath}",
-        "${command:embedded-debug.getApplicationFile}"
+      "dependsOn": [
+        "Nuvoton Lockup Recovery",
+        "Probe-rs Download"
       ],
+      "dependsOrder": "sequence",
       "group": "build",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared",
-        "focus": false,
-        "close": false
-      }
+      "problemMatcher": []
     },
     {
       "label": "LaunchpyOCDServer",
@@ -378,6 +367,31 @@
         "--cbuild-run",
         "${command:cmsis-csolution.getCbuildRunFile}"
       ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Probe-rs Download",
+      "type": "shell",
+      "command": "${command:nuvoton-debug.getProbeRsPath}",
+      "args": [
+        "download",
+        "--chip",
+        "${command:cmsis-csolution.getDeviceName}",
+        "--chip-description-path",
+        "${command:nuvoton-debug.getChipDescriptionPath}",
+        "${command:embedded-debug.getApplicationFile}"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
+      }
+    },
+    {
+      "label": "Nuvoton Lockup Recovery",
+      "type": "nuvotonLockupRecovery",
       "problemMatcher": []
     }
   ],

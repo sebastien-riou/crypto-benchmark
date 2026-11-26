@@ -1,9 +1,28 @@
 class Wolfssl:
-    """wolfSSL, built by the generic scripts of its fork (branch 'crypto-benchmark'): buildit-<algo> <cpu> <build
-    name> <debug> [compiler flags], into build/<cpu>-<build name> of the wolfssl repository.
+    """wolfSSL, built by its own autotools (autogen.sh, configure, make, make install) with the options below,
+    into build/<cpu>-<algo>-<goal> of the wolfssl repository.
 
     What a goal is made of is defined here, as the values of the knobs below; `benchmark.py --opt` overrides
     them one by one to tune a goal (README.md "Tuning a goal")."""
+
+    # configure's options: wolfCrypt only, without what the benchmark does not call, then each algorithm's.
+    # --enable-armasm is added on the targets wolfSSL has assembly for (see toolchain())
+    CONFIGURE = ['--disable-filesystem', '--disable-crypttests', '--disable-shared', '--enable-cryptonly',
+                 '--enable-dh=no', '--enable-ecc=no', '--enable-aesgcm=no', '--enable-chacha=no',
+                 '--enable-pkcs8=no', '--enable-pkcs12=no', '--enable-tls=no', '--enable-tlsv12=no',
+                 '--enable-tls13=no', '--enable-asn=no', '--enable-rsa=no', '--enable-hkdf=no',
+                 '--enable-pwdbased=no', '--enable-hashdrbg=no', '--enable-sha=no', '--enable-aescbc=no',
+                 # timing resistance
+                 '--enable-harden=yes']
+    CONFIGURE_ALGO = {
+        'mldsa': ['--enable-mldsa', '--enable-mlkem=no', '--enable-aes=no'],
+        'mlkem': ['--enable-mldsa=no', '--enable-mlkem=yes', '--enable-aes=no'],
+        'aes': ['--enable-mldsa=no', '--enable-mlkem=no', '--enable-aes=yes', '--enable-cmac'],
+    }
+    # compiler flags of every build, after the target's and before the goal's
+    CFLAGS = ['--specs=nosys.specs', '-flto', '-ffat-lto-objects', '-DHAVE_PK_CALLBACKS', '-DWOLFSSL_USER_IO',
+              '-DWOLFSSL_NO_SOCK', '-DWC_NO_RNG', '-DNO_WRITEV', '-DNO_WOLFSSL_DIR']
+    CFLAGS_ALGO = {'mldsa': ['-DWOLFSSL_DILITHIUM_NO_ASN1'], 'mlkem': [], 'aes': []}
 
     # algo -> knob -> (description, {value: compiler flags}); the first value is wolfSSL's default
     KNOBS = {
@@ -131,9 +150,28 @@ class Wolfssl:
 
     @classmethod
     def algorithms(cls):
-        # on cortex-m*, the ML-DSA and ML-KEM goals use wolfSSL's Thumb-2 assembly (see buildit-toolchain in the
-        # wolfssl repository); AES stays C
+        # on cortex-m*, ML-DSA and ML-KEM use wolfSSL's Thumb-2 assembly (see toolchain()); AES stays C
         return {algo: list(goals) for algo, goals in cls.GOALS.items()}
+
+    @staticmethod
+    def toolchain(sw_target, algo):
+        """(configure's --host, compiler flags of the target, its configure options): -march/-mabi as in
+        target/<cpu>.cmake of crypto-benchmark."""
+        if sw_target.startswith('cortex-m'):
+            # Thumb-2 assembly for ML-DSA (Keccak only) and ML-KEM. Not for AES: wolfSSL's Thumb-2 AES ignores
+            # WOLFSSL_AES_SMALL_TABLES, so smallcode and fast would build the same code
+            return 'arm-none-eabi', [f'-mcpu={sw_target}'], ['--enable-armasm=yes'] if algo != 'aes' else []
+        # RISC-V: the host is riscv-none-elf rather than riscv32/riscv64 on purpose: configure would then enable
+        # RISC-V inline assembly in sp_int.c, which uses mul (not available on rv32i)
+        march = {
+            'rv32i': ['-march=rv32i_zicsr', '-mabi=ilp32'],
+            'rv32imc': ['-march=rv32imc_zicsr', '-mabi=ilp32'],
+            'rv32imcb': ['-march=rv32imc_zbb_zbc_zbs_zbkb_zbkc_zbkx_zicsr', '-mabi=ilp32'],
+            'rv64imc': ['-march=rv64imc_zicsr', '-mabi=lp64'],
+        }
+        if sw_target not in march:
+            raise ValueError(f'wolfssl: no toolchain for target {sw_target}')
+        return 'riscv-none-elf', march[sw_target], ['--enable-armasm=no'] if algo != 'aes' else []
 
     @classmethod
     def knobs(cls, algo):
@@ -166,7 +204,7 @@ class Wolfssl:
 
     @classmethod
     def flags(cls, algo, goal, opts=None):
-        """The compiler flags of a goal with these options, on top of the fork's script."""
+        """The compiler flags of a goal with these options, after CFLAGS and CFLAGS_ALGO."""
         knobs = cls.knobs(algo)
         return [flag for name, value in cls.settings(algo, goal, opts).items() for flag in knobs[name][1][value]]
 
@@ -194,13 +232,26 @@ class Wolfssl:
         self.path = '../wolfssl'
 
     def build_cmd(self,sw_target,goal,pset,algo,opts=None):
+        """wolfSSL's own build, run in the wolfssl repository. DEBUG_INFO=yes in the environment adds -g: debug
+        information only, the code is the same (README.md "Debugging using Renode")."""
+        import os
         # goals.py of the repository's root, which is in the path of every script that loads a manifest
         import goals as goals_module
         self.sw_target = sw_target
-        name = self.build_name(algo, goals_module.goal_id(goal, opts))
+        host, target_flags, target_configure = self.toolchain(sw_target, algo)
+        debug_info = ['-g'] if os.environ.get('DEBUG_INFO', 'no') != 'no' else []
+        cflags = [*target_flags, *debug_info, *self.CFLAGS, *self.CFLAGS_ALGO[algo], *self.flags(algo, goal, opts)]
+        configure = [
+            '--enable-debug=no', f'--host={host}',
+            f'CC={host}-gcc', f'AR={host}-gcc-ar', f'STRIP={host}-strip', f'RANLIB={host}-gcc-ranlib',
+            'CFLAGS=' + ' '.join(cflags),
+            *self.CONFIGURE, *self.CONFIGURE_ALGO[algo], *target_configure,
+        ]
+        build = f'build/{sw_target}-{self.build_name(algo, goals_module.goal_id(goal, opts))}'
         return {
-            'dir':'.',
-            'cmd':[f'./buildit-{algo}', sw_target, name, 'no', *self.flags(algo, goal, opts)]
+            'dir': '.',
+            'cmd': ['sh', '-exc', 'prefix="$PWD/$1"; shift; ./autogen.sh; ./configure --prefix="$prefix" "$@"; '
+                    'make; make install', 'wolfssl-build', build, *configure],
         }
 
 
