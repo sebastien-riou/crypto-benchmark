@@ -24,7 +24,8 @@ def main(*,preset='minSizeRel', goal=None):
     targets = ['cortex-m3','cortex-m4','cortex-m7','cortex-m33','cortex-m52','cortex-m55','rv32i','rv32imc','rv32imcb','rv64imc','linux']
     libs = ['pqcrystals-mldsa-lowram','libtomcrypt','lean-benchmark','pqrv'] #,'fpfp']
 
-    PQCLE_SRC='../../../pqmicrolib-library/'
+    # the pqmicrolib-library checkout PQMICROLIB_SRC names (crypto-libraries/pqmicrolib.py), seen from target/ext
+    PQCLE_SRC=os.path.relpath(os.environ.get('PQMICROLIB_SRC', '../pqmicrolib-library'), 'target/ext') + '/'
     PQCLE='target/ext/pqcle'
 
     LOWRAM_SRC='../../../dilithium-lowram/libpqcrystals-mldsa-lowram'

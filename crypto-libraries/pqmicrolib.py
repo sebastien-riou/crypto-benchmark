@@ -1,3 +1,11 @@
+import os
+
+# the pqmicrolib-library checkout to build from, relative to crypto-benchmark (or absolute): by default the sibling
+# repository, PQMICROLIB_SRC to build another one (e.g. a clone of its crypto-benchmark branch). link_ext.py reads
+# the same variable.
+PQMICROLIB_SRC = os.environ.get('PQMICROLIB_SRC', '../pqmicrolib-library')
+
+
 class PqMicroLibCore:
     # The pqmicrolib-library presets used here are defined in its presets/crypto-benchmark.json
     # (branch 'crypto-benchmark'): one per software target and tier, named <sw_target>-<tier>, for every
@@ -57,7 +65,7 @@ class PqMicroLibCore:
     def __init__(self):
         self.sw_target = None
         self.codename = 'PQSHIELD'
-        self.path = '../pqmicrolib-library'
+        self.path = PQMICROLIB_SRC
 
     def build_cmd(self,sw_target,goal,pset,algo):
         self.sw_target = sw_target
@@ -65,9 +73,15 @@ class PqMicroLibCore:
         # The presets build with LTO: they set CFLAGS=-flto -ffat-lto-objects in their
         # environment. CMake prepends $CFLAGS to the toolchain's initial flags, but only when
         # (re)configuring from scratch, hence --fresh (buildit forwards extra arguments to cmake).
+        cmd = ['./buildit',preset,'--fresh']
+        if sw_target.startswith('rv'):
+            # the xPack compiler, as crypto-benchmark's own RISC-V targets: the library's toolchain file defaults to
+            # riscv64-unknown-elf-, and CMake's compiler checks (try_compile) see TOOLCHAIN_PREFIX only when it is
+            # listed in CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
+            cmd += ['-DTOOLCHAIN_PREFIX=riscv-none-elf-', '-DCMAKE_TRY_COMPILE_PLATFORM_VARIABLES=TOOLCHAIN_PREFIX']
         return {
             'dir':'utl/tools',
-            'cmd':['./buildit',preset,'--fresh']
+            'cmd':cmd
         }
 
 

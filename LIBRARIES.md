@@ -93,7 +93,9 @@ builds.
 
 [PQShield's PQMicroLib-Core](https://pqshield.com/products/pqm-cor/), in the sibling `../pqmicrolib-library`
 repository, which is PQShield-internal. Built from the presets `<target>-<tier>` of its `crypto-benchmark` branch
-(`presets/crypto-benchmark.json`).
+(`presets/crypto-benchmark.json`). `PQMICROLIB_SRC` in the environment names another checkout to build from (relative
+to crypto-benchmark, or absolute), e.g. a clone of that branch, so that the sibling repository can stay on another
+branch. Its RISC-V presets are built with the xPack compiler (`riscv-none-elf-`), as crypto-benchmark's own targets.
 
 | Algorithm | Goal | Configuration |
 |---|---|---|
