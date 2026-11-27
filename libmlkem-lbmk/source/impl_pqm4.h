@@ -48,8 +48,8 @@ static int pqm4_seed_used(void){
 }
 
 static void kem_init(void){
-  //the assembly keeps data in the FPU registers: enable CP10/CP11 full access. The RP2350 start-up code already
-  //does it, the generic start-up used with Renode does not.
+  //the assembly keeps data in the FPU registers: enable CP10/CP11 full access. The boards' start-up code already
+  //does it, the generic start-up used with Renode only on the softfp targets (cortex-m33, m55).
   volatile uint32_t *cpacr = (volatile uint32_t *)0xE000ED88;
   *cpacr |= (0xFu << 20);
   __asm volatile ("dsb\n\tisb" ::: "memory");

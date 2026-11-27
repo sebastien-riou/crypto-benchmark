@@ -5,10 +5,10 @@ set(CMAKE_SYSTEM_PROCESSOR armv8-m)
 set(cpu_PARAMS ${cpu_PARAMS}
     -mthumb
 
-    # Other parameters
-    # -mcpu, -mfloat, -mfloat-abi, ...
+    # the cflags of the lean-bsp targets for this CPU (numaker-m5531), so that the footprint and the board
+    # describe the same code. -mfpu=auto: the M55's whole FPU (double precision too) and Helium (MVE).
+    # softfp: the startup enables the FPU (startup.s)
     -mcpu=cortex-m55
-	#-mfpu=fpv5-sp-d16 #if we declare FPU here, FPU regs are backed up by setjmp and that can crash if FPU has not been enabled by software (it is disabled by default)
-	#-mfloat-abi=hard
-	
+    -mfpu=auto
+    -mfloat-abi=softfp
 )

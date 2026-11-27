@@ -8,10 +8,10 @@ IF ( NOT EXISTS ${PQM4_DIR}/mupq/common/fips202.c )
 	MESSAGE( FATAL_ERROR "pqm4 or its mupq submodule is missing (${PQM4_DIR}/mupq/common/fips202.c). Run './initial-setup --addons pqm4'" )
 ENDIF()
 
-# The assembly uses DSP instructions and keeps data in the FPU registers s0-s29. The firmware is soft-float:
-# softfp makes the FPU available to the assembly with the same calling convention, and the glue enables the FPU
-# (CPACR) before the first call. The FPU must be explicit: the assembly sets .cpu cortex-m4, which otherwise
-# resets it.
+# The assembly uses DSP instructions and keeps data in the FPU registers s0-s29. softfp makes the FPU available
+# to the assembly with the calling convention of the rest of the firmware (soft-float on cortex-m4, m7 and m52,
+# softfp already on cortex-m33 and m55), and the glue enables the FPU (CPACR) before the first call. The FPU must
+# be explicit: the assembly sets .cpu cortex-m4, which otherwise resets it.
 IF ( ${TARGET_CPU} MATCHES "^cortex-m(4|7|33)$" )
 	set( PQM4_FPU_PARAMS -mfloat-abi=softfp -mfpu=fpv4-sp-d16 )
 ELSEIF ( ${TARGET_CPU} MATCHES "^cortex-m(52|55)$" )

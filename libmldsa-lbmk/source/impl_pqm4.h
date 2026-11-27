@@ -48,8 +48,8 @@ static int pqm4_seed_used(void){
 }
 
 //the assembly keeps data in the FPU registers: enable CP10/CP11 full access, before main and outside the
-//measurements (core.c has no initialization hook for ML-DSA). The RP2350 start-up code already does it, the
-//generic start-up used with Renode does not.
+//measurements (core.c has no initialization hook for ML-DSA). The boards' start-up code already does it, the
+//generic start-up used with Renode only on the softfp targets (cortex-m33, m55).
 __attribute__((constructor)) static void pqm4_enable_fpu(void){
   volatile uint32_t *cpacr = (volatile uint32_t *)0xE000ED88;
   *cpacr |= (0xFu << 20);

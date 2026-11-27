@@ -25,6 +25,17 @@ defined in linker script */
 Reset_Handler:
   ldr   sp, =_estack    /* set stack pointer */
 
+#if defined(__ARM_FP)
+/* Enable the FPU (CP10 and CP11 in CPACR): the code is built for softfp, as the lean-bsp targets are, and
+   the C library of that ABI saves the FPU registers in setjmp. MVE needs it too. */
+  ldr   r0, =0xE000ED88
+  ldr   r1, [r0]
+  orr   r1, r1, #(0xF << 20)
+  str   r1, [r0]
+  dsb
+  isb
+#endif
+
 /* Copy the data segment initializers from flash to SRAM */
   movs	r1, #0
   b	LoopCopyDataInit

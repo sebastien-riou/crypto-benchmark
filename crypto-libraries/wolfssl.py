@@ -155,23 +155,21 @@ class Wolfssl:
 
     @staticmethod
     def toolchain(sw_target, algo):
-        """(configure's --host, compiler flags of the target, its configure options): -march/-mabi as in
-        target/<cpu>.cmake of crypto-benchmark."""
+        """(configure's --host, compiler flags of the target, its configure options). The flags are those of
+        target/<cpu>.cmake of crypto-benchmark (cores.cpu_flags)."""
+        # cores.py of the repository's root, which is in the path of every script that loads a manifest
+        import cores
+        try:
+            flags = cores.cpu_flags(sw_target)
+        except ValueError as e:
+            raise ValueError(f'wolfssl: no toolchain for target {sw_target}: {e}')
         if sw_target.startswith('cortex-m'):
             # Thumb-2 assembly for ML-DSA (Keccak only) and ML-KEM. Not for AES: wolfSSL's Thumb-2 AES ignores
             # WOLFSSL_AES_SMALL_TABLES, so smallcode and fast would build the same code
-            return 'arm-none-eabi', [f'-mcpu={sw_target}'], ['--enable-armasm=yes'] if algo != 'aes' else []
+            return 'arm-none-eabi', flags, ['--enable-armasm=yes'] if algo != 'aes' else []
         # RISC-V: the host is riscv-none-elf rather than riscv32/riscv64 on purpose: configure would then enable
         # RISC-V inline assembly in sp_int.c, which uses mul (not available on rv32i)
-        march = {
-            'rv32i': ['-march=rv32i_zicsr', '-mabi=ilp32'],
-            'rv32imc': ['-march=rv32imc_zicsr', '-mabi=ilp32'],
-            'rv32imcb': ['-march=rv32imc_zbb_zbc_zbs_zbkb_zbkc_zbkx_zicsr', '-mabi=ilp32'],
-            'rv64imc': ['-march=rv64imc_zicsr', '-mabi=lp64'],
-        }
-        if sw_target not in march:
-            raise ValueError(f'wolfssl: no toolchain for target {sw_target}')
-        return 'riscv-none-elf', march[sw_target], ['--enable-armasm=no'] if algo != 'aes' else []
+        return 'riscv-none-elf', flags, ['--enable-armasm=no'] if algo != 'aes' else []
 
     @classmethod
     def knobs(cls, algo):

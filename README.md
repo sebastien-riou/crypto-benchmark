@@ -112,6 +112,7 @@ A benchmark runs on a core set: the cores of the board that the library may use.
 
 The first core is the caller: the library is called there and time is measured there; the others help.
 A core is named by its software target, i.e., the name of its toolchain file in [on](on), unless the board gives it a name of its own.
+A software target's compiler flags (`cpu_PARAMS` of `target/<cpu>.cmake`, which wolfSSL's build reads too) are those of the lean-bsp targets for that CPU: `cortex-m33` and `cortex-m55` are built for `softfp` with the FPU, `rv32imcb` for the Hazard3's extensions (`rv32imac_zicsr_zifencei_zba_zbb_zbs_zbkb`). The footprint, Renode and the boards thus describe the same code.
 Each hardware platform declares its core sets (`core_sets()` in [hardware-platforms](hardware-platforms)); without `--cores`, the sets of one core are benchmarked.
 A core set is independent of the goal: `fast` on one core and `fast` on two are two different results.
 
