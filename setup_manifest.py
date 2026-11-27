@@ -102,7 +102,7 @@ ADDONS = {
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-rp2350",
             "default_tag": "crypto-benchmark-0.0.18",
-            "helper_module": "rp2350",  # hardware-platforms/rp2350.py, same one benchmark.py uses
+            "helper_module": "legacy/rp2350",  # hardware-platforms/legacy/rp2350.py, until the board repos retire
             # idempotent: clone pico-sdk if missing, build picotool with USB support if missing
             "setup": ["./setup-pico-sdk", "./setup-picotool"],
         },
@@ -111,7 +111,7 @@ ADDONS = {
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-stm32u5",
             "default_tag": "crypto-benchmark-0.0.16",
-            "helper_module": "stm32u5",  # hardware-platforms/stm32u5.py
+            "helper_module": "legacy/stm32u5",  # hardware-platforms/legacy/stm32u5.py
             "setup": None,  # nothing extra needed beyond its own repo
         },
         {
@@ -119,7 +119,7 @@ ADDONS = {
             "host": "github",
             "path": "sebastien-riou/crypto-benchmark-m5531",
             "default_tag": "crypto-benchmark-0.0.16",
-            "helper_module": "m5531",  # hardware-platforms/m5531.py
+            "helper_module": "legacy/m5531",  # hardware-platforms/legacy/m5531.py
             "setup": ["pipenv install"],  # bootstraps its own pyocd venv
         },
     ],

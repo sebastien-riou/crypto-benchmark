@@ -27,10 +27,10 @@ The other parameter sets, every operation, the split of the RAM, the versions of
 The figures are drawn by `plot_results.py` from the tables that `format_results.py` prints.
 
 ## Current status
-- Boards:
-  - STMicroelectronics [STM32U5A5](https://github.com/sebastien-riou/crypto-benchmark-stm32u5)
-  - Nuvoton [M5531](https://github.com/sebastien-riou/crypto-benchmark-m5531)
-  - Raspberry Pi [RP2350](https://github.com/sebastien-riou/crypto-benchmark-rp2350)
+- Boards, through lean-bsp ([Benchmarking on a board](#benchmarking-on-a-board)):
+  - STMicroelectronics NUCLEO-U5A5ZJ-Q (STM32U5A5, Cortex-M33): `nucleo-u5a5`
+  - Nuvoton NuMaker-M5531 (M5531, Cortex-M55): `numaker-m5531`
+  - Raspberry Pi Pico 2 (RP2350, Cortex-M33 and Hazard3): `pico2`
   - the CPUs Renode emulates
 - Algorithms ([ALGORITHMS.md](ALGORITHMS.md)):
   - [ML-DSA](ALGORITHMS.md#ml-dsa)
@@ -53,10 +53,19 @@ The figures are drawn by `plot_results.py` from the tables that `format_results.
 See [Setup.md](Setup.md).
 
 ## Benchmarking on a board
-To benchmark PQRV's ML-KEM-512 on rp2350 MCU (pico2 board):
+To benchmark PQRV's ML-KEM-512 on the RISC-V core of the Raspberry Pi Pico 2:
 ````
-pipenv run python benchmark.py --hw-platform rp2350 --lib pqrv --algo mlkem --pset 512
+pipenv run python benchmark.py --hw-platform pico2 --cores rv32imcb --lib pqrv --algo mlkem --pset 512
 ````
+
+The boards are lean-bsp boards: `hardware-platforms/<bsp>.py` names the BSP, and [leanbsp_platform.py](leanbsp_platform.py) drives it. For each configuration, `benchmark.py`:
+1. builds its archive, `build/<cpu>/libcrypto-benchmark.a`, with `buildit`, as for a run without a board. The archive must be built with the flags and the compiler of the BSP's target, so `benchmark.py` stops when `lbsp capabilities` gives others than `target/<cpu>.cmake` and `PATH`;
+2. has lean-bsp link it with the board glue ([app.toml](app.toml), [lean-bsp/](lean-bsp)), load it and start it, through lean-hwbridge (`lbsp build`, `load`, `run --detach`);
+3. collects the results from the board's serial port (`get-results`).
+
+It needs lean-bsp and the BSP cloned next to this repository (`../lean-bsp`, `../lean-bsp-<bsp>`), lean-bsp installed (`lbsp`), and lean-hwbridge (`hwbridge`) serving the board. `LBSP` and `HWBRIDGE` give other commands for them, e.g. `LBSP="python3 -m leanbsp"` with lean-bsp on `PYTHONPATH`. `HWBRIDGE_BOARD` names the board in lean-hwbridge, by default the BSP's name.
+
+The results carry the BSP's name, followed by the target's for a BSP of several targets: `nucleo-u5a5`, `numaker-m5531`, `pico2-cortex-m33`, `pico2-rv32imcb`. The rounds taken before the move to lean-bsp carry the names of the board repositories they were taken with (`stm32u5`, `m5531`, `rp2350-cortex-m33`, `rp2350-rv32imcb`), whose platforms stay in [hardware-platforms/legacy](hardware-platforms/legacy) until those repositories are retired.
 
 You can view the results in terminal using:
 ````
@@ -90,7 +99,7 @@ This is for whoever integrates a library, to find out what should go into a goal
 A manifest can declare options (`options(algo)`): the knobs of the library that a goal sets, and the variants it does not use.
 `--opt` overrides them for one library and one goal:
 ````
-pipenv run python benchmark.py --hw-platform rp2350 --lib mldsa-native --algo mldsa --goal fast --opt opt=-O3
+pipenv run python benchmark.py --hw-platform pico2 --lib mldsa-native --algo mldsa --goal fast --opt opt=-O3
 ````
 
 Such a build is not the goal anymore. Its results are reported as `<library>-custom[n]`, with a note giving the goal it starts from and the options, and they are kept apart from the results of the goal itself, footprint included.
@@ -112,8 +121,8 @@ A benchmark runs on a core set: the cores of the board that the library may use.
 
 The first core is the caller: the library is called there and time is measured there; the others help.
 A core is named by its software target, i.e., the name of its toolchain file in [on](on), unless the board gives it a name of its own.
-A software target's compiler flags (`cpu_PARAMS` of `target/<cpu>.cmake`, which wolfSSL's build reads too) are those of the lean-bsp targets for that CPU: `cortex-m33` and `cortex-m55` are built for `softfp` with the FPU, `rv32imcb` for the Hazard3's extensions (`rv32imac_zicsr_zifencei_zba_zbb_zbs_zbkb`). The footprint, Renode and the boards thus describe the same code.
-Each hardware platform declares its core sets (`core_sets()` in [hardware-platforms](hardware-platforms)); without `--cores`, the sets of one core are benchmarked.
+A software target's compiler flags (`cpu_PARAMS` of `target/<cpu>.cmake`, which wolfSSL's build reads too) are those of the lean-bsp targets for that CPU: `cortex-m33` and `cortex-m55` are built for `softfp` with the FPU, `rv32imcb` for the Hazard3's extensions (`rv32imac_zicsr_zifencei_zba_zbb_zbs_zbkb`). The footprint, Renode and the boards thus describe the same code; `benchmark.py` checks that they are the BSP's before it runs a lean-bsp board.
+Each hardware platform declares its core sets (`core_sets()` in [hardware-platforms](hardware-platforms), for a lean-bsp board one per target); without `--cores`, the sets of one core are benchmarked.
 A core set is independent of the goal: `fast` on one core and `fast` on two are two different results.
 
 With several cores:
@@ -121,8 +130,8 @@ With several cores:
 - A library must declare that it can use the set (`supports_cores(cores, algo)` in its manifest). A library that uses one core has the same results on a larger set as on its first core alone: it is not benchmarked again.
 - The results are reported apart from those on one core, in `build/<core set>/` and in a CSV file named after the core set.
 
-So far the only set of several cores is `2xcortex-m33` (and `2xrv32imcb`) on the RP2350, and no supported library uses it; the library's glue starts the second core itself.
-A general way for a library to run on helper cores, the RAM of the helper cores in the reported footprint, and cores that need an image of their own are planned with the move of the hardware platforms to lean-bsp.
+On a lean-bsp board a benchmark runs on one core: sets of several cores wait for helper cores in lean-bsp, with the RAM of the helper cores in the reported footprint and cores that need an image of their own.
+The board repository's RP2350 platform ([hardware-platforms/legacy/rp2350.py](hardware-platforms/legacy/rp2350.py)) has `2xcortex-m33` and `2xrv32imcb`, which no supported library uses; there the library's glue starts the second core itself.
 
 ## External libraries
 An ML-DSA or ML-KEM library which shall not be part of this repository (e.g. not public) can be benchmarked from a folder `external-libs_git_ignore/<name>/` (`<name>` in lower case, git ignores that folder), containing:
@@ -142,7 +151,7 @@ What a build is for reaches every part of the integration:
 - In the glue: `GOAL`, `GOAL_CUSTOM` (1 when there are options) and `N_CORES` (the number of cores of the set).
 - Optional in the manifest: `supports_cores(cores, algo)` for a library that can use several cores, and `revision()` when the library is not the git repository at the manifest's `path` (the firmware reports the library's revision with the results).
 
-The library is then selected like the others, e.g. `./buildit on/rv32imcb mldsa 44 <NAME> minSizeRel GOAL=<goal>` or `pipenv run python benchmark.py --hw-platform rp2350 --lib <name> --algo mldsa`.
+The library is then selected like the others, e.g. `./buildit on/rv32imcb mldsa 44 <NAME> minSizeRel GOAL=<goal>` or `pipenv run python benchmark.py --hw-platform pico2 --lib <name> --algo mldsa`.
 Use `-DEXTERNAL_LIBS_DIR=<path>` to look for external libraries in another folder.
 
 ## Benchmarking using Renode

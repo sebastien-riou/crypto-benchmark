@@ -1,0 +1,30 @@
+# crypto-benchmark as a lean-bsp application (../lean-bsp). benchmark.py builds the benchmark of one configuration into
+# build/<cpu>/libcrypto-benchmark.a, then has lean-bsp link it with the board glue and run it (hardware-platforms/,
+# leanbsp_platform.py). Built by hand, for a configuration buildit has just built:
+#   lbsp build-load-run --bsp nucleo-u5a5 --define 'CB_HW_PLATFORM="nucleo-u5a5"'
+[app]
+name = "crypto-benchmark"
+lean_bsp_contract_version = "1.5"    # 1.4's heap count, 1.5's part numbers (the glue's cache info)
+version = "0.1.0"                    # of this manifest and the glue
+default_bsp = "nucleo-u5a5"
+
+[app.requires]                       # subset of bsp.primitives the benchmark cannot do without
+uart = true                          # lean-benchmark's channel to the host
+cpu_cycle_counter = true             # the figures
+cpu_frequency = true                 # the info fields
+cache_clear = true                   # every measured run starts from the same cache state
+heap_usage = true                    # the heap figures
+
+[app.sources]
+# the board glue: lean-benchmark's hooks on the contract, and app_main
+files = ["lean-bsp/crypto_benchmark_lean_bsp.c"]
+include_dirs = ["target/ext/liblean-benchmark/include"]  # lean-benchmark.h, linked by link_ext.py
+defines = []
+
+[app.build]
+# the archive buildit makes for one configuration: the core, lean-benchmark and the crypto library, LTO objects on Arm
+lib = "build/{cpu}/libcrypto-benchmark.a"
+link_flags = ["-flto"]
+
+[app.build.link_flags_by_cpu]
+rv32imcb = ["-Wl,--no-relax-gp"]     # PQRV's assembly uses gp
