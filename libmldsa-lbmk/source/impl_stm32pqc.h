@@ -83,7 +83,7 @@ static cmox_pqc_dsa_keygen_algo_t pset_to_keygen_algo(unsigned int pset){
 
 static cmox_pqc_handle_t Pqc_Ctx;
 
-//cmox_ll_init() and cmox_ll_deInit(): placeholders in common/stm32pqc_ll.c, an STM32 application defines them
+//cmox_ll_init() and cmox_ll_deInit(): common/stm32pqc_ll.c, for the STM32 family benchmark.py names
 
 static void dsa_init(){
   const cmox_pqc_retval_t r = cmox_initialize(NULL);

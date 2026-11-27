@@ -12,6 +12,8 @@ class Stm32u5a5:
     def __init__(self):
         self.sw_target = None
         self.path = '../crypto-benchmark-stm32u5'
+        # the STM32 family, for the libraries that set up the chip themselves (STM32PQC: the CRC unit's clock)
+        self.stm32_family = 'U5'
         self.run_in_parallel = False # wait 'run' script to exit before starting leanbenchmark
         # With HWBRIDGE_BOARD set (the board's name in lean-hwbridge, e.g. nucleo-u5a5), the board is reached
         # through lean-hwbridge (`hwbridge`, or the command in HWBRIDGE), which works from a sandboxed session

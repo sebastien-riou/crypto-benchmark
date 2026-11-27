@@ -32,6 +32,9 @@ class Stm32pqc:
         self.sw_target = None
         self.codename = 'STM32PQC'
         self.path = 'STM32_Cryptographic'
+        # benchmark.py skips the boards that are not an STM32, and passes the others' family (stm32_family of the
+        # hardware platform) to the build: cmox_ll_init switches on that family's CRC unit (common/stm32pqc_ll.c)
+        self.stm32_only = True
     
     def build_cmd(self,sw_target,goal,pset,algo):
         self.sw_target = sw_target

@@ -522,6 +522,16 @@ if __name__ == '__main__':
                     if supports_algo and not supports_algo(swt, algo):
                         logging.info(f'{lib['name']} does not support {algo} on {swt}, skipped')
                         continue
+                    # build parameters of the library under test only, not of its STUB build
+                    lib_build_params = []
+                    # optional: a library that runs only on an STM32 (STM32PQC) gets the board's STM32 family, for
+                    # what it must set up itself (common/stm32pqc_ll.c)
+                    if getattr(lib['helper'], 'stm32_only', False):
+                        stm32_family = getattr(hwp, 'stm32_family', None)
+                        if not stm32_family:
+                            logging.info(f'{lib['name']} runs only on an STM32, {hwp_name} is not one: skipped')
+                            continue
+                        lib_build_params.append(f'STM32PQC_FAMILY={stm32_family}')
                     if psets is None:
                         all_psets = algorithms_catalog[algo].psets()
                     else:
@@ -557,7 +567,7 @@ if __name__ == '__main__':
                             link_ext()
 
                             logging.info('build crypto-benchmark')
-                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,lib_codename,*build_params,*buildit_options)
+                            out,res = tool(None, './buildit',f'on/{swt}',algo,pset_code,lib_codename,*build_params,*lib_build_params,*buildit_options)
                             
                             logging.info('build firmware')
                             process_cmd(hwp.build_cmd(swt),hwp_path)

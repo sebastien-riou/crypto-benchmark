@@ -18,7 +18,7 @@
 #include <stm32pqc/include/cmox_crypto.h>
 #include <stddef.h>
 
-//cmox_ll_init() and cmox_ll_deInit(): placeholders in common/stm32pqc_ll.c, an STM32 application defines them
+//cmox_ll_init() and cmox_ll_deInit(): common/stm32pqc_ll.c, for the STM32 family benchmark.py names
 
 static void aes_init(void){
   const cmox_init_retval_t r = cmox_initialize(NULL);

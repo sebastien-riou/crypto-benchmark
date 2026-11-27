@@ -89,7 +89,7 @@ static cmox_pqc_kem_dec_algo_t pset_to_dec_algo(unsigned int pset){
 
 static cmox_pqc_handle_t Pqc_Ctx;
 
-//cmox_ll_init() and cmox_ll_deInit(): placeholders in common/stm32pqc_ll.c, an STM32 application defines them
+//cmox_ll_init() and cmox_ll_deInit(): common/stm32pqc_ll.c, for the STM32 family benchmark.py names
 
 static void kem_init(void){
   const cmox_init_retval_t r = cmox_initialize(NULL);

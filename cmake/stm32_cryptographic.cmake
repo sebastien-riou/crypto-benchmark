@@ -9,7 +9,16 @@ IF ( NOT EXISTS ${STM32_CRYPTO_LIB} )
 ENDIF()
 MESSAGE("STM32_CRYPTO_LIB=" ${STM32_CRYPTO_LIB})
 
-# weak placeholders for cmox_ll_init/cmox_ll_deInit, compiled without LTO so that an STM32 application's definitions
-# take precedence (see common/stm32pqc_ll.c)
+# cmox_ll_init/cmox_ll_deInit: they switch on the CRC unit's clock of the STM32 family STM32PQC_FAMILY names, which
+# benchmark.py passes when it builds for a board. Without it, cmox_ll_init never returns (see common/stm32pqc_ll.c).
+# Compiled without LTO, so that an application's own definitions still take precedence over these weak ones.
+set(STM32PQC_FAMILIES U5)
 target_sources(${LIB} PRIVATE ${CMAKE_SOURCE_DIR}/common/stm32pqc_ll.c)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/common/stm32pqc_ll.c PROPERTIES COMPILE_OPTIONS -fno-lto)
+IF ( DEFINED STM32PQC_FAMILY AND NOT STM32PQC_FAMILY STREQUAL "" )
+	IF ( NOT STM32PQC_FAMILY IN_LIST STM32PQC_FAMILIES )
+		MESSAGE( FATAL_ERROR "STM32PQC_FAMILY=${STM32PQC_FAMILY}: common/stm32pqc_ll.c cannot switch on the CRC unit of this family, it knows ${STM32PQC_FAMILIES}" )
+	ENDIF()
+	set_property(SOURCE ${CMAKE_SOURCE_DIR}/common/stm32pqc_ll.c APPEND PROPERTY COMPILE_DEFINITIONS STM32PQC_FAMILY_${STM32PQC_FAMILY})
+	MESSAGE("STM32PQC_FAMILY=" ${STM32PQC_FAMILY})
+ENDIF()
