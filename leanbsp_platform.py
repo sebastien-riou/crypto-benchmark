@@ -133,8 +133,10 @@ class LeanBspPlatform:
         self._check_compiler(self._target(sw_target))
         self.sw_target = sw_target
         name = self.platform_name(sw_target)
+        # CB_LBSP_DEFINES: more definitions for the glue, "K=V K2=V2" (experiments: lean-bsp/crypto_benchmark_lean_bsp.c)
+        extra = [a for d in shlex.split(os.environ.get('CB_LBSP_DEFINES', '')) for a in ('--define', d)]
         return {
-            'cmd': self.lbsp('build', *self._where(sw_target), '--define', f'CB_HW_PLATFORM="{name}"')
+            'cmd': self.lbsp('build', *self._where(sw_target), '--define', f'CB_HW_PLATFORM="{name}"', *extra)
         }
 
     def load_cmd(self, sw_target):
